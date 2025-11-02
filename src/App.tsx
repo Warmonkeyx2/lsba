@@ -45,18 +45,16 @@ function App() {
     setIsExporting(true);
     
     try {
-      const blob = await toPng(cardRef.current, {
+      const dataUrl = await toPng(cardRef.current, {
         quality: 1,
         pixelRatio: 2,
         backgroundColor: '#1e1e1e',
-      }).then(dataUrl => {
-        return fetch(dataUrl).then(res => res.blob());
       });
-      
-      const file = new File([blob], `lsba-fight-card-${Date.now()}.png`, { type: 'image/png' });
       
       if ('showSaveFilePicker' in window) {
         try {
+          const blob = await fetch(dataUrl).then(res => res.blob());
+          
           const handle = await (window as any).showSaveFilePicker({
             suggestedName: `lsba-fight-card-${Date.now()}.png`,
             types: [{
@@ -71,17 +69,12 @@ function App() {
           
           toast.success('Fight card exported successfully!');
         } catch (err: any) {
-          if (err.name !== 'AbortError') {
-            throw err;
+          if (err.name === 'AbortError') {
+            return;
           }
+          throw err;
         }
       } else {
-        const dataUrl = await toPng(cardRef.current, {
-          quality: 1,
-          pixelRatio: 2,
-          backgroundColor: '#1e1e1e',
-        });
-        
         const link = document.createElement('a');
         link.download = `lsba-fight-card-${Date.now()}.png`;
         link.href = dataUrl;
