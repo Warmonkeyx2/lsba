@@ -45,18 +45,50 @@ function App() {
     setIsExporting(true);
     
     try {
-      const dataUrl = await toPng(cardRef.current, {
+      const blob = await toPng(cardRef.current, {
         quality: 1,
         pixelRatio: 2,
         backgroundColor: '#1e1e1e',
+      }).then(dataUrl => {
+        return fetch(dataUrl).then(res => res.blob());
       });
       
-      const link = document.createElement('a');
-      link.download = `lsba-fight-card-${Date.now()}.png`;
-      link.href = dataUrl;
-      link.click();
+      const file = new File([blob], `lsba-fight-card-${Date.now()}.png`, { type: 'image/png' });
       
-      toast.success('Fight card exported successfully!');
+      if ('showSaveFilePicker' in window) {
+        try {
+          const handle = await (window as any).showSaveFilePicker({
+            suggestedName: `lsba-fight-card-${Date.now()}.png`,
+            types: [{
+              description: 'PNG Image',
+              accept: { 'image/png': ['.png'] },
+            }],
+          });
+          
+          const writable = await handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          
+          toast.success('Fight card exported successfully!');
+        } catch (err: any) {
+          if (err.name !== 'AbortError') {
+            throw err;
+          }
+        }
+      } else {
+        const dataUrl = await toPng(cardRef.current, {
+          quality: 1,
+          pixelRatio: 2,
+          backgroundColor: '#1e1e1e',
+        });
+        
+        const link = document.createElement('a');
+        link.download = `lsba-fight-card-${Date.now()}.png`;
+        link.href = dataUrl;
+        link.click();
+        
+        toast.success('Fight card exported successfully!');
+      }
     } catch (error) {
       console.error('Error exporting image:', error);
       toast.error('Failed to export fight card');
