@@ -1,13 +1,12 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { useKV } from "@github/spark/hooks";
-import { Eye, PencilSimple, FloppyDisk, DownloadSimple } from "@phosphor-icons/react";
+import { Eye, PencilSimple, FloppyDisk } from "@phosphor-icons/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { FightCardEditor } from "@/components/FightCardEditor";
 import { FightCardDisplay } from "@/components/FightCardDisplay";
 import { toast, Toaster } from "sonner";
 import type { FightCard } from "@/types/fightCard";
-import html2canvas from "html2canvas";
 
 const defaultFightCard: FightCard = {
   eventDate: '',
@@ -26,181 +25,11 @@ function App() {
   const [savedCard, setSavedCard] = useKV<FightCard>('lsba-fight-card', defaultFightCard);
   const [editingCard, setEditingCard] = useState<FightCard>(savedCard || defaultFightCard);
   const [activeTab, setActiveTab] = useState<string>('edit');
-  const [isExporting, setIsExporting] = useState(false);
-  const [previewImageDataUrl, setPreviewImageDataUrl] = useState<string>('');
-  const cardRef = useRef<HTMLDivElement>(null);
 
   const handleSave = () => {
     setSavedCard(editingCard);
-    setPreviewImageDataUrl('');
     toast.success('Fight card saved successfully!');
   };
-
-  const convertImageToDataURL = async (url: string): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0);
-          resolve(canvas.toDataURL('image/png'));
-        } else {
-          reject(new Error('Failed to get canvas context'));
-        }
-      };
-      img.onerror = () => {
-        resolve(url);
-      };
-      img.src = url;
-    });
-  };
-
-  const cloneWithDataURLs = async (element: HTMLElement): Promise<HTMLElement> => {
-    const clone = element.cloneNode(true) as HTMLElement;
-    const images = clone.querySelectorAll('img');
-    
-    await Promise.all(
-      Array.from(images).map(async (img) => {
-        if (img.src && !img.src.startsWith('data:')) {
-          try {
-            const dataURL = await convertImageToDataURL(img.src);
-            img.src = dataURL;
-          } catch (error) {
-            console.warn('Failed to convert image:', img.src);
-          }
-        }
-      })
-    );
-
-    const bgElements = clone.querySelectorAll('[style*="background-image"]');
-    await Promise.all(
-      Array.from(bgElements).map(async (el) => {
-        const htmlEl = el as HTMLElement;
-        const style = htmlEl.style.backgroundImage;
-        const urlMatch = style.match(/url\(['"]?([^'"]+)['"]?\)/);
-        if (urlMatch && urlMatch[1] && !urlMatch[1].startsWith('data:')) {
-          try {
-            const dataURL = await convertImageToDataURL(urlMatch[1]);
-            htmlEl.style.backgroundImage = `url(${dataURL})`;
-          } catch (error) {
-            console.warn('Failed to convert background image:', urlMatch[1]);
-          }
-        }
-      })
-    );
-
-    return clone;
-  };
-
-  const handleExportPNG = async () => {
-    if (!cardRef.current) return;
-    
-    setIsExporting(true);
-    
-    try {
-      const clonedElement = await cloneWithDataURLs(cardRef.current);
-      const tempContainer = document.createElement('div');
-      tempContainer.style.position = 'absolute';
-      tempContainer.style.left = '-9999px';
-      tempContainer.style.top = '0';
-      tempContainer.style.width = '1200px';
-      document.body.appendChild(tempContainer);
-      tempContainer.appendChild(clonedElement);
-
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      const canvas = await html2canvas(clonedElement, {
-        scale: 2,
-        backgroundColor: '#262626',
-        useCORS: true,
-        allowTaint: false,
-        logging: false,
-        imageTimeout: 15000,
-        width: clonedElement.scrollWidth,
-        height: clonedElement.scrollHeight,
-      });
-      
-      document.body.removeChild(tempContainer);
-
-      canvas.toBlob(async (blob) => {
-        if (!blob) {
-          throw new Error('Failed to create image blob');
-        }
-        
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.download = `lsba-fight-card-${Date.now()}.png`;
-        link.href = url;
-        link.click();
-        URL.revokeObjectURL(url);
-        
-        toast.success('Fight card downloaded successfully!');
-        setIsExporting(false);
-      }, 'image/png');
-    } catch (error) {
-      console.error('Error exporting image:', error);
-      toast.error('Failed to export fight card. Please try again.');
-      setIsExporting(false);
-    }
-  };
-
-  const handleGeneratePreview = async () => {
-    if (!cardRef.current || isExporting) return;
-    
-    setIsExporting(true);
-    
-    try {
-      const clonedElement = await cloneWithDataURLs(cardRef.current);
-      const tempContainer = document.createElement('div');
-      tempContainer.style.position = 'absolute';
-      tempContainer.style.left = '-9999px';
-      tempContainer.style.top = '0';
-      tempContainer.style.width = '1200px';
-      document.body.appendChild(tempContainer);
-      tempContainer.appendChild(clonedElement);
-
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      const canvas = await html2canvas(clonedElement, {
-        scale: 2,
-        backgroundColor: '#262626',
-        useCORS: true,
-        allowTaint: false,
-        logging: false,
-        imageTimeout: 15000,
-        width: clonedElement.scrollWidth,
-        height: clonedElement.scrollHeight,
-      });
-      
-      document.body.removeChild(tempContainer);
-
-      const dataUrl = canvas.toDataURL('image/png');
-      setPreviewImageDataUrl(dataUrl);
-      setIsExporting(false);
-      toast.success('Preview generated successfully!');
-    } catch (error) {
-      console.error('Error generating preview:', error);
-      toast.error('Failed to generate preview. Please try again.');
-      setIsExporting(false);
-    }
-  };
-
-  const handleShowImagePreview = async () => {
-    await handleGeneratePreview();
-    if (previewImageDataUrl) {
-      toast.success('Preview image generated! Right-click to copy or save.');
-    }
-  };
-
-  useEffect(() => {
-    if (activeTab === 'preview' && !previewImageDataUrl && !isExporting) {
-      handleGeneratePreview();
-    }
-  }, [activeTab]);
 
   const hasChanges = JSON.stringify(savedCard) !== JSON.stringify(editingCard);
 
@@ -263,77 +92,9 @@ function App() {
                     </div>
                   )}
                   
-                  <div className="fixed left-[-9999px] top-0 w-[1200px]">
-                    <div ref={cardRef}>
-                      <FightCardDisplay fightCard={savedCard || defaultFightCard} />
-                    </div>
+                  <div className="flex justify-center">
+                    <FightCardDisplay fightCard={savedCard || defaultFightCard} />
                   </div>
-                  
-                  {isExporting && !previewImageDataUrl ? (
-                    <div className="flex flex-col items-center justify-center gap-6 p-12 border border-border rounded-lg">
-                      <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary"></div>
-                      <div className="text-center space-y-2">
-                        <p className="text-lg font-semibold text-foreground">
-                          Generating preview...
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          This may take a few seconds
-                        </p>
-                      </div>
-                    </div>
-                  ) : previewImageDataUrl ? (
-                    <div className="flex flex-col items-center gap-4">
-                      <img 
-                        src={previewImageDataUrl} 
-                        alt="Fight Card Preview" 
-                        className="w-full h-auto rounded-lg border border-border max-w-3xl"
-                      />
-                      <p className="text-sm text-muted-foreground text-center">
-                        Right-click the image to copy or save it
-                      </p>
-                      <div className="flex justify-center gap-2">
-                        <Button
-                          onClick={handleExportPNG}
-                          disabled={isExporting}
-                          variant="default"
-                          size="lg"
-                        >
-                          <DownloadSimple className="w-5 h-5 mr-2" />
-                          {isExporting ? 'Downloading...' : 'Download PNG'}
-                        </Button>
-                        <Button
-                          onClick={handleGeneratePreview}
-                          disabled={isExporting}
-                          variant="secondary"
-                          size="lg"
-                        >
-                          <Eye className="w-5 h-5 mr-2" />
-                          {isExporting ? 'Generating...' : 'Refresh Preview'}
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center gap-6 p-12 border border-border rounded-lg">
-                      <Eye className="w-16 h-16 text-muted-foreground" />
-                      <div className="text-center space-y-2">
-                        <p className="text-lg font-semibold text-foreground">
-                          Ready to preview your fight card
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Click the button below to generate a preview image
-                        </p>
-                      </div>
-                      <Button
-                        onClick={handleGeneratePreview}
-                        disabled={isExporting}
-                        size="lg"
-                        className="bg-primary hover:bg-primary/90"
-                      >
-                        <Eye className="w-5 h-5 mr-2" />
-                        {isExporting ? 'Generating Preview...' : 'Generate Preview'}
-                      </Button>
-                    </div>
-                  )}
                 </div>
               </TabsContent>
             </Tabs>
