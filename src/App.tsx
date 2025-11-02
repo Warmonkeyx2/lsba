@@ -7,7 +7,7 @@ import { FightCardEditor } from "@/components/FightCardEditor";
 import { FightCardDisplay } from "@/components/FightCardDisplay";
 import { toast, Toaster } from "sonner";
 import type { FightCard } from "@/types/fightCard";
-import { toPng } from "html-to-image";
+import html2canvas from "html2canvas";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -45,55 +45,58 @@ function App() {
     setIsExporting(true);
     
     try {
-      const dataUrl = await toPng(cardRef.current, {
-        quality: 1,
-        pixelRatio: 2,
+      const canvas = await html2canvas(cardRef.current, {
+        scale: 2,
         backgroundColor: '#262626',
-        cacheBust: true,
-        filter: (node) => {
-          return true;
-        },
-        style: {
-          transform: 'scale(1)',
-          transformOrigin: 'top left',
-        },
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        imageTimeout: 0,
       });
       
-      if ('showSaveFilePicker' in window) {
-        try {
-          const blob = await fetch(dataUrl).then(res => res.blob());
-          
-          const handle = await (window as any).showSaveFilePicker({
-            suggestedName: `lsba-fight-card-${Date.now()}.png`,
-            types: [{
-              description: 'PNG Image',
-              accept: { 'image/png': ['.png'] },
-            }],
-          });
-          
-          const writable = await handle.createWritable();
-          await writable.write(blob);
-          await writable.close();
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          throw new Error('Failed to create image blob');
+        }
+        
+        if ('showSaveFilePicker' in window) {
+          try {
+            const handle = await (window as any).showSaveFilePicker({
+              suggestedName: `lsba-fight-card-${Date.now()}.png`,
+              types: [{
+                description: 'PNG Image',
+                accept: { 'image/png': ['.png'] },
+              }],
+            });
+            
+            const writable = await handle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+            
+            toast.success('Fight card exported successfully!');
+          } catch (err: any) {
+            if (err.name === 'AbortError') {
+              setIsExporting(false);
+              return;
+            }
+            throw err;
+          }
+        } else {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.download = `lsba-fight-card-${Date.now()}.png`;
+          link.href = url;
+          link.click();
+          URL.revokeObjectURL(url);
           
           toast.success('Fight card exported successfully!');
-        } catch (err: any) {
-          if (err.name === 'AbortError') {
-            return;
-          }
-          throw err;
         }
-      } else {
-        const link = document.createElement('a');
-        link.download = `lsba-fight-card-${Date.now()}.png`;
-        link.href = dataUrl;
-        link.click();
         
-        toast.success('Fight card exported successfully!');
-      }
+        setIsExporting(false);
+      }, 'image/png');
     } catch (error) {
       console.error('Error exporting image:', error);
-      toast.error('Failed to export fight card. Try removing external images or try again.');
-    } finally {
+      toast.error('Failed to export fight card. Please try again.');
       setIsExporting(false);
     }
   };
@@ -101,21 +104,16 @@ function App() {
   const uploadToImgBB = async (): Promise<string> => {
     if (!cardRef.current) throw new Error('Card reference not found');
     
-    const dataUrl = await toPng(cardRef.current, {
-      quality: 1,
-      pixelRatio: 2,
+    const canvas = await html2canvas(cardRef.current, {
+      scale: 2,
       backgroundColor: '#262626',
-      cacheBust: true,
-      filter: (node) => {
-        return true;
-      },
-      style: {
-        transform: 'scale(1)',
-        transformOrigin: 'top left',
-      },
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+      imageTimeout: 0,
     });
 
-    const base64Data = dataUrl.split(',')[1];
+    const base64Data = canvas.toDataURL('image/png').split(',')[1];
     
     const formData = new FormData();
     formData.append('image', base64Data);
