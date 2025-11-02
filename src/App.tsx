@@ -32,6 +32,8 @@ function App() {
   const [isExporting, setIsExporting] = useState(false);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
+  const [imagePreviewOpen, setImagePreviewOpen] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string>('');
   const cardRef = useRef<HTMLDivElement>(null);
 
   const handleSave = () => {
@@ -173,6 +175,45 @@ function App() {
     }
   };
 
+  const handleShowImagePreview = async () => {
+    if (!cardRef.current) return;
+    
+    setIsExporting(true);
+    
+    try {
+      const clonedElement = await cloneWithDataURLs(cardRef.current);
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.top = '0';
+      document.body.appendChild(tempContainer);
+      tempContainer.appendChild(clonedElement);
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const canvas = await html2canvas(clonedElement, {
+        scale: 2,
+        backgroundColor: '#262626',
+        useCORS: false,
+        allowTaint: true,
+        logging: false,
+        imageTimeout: 0,
+      });
+      
+      document.body.removeChild(tempContainer);
+
+      const dataUrl = canvas.toDataURL('image/png');
+      setPreviewImageUrl(dataUrl);
+      setImagePreviewOpen(true);
+      setIsExporting(false);
+      toast.success('Right-click the image and select "Save Image As..." to download');
+    } catch (error) {
+      console.error('Error generating preview:', error);
+      toast.error('Failed to generate preview. Please try again.');
+      setIsExporting(false);
+    }
+  };
+
   const uploadToImgBB = async (): Promise<string> => {
     if (!cardRef.current) throw new Error('Card reference not found');
     
@@ -302,6 +343,15 @@ function App() {
                       {isExporting ? 'Exporting...' : 'Export as PNG'}
                     </Button>
                     <Button
+                      onClick={handleShowImagePreview}
+                      disabled={isExporting}
+                      variant="secondary"
+                      size="lg"
+                    >
+                      <Eye className="w-5 h-5 mr-2" />
+                      {isExporting ? 'Loading...' : 'View Image'}
+                    </Button>
+                    <Button
                       onClick={handleGenerateQR}
                       disabled={isUploading}
                       variant="secondary"
@@ -317,7 +367,7 @@ function App() {
                   </div>
                   
                   <div className="text-center text-sm text-muted-foreground">
-                    <p>Export as PNG for local use, or generate a QR code to get a shareable image link!</p>
+                    <p>Export as PNG to download, View Image to right-click save, or generate a QR code for a shareable link!</p>
                   </div>
                 </div>
               </TabsContent>
@@ -396,6 +446,30 @@ function App() {
               <DownloadSimple className="w-4 h-4 mr-2" />
               Download QR Code
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={imagePreviewOpen} onOpenChange={setImagePreviewOpen}>
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl uppercase">Fight Card Image</DialogTitle>
+            <DialogDescription>
+              Right-click on the image below and select "Save Image As..." to download the fight card.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4 py-4">
+            {previewImageUrl && (
+              <img 
+                src={previewImageUrl} 
+                alt="Fight Card Preview" 
+                className="w-full h-auto rounded-lg border border-border"
+                style={{ maxWidth: '100%' }}
+              />
+            )}
+            <p className="text-sm text-muted-foreground text-center">
+              Right-click the image above and choose "Save Image As..." to download
+            </p>
           </div>
         </DialogContent>
       </Dialog>
