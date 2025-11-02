@@ -73,6 +73,22 @@ function App() {
 
   const handleRegisterBoxer = (boxer: Boxer) => {
     setBoxers((current) => [...(current || []), boxer]);
+    
+    if (boxer.sponsor) {
+      setSponsors((current) => {
+        const updated = [...(current || [])];
+        const sponsorIndex = updated.findIndex(s => s.name.toLowerCase() === boxer.sponsor.toLowerCase());
+        
+        if (sponsorIndex !== -1) {
+          updated[sponsorIndex].boxersSponsored = [
+            ...updated[sponsorIndex].boxersSponsored,
+            boxer.id
+          ];
+        }
+        
+        return updated;
+      });
+    }
   };
 
   const handleRegisterSponsor = (sponsor: Sponsor) => {
@@ -80,14 +96,61 @@ function App() {
   };
 
   const handleUpdateBoxer = (updatedBoxer: Boxer) => {
+    const oldBoxer = boxersList.find(b => b.id === updatedBoxer.id);
+    
     setBoxers((current) =>
       (current || []).map((b) => (b.id === updatedBoxer.id ? updatedBoxer : b))
     );
     setSelectedBoxer(updatedBoxer);
+    
+    if (oldBoxer && oldBoxer.sponsor !== updatedBoxer.sponsor) {
+      setSponsors((current) => {
+        const updated = [...(current || [])];
+        
+        if (oldBoxer.sponsor) {
+          const oldSponsorIndex = updated.findIndex(s => s.name.toLowerCase() === oldBoxer.sponsor.toLowerCase());
+          if (oldSponsorIndex !== -1) {
+            updated[oldSponsorIndex].boxersSponsored = updated[oldSponsorIndex].boxersSponsored.filter(
+              id => id !== updatedBoxer.id
+            );
+          }
+        }
+        
+        if (updatedBoxer.sponsor) {
+          const newSponsorIndex = updated.findIndex(s => s.name.toLowerCase() === updatedBoxer.sponsor.toLowerCase());
+          if (newSponsorIndex !== -1 && !updated[newSponsorIndex].boxersSponsored.includes(updatedBoxer.id)) {
+            updated[newSponsorIndex].boxersSponsored = [
+              ...updated[newSponsorIndex].boxersSponsored,
+              updatedBoxer.id
+            ];
+          }
+        }
+        
+        return updated;
+      });
+    }
   };
 
   const handleDeleteBoxer = (boxerId: string) => {
+    const boxer = boxersList.find(b => b.id === boxerId);
+    
     setBoxers((current) => (current || []).filter((b) => b.id !== boxerId));
+    
+    if (boxer?.sponsor) {
+      setSponsors((current) => {
+        const updated = [...(current || [])];
+        const sponsorIndex = updated.findIndex(s => s.name.toLowerCase() === boxer.sponsor.toLowerCase());
+        
+        if (sponsorIndex !== -1) {
+          updated[sponsorIndex].boxersSponsored = updated[sponsorIndex].boxersSponsored.filter(
+            id => id !== boxerId
+          );
+        }
+        
+        return updated;
+      });
+    }
+    
     toast.success("Fighter profile deleted successfully");
   };
 
@@ -442,7 +505,7 @@ function App() {
               <TabsContent value="sponsors" className="mt-6">
                 <div className="flex flex-col gap-6">
                   <SponsorRegistration onRegister={handleRegisterSponsor} />
-                  <SponsorList sponsors={sponsorsList} />
+                  <SponsorList sponsors={sponsorsList} boxers={boxersList} />
                 </div>
               </TabsContent>
 
