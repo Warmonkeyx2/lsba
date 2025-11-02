@@ -28,6 +28,7 @@ export function SponsorList({ sponsors, onViewProfile }: SponsorListProps) {
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {sponsors.map((sponsor) => {
+          const boxersSponsored = sponsor.boxersSponsored || [];
           return (
             <Card key={sponsor.id} className="p-6 hover:border-accent/50 transition-colors">
               <div className="flex items-start gap-4">
@@ -88,10 +89,10 @@ export function SponsorList({ sponsors, onViewProfile }: SponsorListProps) {
                       <Users className="w-5 h-5 text-accent" weight="bold" />
                       <div className="flex flex-col">
                         <span className="text-2xl font-display font-bold text-accent leading-none">
-                          {sponsor.boxersSponsored.length}
+                          {boxersSponsored.length}
                         </span>
                         <span className="text-xs text-accent-foreground/80 uppercase tracking-wide">
-                          {sponsor.boxersSponsored.length === 1 ? 'Boxer' : 'Boxers'}
+                          {boxersSponsored.length === 1 ? 'Boxer' : 'Boxers'}
                         </span>
                       </div>
                     </div>

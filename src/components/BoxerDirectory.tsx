@@ -121,7 +121,8 @@ export function BoxerDirectory({ boxers, sponsors, onUpdateBoxer, onDeleteBoxer,
   };
 
   const getSponsoredBoxers = (sponsor: Sponsor) => {
-    return boxers.filter(b => sponsor.boxersSponsored.includes(b.id));
+    const boxersSponsored = sponsor.boxersSponsored || [];
+    return boxers.filter(b => boxersSponsored.includes(b.id));
   };
 
   const totalResults = filteredBoxers.length + filteredSponsors.length;

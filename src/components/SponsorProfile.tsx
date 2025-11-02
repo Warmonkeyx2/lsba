@@ -26,8 +26,11 @@ export function SponsorProfile({ sponsor, boxers, onBack, onUpdateSponsor }: Spo
   });
   const [logoUrl, setLogoUrl] = useState(sponsor.logoUrl || '');
 
+  const additionalContacts = sponsor.additionalContacts || [];
+  const boxersSponsored = sponsor.boxersSponsored || [];
+
   const sponsoredBoxers = boxers.filter(boxer => 
-    sponsor.boxersSponsored.includes(boxer.id)
+    boxersSponsored.includes(boxer.id)
   );
 
   const handleAddContact = () => {
@@ -45,7 +48,7 @@ export function SponsorProfile({ sponsor, boxers, onBack, onUpdateSponsor }: Spo
 
     const updatedSponsor = {
       ...sponsor,
-      additionalContacts: [...sponsor.additionalContacts, contact],
+      additionalContacts: [...additionalContacts, contact],
     };
 
     onUpdateSponsor(updatedSponsor);
@@ -57,7 +60,7 @@ export function SponsorProfile({ sponsor, boxers, onBack, onUpdateSponsor }: Spo
   const handleDeleteContact = (contactId: string) => {
     const updatedSponsor = {
       ...sponsor,
-      additionalContacts: sponsor.additionalContacts.filter(c => c.id !== contactId),
+      additionalContacts: additionalContacts.filter(c => c.id !== contactId),
     };
 
     onUpdateSponsor(updatedSponsor);
@@ -231,7 +234,7 @@ export function SponsorProfile({ sponsor, boxers, onBack, onUpdateSponsor }: Spo
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Boxers Sponsored</p>
-                <p className="text-base mt-1">{sponsor.boxersSponsored.length}</p>
+                <p className="text-base mt-1">{boxersSponsored.length}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Registered</p>
@@ -305,13 +308,13 @@ export function SponsorProfile({ sponsor, boxers, onBack, onUpdateSponsor }: Spo
             </Dialog>
           </div>
 
-          {sponsor.additionalContacts.length === 0 ? (
+          {additionalContacts.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <p className="text-sm">No additional contacts yet</p>
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              {sponsor.additionalContacts.map((contact) => (
+              {additionalContacts.map((contact) => (
                 <div key={contact.id} className="p-3 border border-border rounded-md">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">

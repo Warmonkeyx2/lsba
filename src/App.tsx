@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useKV } from "@github/spark/hooks";
 import { 
   Eye, 
@@ -68,6 +68,23 @@ function App() {
   const currentCard = savedCard || defaultFightCard;
   const currentSettings = rankingSettings || DEFAULT_RANKING_SETTINGS;
 
+  useEffect(() => {
+    if (sponsors && sponsors.length > 0) {
+      const needsMigration = sponsors.some(
+        sponsor => !sponsor.boxersSponsored || !sponsor.additionalContacts
+      );
+      
+      if (needsMigration) {
+        const migratedSponsors = sponsors.map(sponsor => ({
+          ...sponsor,
+          boxersSponsored: sponsor.boxersSponsored || [],
+          additionalContacts: sponsor.additionalContacts || [],
+        }));
+        setSponsors(migratedSponsors);
+      }
+    }
+  }, [sponsors, setSponsors]);
+
   const handleSave = () => {
     setSavedCard(editingCard);
     toast.success('Fight card saved successfully!');
@@ -82,8 +99,9 @@ function App() {
         const sponsorIndex = updated.findIndex(s => s.name.toLowerCase() === boxer.sponsor.toLowerCase());
         
         if (sponsorIndex !== -1) {
+          const currentSponsored = updated[sponsorIndex].boxersSponsored || [];
           updated[sponsorIndex].boxersSponsored = [
-            ...updated[sponsorIndex].boxersSponsored,
+            ...currentSponsored,
             boxer.id
           ];
         }
@@ -112,7 +130,8 @@ function App() {
         if (oldBoxer.sponsor) {
           const oldSponsorIndex = updated.findIndex(s => s.name.toLowerCase() === oldBoxer.sponsor.toLowerCase());
           if (oldSponsorIndex !== -1) {
-            updated[oldSponsorIndex].boxersSponsored = updated[oldSponsorIndex].boxersSponsored.filter(
+            const currentSponsored = updated[oldSponsorIndex].boxersSponsored || [];
+            updated[oldSponsorIndex].boxersSponsored = currentSponsored.filter(
               id => id !== updatedBoxer.id
             );
           }
@@ -120,11 +139,14 @@ function App() {
         
         if (updatedBoxer.sponsor) {
           const newSponsorIndex = updated.findIndex(s => s.name.toLowerCase() === updatedBoxer.sponsor.toLowerCase());
-          if (newSponsorIndex !== -1 && !updated[newSponsorIndex].boxersSponsored.includes(updatedBoxer.id)) {
-            updated[newSponsorIndex].boxersSponsored = [
-              ...updated[newSponsorIndex].boxersSponsored,
-              updatedBoxer.id
-            ];
+          if (newSponsorIndex !== -1) {
+            const currentSponsored = updated[newSponsorIndex].boxersSponsored || [];
+            if (!currentSponsored.includes(updatedBoxer.id)) {
+              updated[newSponsorIndex].boxersSponsored = [
+                ...currentSponsored,
+                updatedBoxer.id
+              ];
+            }
           }
         }
         
@@ -144,7 +166,8 @@ function App() {
         const sponsorIndex = updated.findIndex(s => s.name.toLowerCase() === boxer.sponsor.toLowerCase());
         
         if (sponsorIndex !== -1) {
-          updated[sponsorIndex].boxersSponsored = updated[sponsorIndex].boxersSponsored.filter(
+          const currentSponsored = updated[sponsorIndex].boxersSponsored || [];
+          updated[sponsorIndex].boxersSponsored = currentSponsored.filter(
             id => id !== boxerId
           );
         }
