@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useKV } from "@github/spark/hooks";
 import { Eye, PencilSimple, FloppyDisk, DownloadSimple } from "@phosphor-icons/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -107,10 +107,11 @@ function App() {
       tempContainer.style.position = 'absolute';
       tempContainer.style.left = '-9999px';
       tempContainer.style.top = '0';
+      tempContainer.style.width = '1200px';
       document.body.appendChild(tempContainer);
       tempContainer.appendChild(clonedElement);
 
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 300));
 
       const canvas = await html2canvas(clonedElement, {
         scale: 2,
@@ -118,7 +119,9 @@ function App() {
         useCORS: true,
         allowTaint: false,
         logging: false,
-        imageTimeout: 0,
+        imageTimeout: 15000,
+        width: clonedElement.scrollWidth,
+        height: clonedElement.scrollHeight,
       });
       
       document.body.removeChild(tempContainer);
@@ -156,10 +159,11 @@ function App() {
       tempContainer.style.position = 'absolute';
       tempContainer.style.left = '-9999px';
       tempContainer.style.top = '0';
+      tempContainer.style.width = '1200px';
       document.body.appendChild(tempContainer);
       tempContainer.appendChild(clonedElement);
 
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 300));
 
       const canvas = await html2canvas(clonedElement, {
         scale: 2,
@@ -167,7 +171,9 @@ function App() {
         useCORS: true,
         allowTaint: false,
         logging: false,
-        imageTimeout: 0,
+        imageTimeout: 15000,
+        width: clonedElement.scrollWidth,
+        height: clonedElement.scrollHeight,
       });
       
       document.body.removeChild(tempContainer);
@@ -175,6 +181,7 @@ function App() {
       const dataUrl = canvas.toDataURL('image/png');
       setPreviewImageDataUrl(dataUrl);
       setIsExporting(false);
+      toast.success('Preview generated successfully!');
     } catch (error) {
       console.error('Error generating preview:', error);
       toast.error('Failed to generate preview. Please try again.');
@@ -188,6 +195,12 @@ function App() {
       toast.success('Preview image generated! Right-click to copy or save.');
     }
   };
+
+  useEffect(() => {
+    if (activeTab === 'preview' && !previewImageDataUrl && !isExporting) {
+      handleGeneratePreview();
+    }
+  }, [activeTab]);
 
   const hasChanges = JSON.stringify(savedCard) !== JSON.stringify(editingCard);
 
@@ -250,13 +263,25 @@ function App() {
                     </div>
                   )}
                   
-                  <div className="hidden">
+                  <div className="fixed left-[-9999px] top-0 w-[1200px]">
                     <div ref={cardRef}>
                       <FightCardDisplay fightCard={savedCard || defaultFightCard} />
                     </div>
                   </div>
                   
-                  {previewImageDataUrl ? (
+                  {isExporting && !previewImageDataUrl ? (
+                    <div className="flex flex-col items-center justify-center gap-6 p-12 border border-border rounded-lg">
+                      <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary"></div>
+                      <div className="text-center space-y-2">
+                        <p className="text-lg font-semibold text-foreground">
+                          Generating preview...
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          This may take a few seconds
+                        </p>
+                      </div>
+                    </div>
+                  ) : previewImageDataUrl ? (
                     <div className="flex flex-col items-center gap-4">
                       <img 
                         src={previewImageDataUrl} 
