@@ -94,6 +94,11 @@ export function BoxerProfile({ boxer, allBoxers, onBack, onUpdateBoxer }: BoxerP
                 <div>
                   <span className="font-semibold">Phone:</span> {boxer.phoneNumber}
                 </div>
+                {boxer.timezone && (
+                  <div>
+                    <span className="font-semibold">Timezone:</span> {boxer.timezone}
+                  </div>
+                )}
                 {boxer.sponsor && (
                   <div>
                     <span className="font-semibold">Sponsor:</span> {boxer.sponsor}

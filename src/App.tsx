@@ -13,7 +13,8 @@ import {
   Calendar,
   Sliders,
   Info,
-  ArrowsClockwise
+  ArrowsClockwise,
+  Trophy
 } from "@phosphor-icons/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -32,9 +33,11 @@ import { FightResultsManager } from "@/components/FightResultsManager";
 import { RankingFAQ } from "@/components/RankingFAQ";
 import { RankingSettingsComponent } from "@/components/RankingSettings";
 import { SeasonReset } from "@/components/SeasonReset";
+import { TournamentBracket } from "@/components/TournamentBracket";
 import { toast, Toaster } from "sonner";
 import type { FightCard } from "@/types/fightCard";
 import type { Boxer, Sponsor, RankingSettings } from "@/types/boxer";
+import type { Tournament } from "@/types/tournament";
 import { DEFAULT_RANKING_SETTINGS, calculatePointsForFight, getSortedBoxers } from "@/lib/rankingUtils";
 
 const defaultFightCard: FightCard = {
@@ -58,6 +61,7 @@ function App() {
   const [boxers, setBoxers] = useKV<Boxer[]>('lsba-boxers', []);
   const [sponsors, setSponsors] = useKV<Sponsor[]>('lsba-sponsors', []);
   const [rankingSettings, setRankingSettings] = useKV<RankingSettings>('lsba-ranking-settings', DEFAULT_RANKING_SETTINGS);
+  const [tournaments, setTournaments] = useKV<Tournament[]>('lsba-tournaments', []);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [selectedBoxer, setSelectedBoxer] = useState<Boxer | null>(null);
   const [selectedSponsor, setSelectedSponsor] = useState<Sponsor | null>(null);
@@ -65,6 +69,7 @@ function App() {
   const boxersList = boxers || [];
   const sponsorsList = sponsors || [];
   const fightCardsList = fightCards || [];
+  const tournamentsList = tournaments || [];
   const currentCard = savedCard || defaultFightCard;
   const currentSettings = rankingSettings || DEFAULT_RANKING_SETTINGS;
 
@@ -84,6 +89,20 @@ function App() {
       }
     }
   }, [sponsors, setSponsors]);
+
+  useEffect(() => {
+    if (boxers && boxers.length > 0) {
+      const needsTimezoneMigration = boxers.some(boxer => !boxer.timezone);
+      
+      if (needsTimezoneMigration) {
+        const migratedBoxers = boxers.map(boxer => ({
+          ...boxer,
+          timezone: boxer.timezone || 'NA',
+        }));
+        setBoxers(migratedBoxers);
+      }
+    }
+  }, [boxers, setBoxers]);
 
   const handleSave = () => {
     setSavedCard(editingCard);
@@ -351,6 +370,16 @@ function App() {
     toast.success('Sponsor updated successfully!');
   };
 
+  const handleCreateTournament = (tournament: Tournament) => {
+    setTournaments((current) => [...(current || []), tournament]);
+  };
+
+  const handleUpdateTournament = (tournament: Tournament) => {
+    setTournaments((current) =>
+      (current || []).map((t) => (t.id === tournament.id ? tournament : t))
+    );
+  };
+
   const hasChanges = JSON.stringify(currentCard) !== JSON.stringify(editingCard);
 
   if (selectedSponsor) {
@@ -408,7 +437,7 @@ function App() {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-5 md:grid-cols-10 h-auto gap-1">
+              <TabsList className="grid w-full grid-cols-5 md:grid-cols-11 h-auto gap-1">
                 <TabsTrigger value="dashboard" className="flex items-center gap-2 py-3">
                   <SquaresFour className="w-4 h-4" />
                   <span className="hidden sm:inline">Dashboard</span>
@@ -416,6 +445,10 @@ function App() {
                 <TabsTrigger value="upcoming-fights" className="flex items-center gap-2 py-3">
                   <Calendar className="w-4 h-4" />
                   <span className="hidden sm:inline">Upcoming</span>
+                </TabsTrigger>
+                <TabsTrigger value="tournament" className="flex items-center gap-2 py-3">
+                  <Trophy className="w-4 h-4" />
+                  <span className="hidden sm:inline">Tournament</span>
                 </TabsTrigger>
                 <TabsTrigger value="directory" className="flex items-center gap-2 py-3">
                   <AddressBook className="w-4 h-4" />
@@ -533,6 +566,15 @@ function App() {
                     </>
                   )}
                 </div>
+              </TabsContent>
+
+              <TabsContent value="tournament" className="mt-6">
+                <TournamentBracket
+                  boxers={boxersList}
+                  tournaments={tournamentsList}
+                  onCreateTournament={handleCreateTournament}
+                  onUpdateTournament={handleUpdateTournament}
+                />
               </TabsContent>
 
               <TabsContent value="directory" className="mt-6">

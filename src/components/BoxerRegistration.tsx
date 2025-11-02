@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import type { Boxer, Sponsor } from '@/types/boxer';
 
@@ -21,6 +22,7 @@ export function BoxerRegistration({ onRegister, existingBoxers, existingSponsors
     phoneNumber: '',
     sponsor: '',
     profileImage: '',
+    timezone: 'NA' as 'NA' | 'EU' | 'AU',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -65,6 +67,7 @@ export function BoxerRegistration({ onRegister, existingBoxers, existingSponsors
       registeredDate: new Date().toISOString(),
       profileImage: formData.profileImage || undefined,
       fightHistory: [],
+      timezone: formData.timezone,
     };
 
     onRegister(newBoxer);
@@ -77,6 +80,7 @@ export function BoxerRegistration({ onRegister, existingBoxers, existingSponsors
       phoneNumber: '',
       sponsor: '',
       profileImage: '',
+      timezone: 'NA',
     });
   };
 
@@ -144,6 +148,23 @@ export function BoxerRegistration({ onRegister, existingBoxers, existingSponsors
             onChange={(e) => setFormData({ ...formData, sponsor: e.target.value })}
             className="mt-1"
           />
+        </div>
+
+        <div>
+          <Label htmlFor="timezone">Timezone *</Label>
+          <Select
+            value={formData.timezone}
+            onValueChange={(value) => setFormData({ ...formData, timezone: value as 'NA' | 'EU' | 'AU' })}
+          >
+            <SelectTrigger id="timezone" className="mt-1">
+              <SelectValue placeholder="Select timezone" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="NA">North America (NA)</SelectItem>
+              <SelectItem value="EU">Europe (EU)</SelectItem>
+              <SelectItem value="AU">Australia (AU)</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div>

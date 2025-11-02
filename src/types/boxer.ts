@@ -12,6 +12,7 @@ export interface Boxer {
   registeredDate: string;
   profileImage?: string;
   fightHistory: FightHistory[];
+  timezone?: 'NA' | 'EU' | 'AU';
 }
 
 export interface FightHistory {

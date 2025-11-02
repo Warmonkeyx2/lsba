@@ -286,7 +286,7 @@ export function BoxerDirectory({ boxers, sponsors, onUpdateBoxer, onDeleteBoxer,
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                           <div className="flex items-center gap-2 text-sm">
                             <Phone className="w-4 h-4 text-muted-foreground" />
                             <span className="text-foreground font-medium">{boxer.phoneNumber}</span>
@@ -296,6 +296,14 @@ export function BoxerDirectory({ boxers, sponsors, onUpdateBoxer, onDeleteBoxer,
                             <Briefcase className="w-4 h-4 text-muted-foreground" />
                             <span className="text-foreground font-medium">{boxer.sponsor || 'No sponsor'}</span>
                           </div>
+
+                          {boxer.timezone && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <Badge variant="outline" className="text-xs">
+                                {boxer.timezone}
+                              </Badge>
+                            </div>
+                          )}
                           
                           <div className="flex items-center gap-2 text-sm">
                             <Calendar className="w-4 h-4 text-muted-foreground" />

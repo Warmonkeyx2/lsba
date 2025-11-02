@@ -175,6 +175,25 @@ export function BoxerEditDialog({ boxer, sponsors, onClose, onSave }: BoxerEditD
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="timezone">Timezone</Label>
+            <Select
+              value={formData.timezone || "NA"}
+              onValueChange={(value) => 
+                setFormData({ ...formData, timezone: value as 'NA' | 'EU' | 'AU' })
+              }
+            >
+              <SelectTrigger id="timezone">
+                <SelectValue placeholder="Select timezone" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="NA">North America (NA)</SelectItem>
+                <SelectItem value="EU">Europe (EU)</SelectItem>
+                <SelectItem value="AU">Australia (AU)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="profileImage">Profile Image URL</Label>
             <Input
               id="profileImage"
