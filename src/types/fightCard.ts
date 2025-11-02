@@ -4,6 +4,16 @@ export interface Bout {
   fighter2: string;
   fighter1Image?: string;
   fighter2Image?: string;
+  fighter1Record?: {
+    wins: string;
+    losses: string;
+    knockouts: string;
+  };
+  fighter2Record?: {
+    wins: string;
+    losses: string;
+    knockouts: string;
+  };
   title?: string;
   type: 'main' | 'co-main' | 'undercard' | 'preliminary';
 }

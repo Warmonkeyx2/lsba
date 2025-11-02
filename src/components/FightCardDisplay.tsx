@@ -49,15 +49,26 @@ export function FightCardDisplay({ fightCard }: FightCardDisplayProps) {
         <div className="flex items-center justify-center gap-6 w-full">
           <div className="flex-1 flex flex-col items-end gap-3">
             {bout.fighter1Image && showImages && (
-              <div className="w-32 h-32 md:w-40 md:h-40 rounded-lg overflow-hidden border-2 border-primary/50 shadow-lg">
-                <img 
-                  src={bout.fighter1Image} 
-                  alt={bout.fighter1 || 'Fighter 1'}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-32 h-32 md:w-40 md:h-40 rounded-lg overflow-hidden border-2 border-primary/50 shadow-lg">
+                  <img 
+                    src={bout.fighter1Image} 
+                    alt={bout.fighter1 || 'Fighter 1'}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                </div>
+                {bout.fighter1Record && (bout.fighter1Record.wins || bout.fighter1Record.losses || bout.fighter1Record.knockouts) && (
+                  <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                    <span className="text-foreground">{bout.fighter1Record.wins || '0'}</span>
+                    <span>|</span>
+                    <span className="text-foreground">{bout.fighter1Record.losses || '0'}</span>
+                    <span>|</span>
+                    <span className="text-foreground">{bout.fighter1Record.knockouts || '0'}</span>
+                  </div>
+                )}
               </div>
             )}
             <p className={`font-display uppercase ${
@@ -75,15 +86,26 @@ export function FightCardDisplay({ fightCard }: FightCardDisplayProps) {
           
           <div className="flex-1 flex flex-col items-start gap-3">
             {bout.fighter2Image && showImages && (
-              <div className="w-32 h-32 md:w-40 md:h-40 rounded-lg overflow-hidden border-2 border-primary/50 shadow-lg">
-                <img 
-                  src={bout.fighter2Image} 
-                  alt={bout.fighter2 || 'Fighter 2'}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-32 h-32 md:w-40 md:h-40 rounded-lg overflow-hidden border-2 border-primary/50 shadow-lg">
+                  <img 
+                    src={bout.fighter2Image} 
+                    alt={bout.fighter2 || 'Fighter 2'}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                </div>
+                {bout.fighter2Record && (bout.fighter2Record.wins || bout.fighter2Record.losses || bout.fighter2Record.knockouts) && (
+                  <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                    <span className="text-foreground">{bout.fighter2Record.wins || '0'}</span>
+                    <span>|</span>
+                    <span className="text-foreground">{bout.fighter2Record.losses || '0'}</span>
+                    <span>|</span>
+                    <span className="text-foreground">{bout.fighter2Record.knockouts || '0'}</span>
+                  </div>
+                )}
               </div>
             )}
             <p className={`font-display uppercase ${

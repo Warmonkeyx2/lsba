@@ -14,14 +14,14 @@ interface FightCardEditorProps {
 }
 
 export function FightCardEditor({ fightCard, onChange }: FightCardEditorProps) {
-  const updateMainEvent = (field: keyof Bout, value: string) => {
+  const updateMainEvent = (field: keyof Bout, value: string | Bout['fighter1Record']) => {
     onChange({
       ...fightCard,
       mainEvent: { ...fightCard.mainEvent, [field]: value }
     });
   };
 
-  const updateCoMainEvent = (field: keyof Bout, value: string) => {
+  const updateCoMainEvent = (field: keyof Bout, value: string | Bout['fighter1Record']) => {
     if (!fightCard.coMainEvent) {
       onChange({
         ...fightCard,
@@ -61,7 +61,7 @@ export function FightCardEditor({ fightCard, onChange }: FightCardEditorProps) {
     });
   };
 
-  const updateBout = (index: number, field: keyof Bout, value: string) => {
+  const updateBout = (index: number, field: keyof Bout, value: string | Bout['fighter1Record']) => {
     const updatedBouts = [...fightCard.otherBouts];
     updatedBouts[index] = { ...updatedBouts[index], [field]: value };
     onChange({
@@ -153,6 +153,48 @@ export function FightCardEditor({ fightCard, onChange }: FightCardEditorProps) {
                 onChange={(e) => updateMainEvent('fighter1Image', e.target.value)}
                 className="mt-1"
               />
+              <Label className="mt-2 inline-block">Fighter 1 Record (Optional)</Label>
+              <div className="grid grid-cols-3 gap-2 mt-1">
+                <div>
+                  <Label htmlFor="main-fighter1-wins" className="text-xs">Wins</Label>
+                  <Input
+                    id="main-fighter1-wins"
+                    placeholder="W"
+                    value={fightCard.mainEvent.fighter1Record?.wins || ''}
+                    onChange={(e) => {
+                      const record = fightCard.mainEvent.fighter1Record || { wins: '', losses: '', knockouts: '' };
+                      updateMainEvent('fighter1Record', { ...record, wins: e.target.value });
+                    }}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="main-fighter1-losses" className="text-xs">Losses</Label>
+                  <Input
+                    id="main-fighter1-losses"
+                    placeholder="L"
+                    value={fightCard.mainEvent.fighter1Record?.losses || ''}
+                    onChange={(e) => {
+                      const record = fightCard.mainEvent.fighter1Record || { wins: '', losses: '', knockouts: '' };
+                      updateMainEvent('fighter1Record', { ...record, losses: e.target.value });
+                    }}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="main-fighter1-knockouts" className="text-xs">KOs</Label>
+                  <Input
+                    id="main-fighter1-knockouts"
+                    placeholder="K"
+                    value={fightCard.mainEvent.fighter1Record?.knockouts || ''}
+                    onChange={(e) => {
+                      const record = fightCard.mainEvent.fighter1Record || { wins: '', losses: '', knockouts: '' };
+                      updateMainEvent('fighter1Record', { ...record, knockouts: e.target.value });
+                    }}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
             </div>
             <div>
               <Label htmlFor="main-fighter2">Fighter 2</Label>
@@ -171,6 +213,48 @@ export function FightCardEditor({ fightCard, onChange }: FightCardEditorProps) {
                 onChange={(e) => updateMainEvent('fighter2Image', e.target.value)}
                 className="mt-1"
               />
+              <Label className="mt-2 inline-block">Fighter 2 Record (Optional)</Label>
+              <div className="grid grid-cols-3 gap-2 mt-1">
+                <div>
+                  <Label htmlFor="main-fighter2-wins" className="text-xs">Wins</Label>
+                  <Input
+                    id="main-fighter2-wins"
+                    placeholder="W"
+                    value={fightCard.mainEvent.fighter2Record?.wins || ''}
+                    onChange={(e) => {
+                      const record = fightCard.mainEvent.fighter2Record || { wins: '', losses: '', knockouts: '' };
+                      updateMainEvent('fighter2Record', { ...record, wins: e.target.value });
+                    }}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="main-fighter2-losses" className="text-xs">Losses</Label>
+                  <Input
+                    id="main-fighter2-losses"
+                    placeholder="L"
+                    value={fightCard.mainEvent.fighter2Record?.losses || ''}
+                    onChange={(e) => {
+                      const record = fightCard.mainEvent.fighter2Record || { wins: '', losses: '', knockouts: '' };
+                      updateMainEvent('fighter2Record', { ...record, losses: e.target.value });
+                    }}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="main-fighter2-knockouts" className="text-xs">KOs</Label>
+                  <Input
+                    id="main-fighter2-knockouts"
+                    placeholder="K"
+                    value={fightCard.mainEvent.fighter2Record?.knockouts || ''}
+                    onChange={(e) => {
+                      const record = fightCard.mainEvent.fighter2Record || { wins: '', losses: '', knockouts: '' };
+                      updateMainEvent('fighter2Record', { ...record, knockouts: e.target.value });
+                    }}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
             </div>
           </div>
           <div>
@@ -222,6 +306,48 @@ export function FightCardEditor({ fightCard, onChange }: FightCardEditorProps) {
                 onChange={(e) => updateCoMainEvent('fighter1Image', e.target.value)}
                 className="mt-1"
               />
+              <Label className="mt-2 inline-block text-sm">Fighter 1 Record (Optional)</Label>
+              <div className="grid grid-cols-3 gap-2 mt-1">
+                <div>
+                  <Label htmlFor="co-fighter1-wins" className="text-xs">Wins</Label>
+                  <Input
+                    id="co-fighter1-wins"
+                    placeholder="W"
+                    value={fightCard.coMainEvent?.fighter1Record?.wins || ''}
+                    onChange={(e) => {
+                      const record = fightCard.coMainEvent?.fighter1Record || { wins: '', losses: '', knockouts: '' };
+                      updateCoMainEvent('fighter1Record', { ...record, wins: e.target.value });
+                    }}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="co-fighter1-losses" className="text-xs">Losses</Label>
+                  <Input
+                    id="co-fighter1-losses"
+                    placeholder="L"
+                    value={fightCard.coMainEvent?.fighter1Record?.losses || ''}
+                    onChange={(e) => {
+                      const record = fightCard.coMainEvent?.fighter1Record || { wins: '', losses: '', knockouts: '' };
+                      updateCoMainEvent('fighter1Record', { ...record, losses: e.target.value });
+                    }}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="co-fighter1-knockouts" className="text-xs">KOs</Label>
+                  <Input
+                    id="co-fighter1-knockouts"
+                    placeholder="K"
+                    value={fightCard.coMainEvent?.fighter1Record?.knockouts || ''}
+                    onChange={(e) => {
+                      const record = fightCard.coMainEvent?.fighter1Record || { wins: '', losses: '', knockouts: '' };
+                      updateCoMainEvent('fighter1Record', { ...record, knockouts: e.target.value });
+                    }}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
             </div>
             <div>
               <Label htmlFor="co-fighter2">Fighter 2</Label>
@@ -240,6 +366,48 @@ export function FightCardEditor({ fightCard, onChange }: FightCardEditorProps) {
                 onChange={(e) => updateCoMainEvent('fighter2Image', e.target.value)}
                 className="mt-1"
               />
+              <Label className="mt-2 inline-block text-sm">Fighter 2 Record (Optional)</Label>
+              <div className="grid grid-cols-3 gap-2 mt-1">
+                <div>
+                  <Label htmlFor="co-fighter2-wins" className="text-xs">Wins</Label>
+                  <Input
+                    id="co-fighter2-wins"
+                    placeholder="W"
+                    value={fightCard.coMainEvent?.fighter2Record?.wins || ''}
+                    onChange={(e) => {
+                      const record = fightCard.coMainEvent?.fighter2Record || { wins: '', losses: '', knockouts: '' };
+                      updateCoMainEvent('fighter2Record', { ...record, wins: e.target.value });
+                    }}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="co-fighter2-losses" className="text-xs">Losses</Label>
+                  <Input
+                    id="co-fighter2-losses"
+                    placeholder="L"
+                    value={fightCard.coMainEvent?.fighter2Record?.losses || ''}
+                    onChange={(e) => {
+                      const record = fightCard.coMainEvent?.fighter2Record || { wins: '', losses: '', knockouts: '' };
+                      updateCoMainEvent('fighter2Record', { ...record, losses: e.target.value });
+                    }}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="co-fighter2-knockouts" className="text-xs">KOs</Label>
+                  <Input
+                    id="co-fighter2-knockouts"
+                    placeholder="K"
+                    value={fightCard.coMainEvent?.fighter2Record?.knockouts || ''}
+                    onChange={(e) => {
+                      const record = fightCard.coMainEvent?.fighter2Record || { wins: '', losses: '', knockouts: '' };
+                      updateCoMainEvent('fighter2Record', { ...record, knockouts: e.target.value });
+                    }}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
             </div>
           </div>
           <div>
@@ -299,6 +467,33 @@ export function FightCardEditor({ fightCard, onChange }: FightCardEditorProps) {
                         onChange={(e) => updateBout(index, 'fighter1Image', e.target.value)}
                         className="mt-1"
                       />
+                      <Label className="mt-2 inline-block text-xs">Record (Optional)</Label>
+                      <div className="grid grid-cols-3 gap-1 mt-1">
+                        <Input
+                          placeholder="W"
+                          value={bout.fighter1Record?.wins || ''}
+                          onChange={(e) => {
+                            const record = bout.fighter1Record || { wins: '', losses: '', knockouts: '' };
+                            updateBout(index, 'fighter1Record', { ...record, wins: e.target.value });
+                          }}
+                        />
+                        <Input
+                          placeholder="L"
+                          value={bout.fighter1Record?.losses || ''}
+                          onChange={(e) => {
+                            const record = bout.fighter1Record || { wins: '', losses: '', knockouts: '' };
+                            updateBout(index, 'fighter1Record', { ...record, losses: e.target.value });
+                          }}
+                        />
+                        <Input
+                          placeholder="K"
+                          value={bout.fighter1Record?.knockouts || ''}
+                          onChange={(e) => {
+                            const record = bout.fighter1Record || { wins: '', losses: '', knockouts: '' };
+                            updateBout(index, 'fighter1Record', { ...record, knockouts: e.target.value });
+                          }}
+                        />
+                      </div>
                     </div>
                     <div>
                       <Label htmlFor={`bout-${index}-fighter2`}>Fighter 2</Label>
@@ -317,6 +512,33 @@ export function FightCardEditor({ fightCard, onChange }: FightCardEditorProps) {
                         onChange={(e) => updateBout(index, 'fighter2Image', e.target.value)}
                         className="mt-1"
                       />
+                      <Label className="mt-2 inline-block text-xs">Record (Optional)</Label>
+                      <div className="grid grid-cols-3 gap-1 mt-1">
+                        <Input
+                          placeholder="W"
+                          value={bout.fighter2Record?.wins || ''}
+                          onChange={(e) => {
+                            const record = bout.fighter2Record || { wins: '', losses: '', knockouts: '' };
+                            updateBout(index, 'fighter2Record', { ...record, wins: e.target.value });
+                          }}
+                        />
+                        <Input
+                          placeholder="L"
+                          value={bout.fighter2Record?.losses || ''}
+                          onChange={(e) => {
+                            const record = bout.fighter2Record || { wins: '', losses: '', knockouts: '' };
+                            updateBout(index, 'fighter2Record', { ...record, losses: e.target.value });
+                          }}
+                        />
+                        <Input
+                          placeholder="K"
+                          value={bout.fighter2Record?.knockouts || ''}
+                          onChange={(e) => {
+                            const record = bout.fighter2Record || { wins: '', losses: '', knockouts: '' };
+                            updateBout(index, 'fighter2Record', { ...record, knockouts: e.target.value });
+                          }}
+                        />
+                      </div>
                     </div>
                   </div>
                   <div>
