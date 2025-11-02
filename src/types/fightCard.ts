@@ -2,6 +2,10 @@ export interface Bout {
   id: string;
   fighter1: string;
   fighter2: string;
+  fighter1Id?: string;
+  fighter2Id?: string;
+  fighter1Rank?: number;
+  fighter2Rank?: number;
   fighter1Image?: string;
   fighter2Image?: string;
   fighter1Record?: {

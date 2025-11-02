@@ -9,14 +9,15 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import type { Boxer } from '@/types/boxer';
 import type { FightCard, Bout } from '@/types/fightCard';
-import { getBoxerRecord, getBoxerFullName } from '@/lib/boxerUtils';
+import { getBoxerRecord, getBoxerFullName, calculateRank } from '@/lib/boxerUtils';
 
 interface FightCardGeneratorProps {
   boxers: Boxer[];
-  onGenerate: (fightCard: FightCard) => void;
+  allBoxers: Boxer[];
+  onGenerate: (fightCard: FightCard, boxerIds: string[]) => void;
 }
 
-export function FightCardGenerator({ boxers, onGenerate }: FightCardGeneratorProps) {
+export function FightCardGenerator({ boxers, allBoxers, onGenerate }: FightCardGeneratorProps) {
   const [selectedBoxers, setSelectedBoxers] = useState<string[]>([]);
   const [eventDate, setEventDate] = useState('');
   const [location, setLocation] = useState('');
@@ -52,6 +53,10 @@ export function FightCardGenerator({ boxers, onGenerate }: FightCardGeneratorPro
           fighter2: getBoxerFullName(fighter2),
           fighter1Image: fighter1.profileImage,
           fighter2Image: fighter2.profileImage,
+          fighter1Id: fighter1.id,
+          fighter2Id: fighter2.id,
+          fighter1Rank: calculateRank(fighter1, allBoxers),
+          fighter2Rank: calculateRank(fighter2, allBoxers),
           fighter1Record: {
             wins: fighter1.wins.toString(),
             losses: fighter1.losses.toString(),
@@ -82,7 +87,7 @@ export function FightCardGenerator({ boxers, onGenerate }: FightCardGeneratorPro
       sponsors: '',
     };
 
-    onGenerate(fightCard);
+    onGenerate(fightCard, selectedBoxers);
     toast.success('Fight card generated successfully!');
     setSelectedBoxers([]);
   };

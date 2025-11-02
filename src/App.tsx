@@ -7,7 +7,8 @@ import {
   ChartLine, 
   UserPlus, 
   Sparkle,
-  SquaresFour 
+  SquaresFour,
+  Briefcase 
 } from "@phosphor-icons/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -17,9 +18,11 @@ import { BoxerRegistration } from "@/components/BoxerRegistration";
 import { BoxerLeaderboard } from "@/components/BoxerLeaderboard";
 import { BoxerProfile } from "@/components/BoxerProfile";
 import { FightCardGenerator } from "@/components/FightCardGenerator";
+import { SponsorRegistration } from "@/components/SponsorRegistration";
+import { SponsorList } from "@/components/SponsorList";
 import { toast, Toaster } from "sonner";
 import type { FightCard } from "@/types/fightCard";
-import type { Boxer } from "@/types/boxer";
+import type { Boxer, Sponsor } from "@/types/boxer";
 
 const defaultFightCard: FightCard = {
   eventDate: '',
@@ -38,10 +41,12 @@ function App() {
   const [savedCard, setSavedCard] = useKV<FightCard>('lsba-fight-card', defaultFightCard);
   const [editingCard, setEditingCard] = useState<FightCard>(savedCard || defaultFightCard);
   const [boxers, setBoxers] = useKV<Boxer[]>('lsba-boxers', []);
+  const [sponsors, setSponsors] = useKV<Sponsor[]>('lsba-sponsors', []);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [selectedBoxer, setSelectedBoxer] = useState<Boxer | null>(null);
 
   const boxersList = boxers || [];
+  const sponsorsList = sponsors || [];
   const currentCard = savedCard || defaultFightCard;
 
   const handleSave = () => {
@@ -53,6 +58,10 @@ function App() {
     setBoxers((current) => [...(current || []), boxer]);
   };
 
+  const handleRegisterSponsor = (sponsor: Sponsor) => {
+    setSponsors((current) => [...(current || []), sponsor]);
+  };
+
   const handleUpdateBoxer = (updatedBoxer: Boxer) => {
     setBoxers((current) =>
       (current || []).map((b) => (b.id === updatedBoxer.id ? updatedBoxer : b))
@@ -60,9 +69,57 @@ function App() {
     setSelectedBoxer(updatedBoxer);
   };
 
-  const handleGenerateFightCard = (fightCard: FightCard) => {
+  const handleGenerateFightCard = (fightCard: FightCard, boxerIds: string[]) => {
     setEditingCard(fightCard);
     setSavedCard(fightCard);
+    
+    const eventName = `LSBA Event - ${fightCard.eventDate}`;
+    const eventDate = new Date().toISOString();
+    
+    const matchedPairs: Array<[string, string]> = [];
+    for (let i = 0; i < boxerIds.length; i += 2) {
+      if (i + 1 < boxerIds.length) {
+        matchedPairs.push([boxerIds[i], boxerIds[i + 1]]);
+      }
+    }
+    
+    setBoxers((current) => {
+      const updated = [...(current || [])];
+      matchedPairs.forEach(([fighterId1, fighterId2]) => {
+        const boxer1Index = updated.findIndex(b => b.id === fighterId1);
+        const boxer2Index = updated.findIndex(b => b.id === fighterId2);
+        
+        if (boxer1Index !== -1) {
+          const opponent = updated[boxer2Index];
+          updated[boxer1Index].fightHistory = [
+            {
+              id: `fight-${Date.now()}-${fighterId1}`,
+              opponent: opponent ? `${opponent.firstName} ${opponent.lastName}` : 'TBD',
+              date: eventDate,
+              result: 'win',
+              eventName,
+            },
+            ...updated[boxer1Index].fightHistory,
+          ];
+        }
+        
+        if (boxer2Index !== -1) {
+          const opponent = updated[boxer1Index];
+          updated[boxer2Index].fightHistory = [
+            {
+              id: `fight-${Date.now()}-${fighterId2}`,
+              opponent: opponent ? `${opponent.firstName} ${opponent.lastName}` : 'TBD',
+              date: eventDate,
+              result: 'win',
+              eventName,
+            },
+            ...updated[boxer2Index].fightHistory,
+          ];
+        }
+      });
+      return updated;
+    });
+    
     setActiveTab('fight-card');
   };
 
@@ -105,7 +162,7 @@ function App() {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto">
+              <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 h-auto">
                 <TabsTrigger value="dashboard" className="flex items-center gap-2 py-3">
                   <SquaresFour className="w-4 h-4" />
                   <span className="hidden sm:inline">Dashboard</span>
@@ -117,6 +174,10 @@ function App() {
                 <TabsTrigger value="generator" className="flex items-center gap-2 py-3">
                   <Sparkle className="w-4 h-4" />
                   <span className="hidden sm:inline">Generator</span>
+                </TabsTrigger>
+                <TabsTrigger value="sponsors" className="flex items-center gap-2 py-3">
+                  <Briefcase className="w-4 h-4" />
+                  <span className="hidden sm:inline">Sponsors</span>
                 </TabsTrigger>
                 <TabsTrigger value="fight-card" className="flex items-center gap-2 py-3">
                   <PencilSimple className="w-4 h-4" />
@@ -173,7 +234,14 @@ function App() {
               </TabsContent>
 
               <TabsContent value="generator" className="mt-6">
-                <FightCardGenerator boxers={boxersList} onGenerate={handleGenerateFightCard} />
+                <FightCardGenerator boxers={boxersList} allBoxers={boxersList} onGenerate={handleGenerateFightCard} />
+              </TabsContent>
+
+              <TabsContent value="sponsors" className="mt-6">
+                <div className="flex flex-col gap-6">
+                  <SponsorRegistration onRegister={handleRegisterSponsor} />
+                  <SponsorList sponsors={sponsorsList} />
+                </div>
               </TabsContent>
 
               <TabsContent value="fight-card" className="mt-6">

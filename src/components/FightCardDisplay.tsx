@@ -50,7 +50,12 @@ export function FightCardDisplay({ fightCard }: FightCardDisplayProps) {
           <div className="flex-1 flex flex-col items-end gap-3">
             {bout.fighter1Image && showImages && (
               <div className="flex flex-col items-center gap-2">
-                <div className="w-32 h-32 md:w-40 md:h-40 rounded-lg overflow-hidden border-2 border-primary/50 shadow-lg">
+                <div className="w-32 h-32 md:w-40 md:h-40 rounded-lg overflow-hidden border-2 border-primary/50 shadow-lg relative">
+                  {bout.fighter1Rank && (
+                    <div className="absolute top-2 left-2 w-10 h-10 bg-secondary/95 backdrop-blur-sm rounded-full flex items-center justify-center border-2 border-foreground/20 shadow-lg z-10">
+                      <span className="font-display font-bold text-sm text-secondary-foreground">#{bout.fighter1Rank}</span>
+                    </div>
+                  )}
                   <img 
                     src={bout.fighter1Image} 
                     alt={bout.fighter1 || 'Fighter 1'}
@@ -87,7 +92,12 @@ export function FightCardDisplay({ fightCard }: FightCardDisplayProps) {
           <div className="flex-1 flex flex-col items-start gap-3">
             {bout.fighter2Image && showImages && (
               <div className="flex flex-col items-center gap-2">
-                <div className="w-32 h-32 md:w-40 md:h-40 rounded-lg overflow-hidden border-2 border-primary/50 shadow-lg">
+                <div className="w-32 h-32 md:w-40 md:h-40 rounded-lg overflow-hidden border-2 border-primary/50 shadow-lg relative">
+                  {bout.fighter2Rank && (
+                    <div className="absolute top-2 left-2 w-10 h-10 bg-secondary/95 backdrop-blur-sm rounded-full flex items-center justify-center border-2 border-foreground/20 shadow-lg z-10">
+                      <span className="font-display font-bold text-sm text-secondary-foreground">#{bout.fighter2Rank}</span>
+                    </div>
+                  )}
                   <img 
                     src={bout.fighter2Image} 
                     alt={bout.fighter2 || 'Fighter 2'}
