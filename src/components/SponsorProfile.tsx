@@ -19,12 +19,25 @@ interface SponsorProfileProps {
 export function SponsorProfile({ sponsor, boxers, onBack, onUpdateSponsor }: SponsorProfileProps) {
   const [isAddingContact, setIsAddingContact] = useState(false);
   const [isEditingLogo, setIsEditingLogo] = useState(false);
+  const [isEditingDetails, setIsEditingDetails] = useState(false);
+  const [editingContactId, setEditingContactId] = useState<string | null>(null);
   const [newContact, setNewContact] = useState({
     name: '',
     phoneNumber: '',
     role: '',
   });
   const [logoUrl, setLogoUrl] = useState(sponsor.logoUrl || '');
+  const [editForm, setEditForm] = useState({
+    name: sponsor.name,
+    stateId: sponsor.stateId,
+    contactPerson: sponsor.contactPerson,
+    phoneNumber: sponsor.phoneNumber,
+  });
+  const [editingContact, setEditingContact] = useState({
+    name: '',
+    phoneNumber: '',
+    role: '',
+  });
 
   const additionalContacts = sponsor.additionalContacts || [];
   const boxersSponsored = sponsor.boxersSponsored || [];
@@ -67,6 +80,38 @@ export function SponsorProfile({ sponsor, boxers, onBack, onUpdateSponsor }: Spo
     toast.success('Contact removed');
   };
 
+  const handleEditContact = (contactId: string) => {
+    const contact = additionalContacts.find(c => c.id === contactId);
+    if (contact) {
+      setEditingContact({
+        name: contact.name,
+        phoneNumber: contact.phoneNumber,
+        role: contact.role || '',
+      });
+      setEditingContactId(contactId);
+    }
+  };
+
+  const handleUpdateContact = () => {
+    if (!editingContact.name || !editingContact.phoneNumber) {
+      toast.error('Please fill in name and phone number');
+      return;
+    }
+
+    const updatedSponsor = {
+      ...sponsor,
+      additionalContacts: additionalContacts.map(c => 
+        c.id === editingContactId 
+          ? { ...c, name: editingContact.name, phoneNumber: editingContact.phoneNumber, role: editingContact.role || undefined }
+          : c
+      ),
+    };
+
+    onUpdateSponsor(updatedSponsor);
+    toast.success('Contact updated successfully!');
+    setEditingContactId(null);
+  };
+
   const handleUpdateLogo = () => {
     const updatedSponsor = {
       ...sponsor,
@@ -76,6 +121,25 @@ export function SponsorProfile({ sponsor, boxers, onBack, onUpdateSponsor }: Spo
     onUpdateSponsor(updatedSponsor);
     toast.success('Logo updated successfully!');
     setIsEditingLogo(false);
+  };
+
+  const handleUpdateDetails = () => {
+    if (!editForm.name || !editForm.stateId || !editForm.contactPerson || !editForm.phoneNumber) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    const updatedSponsor = {
+      ...sponsor,
+      name: editForm.name,
+      stateId: editForm.stateId,
+      contactPerson: editForm.contactPerson,
+      phoneNumber: editForm.phoneNumber,
+    };
+
+    onUpdateSponsor(updatedSponsor);
+    toast.success('Sponsor details updated successfully!');
+    setIsEditingDetails(false);
   };
 
   return (
@@ -105,6 +169,80 @@ export function SponsorProfile({ sponsor, boxers, onBack, onUpdateSponsor }: Spo
                 Sponsor Details
               </h2>
             </div>
+            <Dialog open={isEditingDetails} onOpenChange={(open) => {
+              setIsEditingDetails(open);
+              if (open) {
+                setEditForm({
+                  name: sponsor.name,
+                  stateId: sponsor.stateId,
+                  contactPerson: sponsor.contactPerson,
+                  phoneNumber: sponsor.phoneNumber,
+                });
+              }
+            }}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <PencilSimple className="w-4 h-4 mr-2" />
+                  Edit Details
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Edit Sponsor Details</DialogTitle>
+                </DialogHeader>
+                <div className="flex flex-col gap-4 pt-4">
+                  <div>
+                    <Label htmlFor="edit-name">Sponsor Name *</Label>
+                    <Input
+                      id="edit-name"
+                      placeholder="Company Name"
+                      value={editForm.name}
+                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-state-id">State ID *</Label>
+                    <Input
+                      id="edit-state-id"
+                      placeholder="State identification number"
+                      value={editForm.stateId}
+                      onChange={(e) => setEditForm({ ...editForm, stateId: e.target.value })}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-contact-person">Contact Person *</Label>
+                    <Input
+                      id="edit-contact-person"
+                      placeholder="Full name of primary contact"
+                      value={editForm.contactPerson}
+                      onChange={(e) => setEditForm({ ...editForm, contactPerson: e.target.value })}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-phone">Phone Number *</Label>
+                    <Input
+                      id="edit-phone"
+                      type="tel"
+                      placeholder="(555) 123-4567"
+                      value={editForm.phoneNumber}
+                      onChange={(e) => setEditForm({ ...editForm, phoneNumber: e.target.value })}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={handleUpdateDetails} className="flex-1">
+                      Save Changes
+                    </Button>
+                    <Button variant="outline" onClick={() => setIsEditingDetails(false)} className="flex-1">
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
 
           <div className="flex flex-col gap-6">
@@ -324,27 +462,85 @@ export function SponsorProfile({ sponsor, boxers, onBack, onUpdateSponsor }: Spo
                       )}
                       <p className="text-sm text-muted-foreground mt-1">{contact.phoneNumber}</p>
                     </div>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Trash className="w-4 h-4 text-destructive" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Remove Contact</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to remove {contact.name} from the contact list?
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDeleteContact(contact.id)}>
-                            Remove
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                    <div className="flex gap-1">
+                      <Dialog open={editingContactId === contact.id} onOpenChange={(open) => {
+                        if (!open) setEditingContactId(null);
+                        else handleEditContact(contact.id);
+                      }}>
+                        <DialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <PencilSimple className="w-4 h-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Edit Contact</DialogTitle>
+                          </DialogHeader>
+                          <div className="flex flex-col gap-4 pt-4">
+                            <div>
+                              <Label htmlFor="edit-contact-name">Name *</Label>
+                              <Input
+                                id="edit-contact-name"
+                                placeholder="Full Name"
+                                value={editingContact.name}
+                                onChange={(e) => setEditingContact({ ...editingContact, name: e.target.value })}
+                                className="mt-1"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="edit-contact-phone">Phone Number *</Label>
+                              <Input
+                                id="edit-contact-phone"
+                                type="tel"
+                                placeholder="(555) 123-4567"
+                                value={editingContact.phoneNumber}
+                                onChange={(e) => setEditingContact({ ...editingContact, phoneNumber: e.target.value })}
+                                className="mt-1"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="edit-contact-role">Role</Label>
+                              <Input
+                                id="edit-contact-role"
+                                placeholder="e.g., Manager, Assistant (Optional)"
+                                value={editingContact.role}
+                                onChange={(e) => setEditingContact({ ...editingContact, role: e.target.value })}
+                                className="mt-1"
+                              />
+                            </div>
+                            <div className="flex gap-2">
+                              <Button onClick={handleUpdateContact} className="flex-1">
+                                Save Changes
+                              </Button>
+                              <Button variant="outline" onClick={() => setEditingContactId(null)} className="flex-1">
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Trash className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Remove Contact</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to remove {contact.name} from the contact list?
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteContact(contact.id)}>
+                              Remove
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
                 </div>
               ))}
