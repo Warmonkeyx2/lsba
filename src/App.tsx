@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useKV } from "@github/spark/hooks";
-import { Eye, PencilSimple, FloppyDisk, DownloadSimple, QrCode } from "@phosphor-icons/react";
+import { Eye, PencilSimple, FloppyDisk, DownloadSimple, QrCode, Copy } from "@phosphor-icons/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { FightCardEditor } from "@/components/FightCardEditor";
@@ -30,6 +30,8 @@ function App() {
   const [activeTab, setActiveTab] = useState<string>('edit');
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string>('');
+  const [isUploading, setIsUploading] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   const handleSave = () => {
@@ -63,7 +65,48 @@ function App() {
     }
   };
 
-  const appUrl = window.location.href;
+  const uploadToImgBB = async (): Promise<string> => {
+    if (!cardRef.current) throw new Error('Card reference not found');
+    
+    const dataUrl = await toPng(cardRef.current, {
+      quality: 1,
+      pixelRatio: 2,
+      backgroundColor: '#1e1e1e',
+    });
+
+    const base64Data = dataUrl.split(',')[1];
+    
+    const formData = new FormData();
+    formData.append('image', base64Data);
+    
+    const response = await fetch('https://api.imgbb.com/1/upload?key=d36eb6591370ae7f9089d85875e56b22', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to upload image to ImgBB');
+    }
+
+    const data = await response.json();
+    return data.data.url;
+  };
+
+  const handleGenerateQR = async () => {
+    setIsUploading(true);
+    try {
+      const imageUrl = await uploadToImgBB();
+      setUploadedImageUrl(imageUrl);
+      setQrModalOpen(true);
+      toast.success('Fight card uploaded successfully!');
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error('Failed to upload fight card image');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const hasChanges = JSON.stringify(savedCard) !== JSON.stringify(editingCard);
 
   return (
@@ -136,12 +179,13 @@ function App() {
                       {isExporting ? 'Exporting...' : 'Export as PNG'}
                     </Button>
                     <Button
-                      onClick={() => setQrModalOpen(true)}
+                      onClick={handleGenerateQR}
+                      disabled={isUploading}
                       variant="secondary"
                       size="lg"
                     >
                       <QrCode className="w-5 h-5 mr-2" />
-                      Generate QR Code
+                      {isUploading ? 'Uploading...' : 'Generate QR Code'}
                     </Button>
                   </div>
                   
@@ -150,7 +194,7 @@ function App() {
                   </div>
                   
                   <div className="text-center text-sm text-muted-foreground">
-                    <p>Export as PNG or generate a QR code to share on Discord or in stream overlays!</p>
+                    <p>Export as PNG for local use, or generate a QR code to get a shareable image link!</p>
                   </div>
                 </div>
               </TabsContent>
@@ -164,21 +208,41 @@ function App() {
           <DialogHeader>
             <DialogTitle className="font-display text-2xl uppercase">QR Code</DialogTitle>
             <DialogDescription>
-              Scan this QR code to view the fight card or add it to your stream overlays.
+              Scan this QR code to view the fight card image. The image is hosted on ImgBB and can be used in Discord or stream overlays.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center gap-4 py-4">
             <div className="bg-white p-4 rounded-lg">
               <QRCodeSVG 
-                value={appUrl}
+                value={uploadedImageUrl}
                 size={256}
                 level="H"
                 includeMargin={true}
               />
             </div>
-            <p className="text-sm text-muted-foreground text-center">
-              This QR code links to your fight card manager
-            </p>
+            <div className="w-full space-y-2">
+              <p className="text-xs text-muted-foreground text-center uppercase tracking-wider">
+                Image URL
+              </p>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={uploadedImageUrl} 
+                  readOnly 
+                  className="flex-1 px-3 py-2 text-sm bg-muted rounded border border-border text-foreground"
+                />
+                <Button
+                  size="icon"
+                  variant="secondary"
+                  onClick={() => {
+                    navigator.clipboard.writeText(uploadedImageUrl);
+                    toast.success('URL copied to clipboard!');
+                  }}
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
             <Button
               onClick={() => {
                 const svg = document.querySelector('svg');
