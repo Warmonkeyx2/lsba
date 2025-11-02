@@ -42,17 +42,6 @@ export function BoxerRegistration({ onRegister, existingBoxers, existingSponsors
       return;
     }
 
-    if (formData.sponsor) {
-      const sponsorExists = existingSponsors.find(
-        (sponsor) => sponsor.name.toLowerCase() === formData.sponsor.toLowerCase()
-      );
-
-      if (!sponsorExists) {
-        toast.error(`Sponsor "${formData.sponsor}" is not registered. Please register the sponsor first.`);
-        return;
-      }
-    }
-
     const newBoxer: Boxer = {
       id: `boxer-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       stateId: formData.stateId,
@@ -140,14 +129,23 @@ export function BoxerRegistration({ onRegister, existingBoxers, existingSponsors
         </div>
 
         <div>
-          <Label htmlFor="sponsor">Sponsor</Label>
-          <Input
-            id="sponsor"
-            placeholder="Sponsor Name (Optional)"
+          <Label htmlFor="sponsor">Sponsor (Optional)</Label>
+          <Select
             value={formData.sponsor}
-            onChange={(e) => setFormData({ ...formData, sponsor: e.target.value })}
-            className="mt-1"
-          />
+            onValueChange={(value) => setFormData({ ...formData, sponsor: value === 'none' ? '' : value })}
+          >
+            <SelectTrigger id="sponsor" className="mt-1">
+              <SelectValue placeholder="Select a sponsor (optional)" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">No Sponsor</SelectItem>
+              {existingSponsors.map((sponsor) => (
+                <SelectItem key={sponsor.id} value={sponsor.name}>
+                  {sponsor.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div>
