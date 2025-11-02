@@ -61,6 +61,13 @@ This is a full-featured management system with multiple interconnected modules: 
 - Progression: Load data → Display stats → Show leaderboard → Navigate to desired module
 - Success criteria: Stats update in real-time; leaderboard immediately visible; quick navigation to all modules
 
+**Boxer Directory & Search**
+- Functionality: Searchable phonebook-style directory with real-time filtering, full profile editing, and deletion with confirmation
+- Purpose: Provide quick access to all registered fighters with powerful search and management capabilities
+- Trigger: User navigates to Directory tab
+- Progression: View all boxers → Type search query → Results filter instantly → Select edit or delete → Make changes → Confirm action
+- Success criteria: Search updates on every keystroke; filters by name, ID, phone, sponsor; edit dialog validates sponsor against registered list; deletion requires confirmation; all changes persist correctly
+
 ## Edge Case Handling
 
 - **No boxers registered** - Show empty state with prompt to register first boxer
@@ -73,6 +80,11 @@ This is a full-featured management system with multiple interconnected modules: 
 - **Deleting boxer stats** - Can reduce to 0 but not negative values
 - **Many registered boxers** - Leaderboard scrolls; maintain performance with 100+ boxers
 - **Broken image URLs** - Fallback to initials in fight card generator and profiles
+- **Empty search query** - Display all boxers in directory
+- **No search results** - Show helpful empty state with suggestion to adjust search
+- **Sponsor selection in edit** - Only allow registered sponsors from dropdown; prevent manual text entry
+- **Knockouts exceeding wins** - Validate that KO count cannot exceed total wins
+- **Profile deletion confirmation** - Require explicit "Are you sure?" dialog before permanent deletion
 
 ## Design Direction
 
@@ -148,6 +160,13 @@ Animations should be purposeful and enhance data comprehension—smooth transiti
   - Target (stat management)
   - SquaresFour (dashboard)
   - ArrowLeft (back navigation)
+  - AddressBook (directory)
+  - MagnifyingGlass (search)
+  - PencilSimple (edit)
+  - Trash (delete)
+  - Phone (contact info)
+  - IdentificationCard (State ID)
+  - Briefcase (sponsor)
 
 - **Spacing**: 
   - Consistent gap-4 between form elements

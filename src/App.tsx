@@ -8,7 +8,8 @@ import {
   UserPlus, 
   Sparkle,
   SquaresFour,
-  Briefcase 
+  Briefcase,
+  AddressBook
 } from "@phosphor-icons/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ import { BoxerProfile } from "@/components/BoxerProfile";
 import { FightCardGenerator } from "@/components/FightCardGenerator";
 import { SponsorRegistration } from "@/components/SponsorRegistration";
 import { SponsorList } from "@/components/SponsorList";
+import { BoxerDirectory } from "@/components/BoxerDirectory";
 import { toast, Toaster } from "sonner";
 import type { FightCard } from "@/types/fightCard";
 import type { Boxer, Sponsor } from "@/types/boxer";
@@ -67,6 +69,11 @@ function App() {
       (current || []).map((b) => (b.id === updatedBoxer.id ? updatedBoxer : b))
     );
     setSelectedBoxer(updatedBoxer);
+  };
+
+  const handleDeleteBoxer = (boxerId: string) => {
+    setBoxers((current) => (current || []).filter((b) => b.id !== boxerId));
+    toast.success("Fighter profile deleted successfully");
   };
 
   const handleGenerateFightCard = (fightCard: FightCard, boxerIds: string[]) => {
@@ -162,10 +169,14 @@ function App() {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 h-auto">
+              <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto">
                 <TabsTrigger value="dashboard" className="flex items-center gap-2 py-3">
                   <SquaresFour className="w-4 h-4" />
                   <span className="hidden sm:inline">Dashboard</span>
+                </TabsTrigger>
+                <TabsTrigger value="directory" className="flex items-center gap-2 py-3">
+                  <AddressBook className="w-4 h-4" />
+                  <span className="hidden sm:inline">Directory</span>
                 </TabsTrigger>
                 <TabsTrigger value="register" className="flex items-center gap-2 py-3">
                   <UserPlus className="w-4 h-4" />
@@ -227,6 +238,15 @@ function App() {
 
                   <BoxerLeaderboard boxers={boxersList} onSelectBoxer={setSelectedBoxer} />
                 </div>
+              </TabsContent>
+
+              <TabsContent value="directory" className="mt-6">
+                <BoxerDirectory 
+                  boxers={boxersList} 
+                  sponsors={sponsorsList}
+                  onUpdateBoxer={handleUpdateBoxer}
+                  onDeleteBoxer={handleDeleteBoxer}
+                />
               </TabsContent>
 
               <TabsContent value="register" className="mt-6">
