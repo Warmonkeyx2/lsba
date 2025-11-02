@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Sparkle, ArrowRight, Trash, ArrowsDownUp } from '@phosphor-icons/react';
+import { Sparkle, ArrowRight, Trash, ArrowsDownUp, CalendarBlank } from '@phosphor-icons/react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -7,6 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
 import { toast } from 'sonner';
 import type { Boxer } from '@/types/boxer';
 import type { FightCard, Bout } from '@/types/fightCard';
@@ -30,7 +33,15 @@ export function FightCardGenerator({ boxers, allBoxers, onGenerate }: FightCardG
   const [selectedBoxers, setSelectedBoxers] = useState<string[]>([]);
   const [bouts, setBouts] = useState<BoutSetup[]>([]);
   const [eventDate, setEventDate] = useState('');
+  const [calendarDate, setCalendarDate] = useState<Date>();
   const [location, setLocation] = useState('');
+
+  const handleCalendarSelect = (date: Date | undefined) => {
+    if (date) {
+      setCalendarDate(date);
+      setEventDate(format(date, 'EEEE, MMMM do, yyyy'));
+    }
+  };
 
   const toggleBoxer = (boxerId: string) => {
     setSelectedBoxers((prev) =>
@@ -196,13 +207,30 @@ export function FightCardGenerator({ boxers, allBoxers, onGenerate }: FightCardG
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="gen-event-date">Event Date</Label>
-            <Input
-              id="gen-event-date"
-              placeholder="e.g., Saturday, October 26th, 2024"
-              value={eventDate}
-              onChange={(e) => setEventDate(e.target.value)}
-              className="mt-1"
-            />
+            <div className="flex gap-2 mt-1">
+              <Input
+                id="gen-event-date"
+                placeholder="e.g., Saturday, October 26th, 2024"
+                value={eventDate}
+                onChange={(e) => setEventDate(e.target.value)}
+                className="flex-1"
+              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="icon" className="shrink-0">
+                    <CalendarBlank className="w-4 h-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    mode="single"
+                    selected={calendarDate}
+                    onSelect={handleCalendarSelect}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
           <div>
             <Label htmlFor="gen-location">Location</Label>
