@@ -1,12 +1,15 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useKV } from "@github/spark/hooks";
-import { Eye, PencilSimple, FloppyDisk } from "@phosphor-icons/react";
+import { Eye, PencilSimple, FloppyDisk, DownloadSimple, QrCode } from "@phosphor-icons/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { FightCardEditor } from "@/components/FightCardEditor";
 import { FightCardDisplay } from "@/components/FightCardDisplay";
 import { toast, Toaster } from "sonner";
 import type { FightCard } from "@/types/fightCard";
+import { toPng } from "html-to-image";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { QRCodeSVG } from "qrcode.react";
 
 const defaultFightCard: FightCard = {
   eventDate: '',
@@ -25,12 +28,42 @@ function App() {
   const [savedCard, setSavedCard] = useKV<FightCard>('lsba-fight-card', defaultFightCard);
   const [editingCard, setEditingCard] = useState<FightCard>(savedCard || defaultFightCard);
   const [activeTab, setActiveTab] = useState<string>('edit');
+  const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const handleSave = () => {
     setSavedCard(editingCard);
     toast.success('Fight card saved successfully!');
   };
 
+  const handleExportPNG = async () => {
+    if (!cardRef.current) return;
+    
+    setIsExporting(true);
+    
+    try {
+      const dataUrl = await toPng(cardRef.current, {
+        quality: 1,
+        pixelRatio: 2,
+        backgroundColor: '#1e1e1e',
+      });
+      
+      const link = document.createElement('a');
+      link.download = `lsba-fight-card-${Date.now()}.png`;
+      link.href = dataUrl;
+      link.click();
+      
+      toast.success('Fight card exported successfully!');
+    } catch (error) {
+      console.error('Error exporting image:', error);
+      toast.error('Failed to export fight card');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const appUrl = window.location.href;
   const hasChanges = JSON.stringify(savedCard) !== JSON.stringify(editingCard);
 
   return (
@@ -50,15 +83,17 @@ function App() {
                 </p>
               </div>
               
-              <Button
-                onClick={handleSave}
-                disabled={!hasChanges}
-                size="lg"
-                className="bg-primary hover:bg-primary/90"
-              >
-                <FloppyDisk className="w-5 h-5 mr-2" />
-                Save Changes
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  onClick={handleSave}
+                  disabled={!hasChanges}
+                  size="lg"
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  <FloppyDisk className="w-5 h-5 mr-2" />
+                  Save Changes
+                </Button>
+              </div>
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -89,9 +124,33 @@ function App() {
                       </p>
                     </div>
                   )}
-                  <FightCardDisplay fightCard={savedCard || defaultFightCard} />
+                  
+                  <div className="flex justify-center gap-2">
+                    <Button
+                      onClick={handleExportPNG}
+                      disabled={isExporting}
+                      variant="secondary"
+                      size="lg"
+                    >
+                      <DownloadSimple className="w-5 h-5 mr-2" />
+                      {isExporting ? 'Exporting...' : 'Export as PNG'}
+                    </Button>
+                    <Button
+                      onClick={() => setQrModalOpen(true)}
+                      variant="secondary"
+                      size="lg"
+                    >
+                      <QrCode className="w-5 h-5 mr-2" />
+                      Generate QR Code
+                    </Button>
+                  </div>
+                  
+                  <div ref={cardRef}>
+                    <FightCardDisplay fightCard={savedCard || defaultFightCard} />
+                  </div>
+                  
                   <div className="text-center text-sm text-muted-foreground">
-                    <p>Take a screenshot of this card to share on Discord or in-game!</p>
+                    <p>Export as PNG or generate a QR code to share on Discord or in stream overlays!</p>
                   </div>
                 </div>
               </TabsContent>
@@ -99,6 +158,60 @@ function App() {
           </div>
         </div>
       </div>
+
+      <Dialog open={qrModalOpen} onOpenChange={setQrModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl uppercase">QR Code</DialogTitle>
+            <DialogDescription>
+              Scan this QR code to view the fight card or add it to your stream overlays.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4 py-4">
+            <div className="bg-white p-4 rounded-lg">
+              <QRCodeSVG 
+                value={appUrl}
+                size={256}
+                level="H"
+                includeMargin={true}
+              />
+            </div>
+            <p className="text-sm text-muted-foreground text-center">
+              This QR code links to your fight card manager
+            </p>
+            <Button
+              onClick={() => {
+                const svg = document.querySelector('svg');
+                if (svg) {
+                  const svgData = new XMLSerializer().serializeToString(svg);
+                  const canvas = document.createElement('canvas');
+                  const ctx = canvas.getContext('2d');
+                  const img = new Image();
+                  
+                  img.onload = () => {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx?.drawImage(img, 0, 0);
+                    
+                    const link = document.createElement('a');
+                    link.download = `lsba-qr-code-${Date.now()}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    toast.success('QR code downloaded!');
+                  };
+                  
+                  img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
+                }
+              }}
+              variant="secondary"
+              className="w-full"
+            >
+              <DownloadSimple className="w-4 h-4 mr-2" />
+              Download QR Code
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
