@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useKV } from "@github/spark/hooks";
-import { Eye, PencilSimple, FloppyDisk, DownloadSimple, Copy } from "@phosphor-icons/react";
+import { Eye, PencilSimple, FloppyDisk, DownloadSimple } from "@phosphor-icons/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { FightCardEditor } from "@/components/FightCardEditor";
@@ -29,12 +29,6 @@ function App() {
   const [isExporting, setIsExporting] = useState(false);
   const [previewImageDataUrl, setPreviewImageDataUrl] = useState<string>('');
   const cardRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (activeTab === 'preview' && !previewImageDataUrl) {
-      handleGeneratePreview();
-    }
-  }, [activeTab]);
 
   const handleSave = () => {
     setSavedCard(editingCard);
@@ -152,7 +146,7 @@ function App() {
   };
 
   const handleGeneratePreview = async () => {
-    if (!cardRef.current) return;
+    if (!cardRef.current || isExporting) return;
     
     setIsExporting(true);
     
@@ -256,27 +250,6 @@ function App() {
                     </div>
                   )}
                   
-                  <div className="flex justify-center gap-2">
-                    <Button
-                      onClick={handleExportPNG}
-                      disabled={isExporting}
-                      variant="secondary"
-                      size="lg"
-                    >
-                      <DownloadSimple className="w-5 h-5 mr-2" />
-                      {isExporting ? 'Downloading...' : 'Download PNG'}
-                    </Button>
-                    <Button
-                      onClick={handleGeneratePreview}
-                      disabled={isExporting}
-                      variant="secondary"
-                      size="lg"
-                    >
-                      <Eye className="w-5 h-5 mr-2" />
-                      {isExporting ? 'Generating...' : 'Refresh Preview'}
-                    </Button>
-                  </div>
-                  
                   <div className="hidden">
                     <div ref={cardRef}>
                       <FightCardDisplay fightCard={savedCard || defaultFightCard} />
@@ -293,12 +266,47 @@ function App() {
                       <p className="text-sm text-muted-foreground text-center">
                         Right-click the image to copy or save it
                       </p>
+                      <div className="flex justify-center gap-2">
+                        <Button
+                          onClick={handleExportPNG}
+                          disabled={isExporting}
+                          variant="default"
+                          size="lg"
+                        >
+                          <DownloadSimple className="w-5 h-5 mr-2" />
+                          {isExporting ? 'Downloading...' : 'Download PNG'}
+                        </Button>
+                        <Button
+                          onClick={handleGeneratePreview}
+                          disabled={isExporting}
+                          variant="secondary"
+                          size="lg"
+                        >
+                          <Eye className="w-5 h-5 mr-2" />
+                          {isExporting ? 'Generating...' : 'Refresh Preview'}
+                        </Button>
+                      </div>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center gap-4 p-12 border border-border rounded-lg">
-                      <p className="text-muted-foreground">
-                        {isExporting ? 'Generating preview...' : 'Loading preview...'}
-                      </p>
+                    <div className="flex flex-col items-center justify-center gap-6 p-12 border border-border rounded-lg">
+                      <Eye className="w-16 h-16 text-muted-foreground" />
+                      <div className="text-center space-y-2">
+                        <p className="text-lg font-semibold text-foreground">
+                          Ready to preview your fight card
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Click the button below to generate a preview image
+                        </p>
+                      </div>
+                      <Button
+                        onClick={handleGeneratePreview}
+                        disabled={isExporting}
+                        size="lg"
+                        className="bg-primary hover:bg-primary/90"
+                      >
+                        <Eye className="w-5 h-5 mr-2" />
+                        {isExporting ? 'Generating Preview...' : 'Generate Preview'}
+                      </Button>
                     </div>
                   )}
                 </div>
