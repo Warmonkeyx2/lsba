@@ -70,7 +70,7 @@ export function SeasonReset({ boxers, onResetSeason, onClearAll }: SeasonResetPr
             Reset Season Rankings
           </CardTitle>
           <CardDescription>
-            Reset all ranking points to zero while keeping boxer profiles and fight history intact
+            Reset all ranking points and fight history to start a fresh season
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -80,9 +80,9 @@ export function SeasonReset({ boxers, onResetSeason, onClearAll }: SeasonResetPr
             </p>
             <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
               <li>All boxer ranking points reset to 0</li>
+              <li>All fight history is cleared</li>
               <li>Everyone becomes unranked (no one appears on leaderboard)</li>
               <li>Boxer profiles remain (name, contact, sponsor)</li>
-              <li>Fight history is preserved for records</li>
               <li>Win/Loss/KO stats remain unchanged</li>
               <li>Upcoming fight cards are kept</li>
             </ul>
@@ -103,11 +103,11 @@ export function SeasonReset({ boxers, onResetSeason, onClearAll }: SeasonResetPr
                 </AlertDialogTitle>
                 <AlertDialogDescription className="space-y-3">
                   <p>
-                    This will reset all ranking points to zero for all {totalBoxers} boxers. 
+                    This will reset all ranking points to zero and clear all fight history for all {totalBoxers} boxers. 
                     Everyone will start fresh in the new season.
                   </p>
                   <p className="font-semibold text-foreground">
-                    All boxer profiles and fight histories will be preserved.
+                    Boxer profiles will be preserved, but their fight records will be cleared.
                   </p>
                   <p className="text-destructive">
                     This action cannot be undone.

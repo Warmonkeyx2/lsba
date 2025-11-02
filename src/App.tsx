@@ -237,9 +237,10 @@ function App() {
       (current || []).map((boxer) => ({
         ...boxer,
         rankingPoints: 0,
+        fightHistory: [],
       }))
     );
-    toast.success('Season reset! All ranking points reset to zero.');
+    toast.success('Season reset! All ranking points and fight history cleared.');
   };
 
   const handleClearAll = () => {
