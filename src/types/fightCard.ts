@@ -26,4 +26,5 @@ export interface FightCard {
   otherBouts: Bout[];
   sponsors: string;
   backgroundImage?: string;
+  customLogo?: string;
 }

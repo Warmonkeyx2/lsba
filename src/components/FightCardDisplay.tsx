@@ -37,12 +37,12 @@ export function FightCardDisplay({ fightCard }: FightCardDisplayProps) {
         )}
         
         {hasTitle && (
-          <div className="flex items-center gap-2 text-secondary">
-            {isMainEvent && <Trophy className="w-5 h-5" weight="fill" />}
-            <p className={`font-display uppercase ${isMainEvent ? 'text-2xl' : 'text-xl'} tracking-wide text-center`}>
+          <div className="flex items-center justify-center gap-3 text-secondary">
+            {isMainEvent && <Trophy className="w-6 h-6 md:w-7 md:h-7" weight="fill" />}
+            <p className={`font-display uppercase ${isMainEvent ? 'text-3xl md:text-4xl' : 'text-2xl md:text-3xl'} tracking-widest text-center font-extrabold drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]`}>
               {bout.title}
             </p>
-            {isMainEvent && <Trophy className="w-5 h-5" weight="fill" />}
+            {isMainEvent && <Trophy className="w-6 h-6 md:w-7 md:h-7" weight="fill" />}
           </div>
         )}
 
@@ -71,17 +71,17 @@ export function FightCardDisplay({ fightCard }: FightCardDisplayProps) {
                 )}
               </div>
             )}
-            <p className={`font-display uppercase ${
-              isMainEvent ? 'text-5xl md:text-6xl' : isCoMain ? 'text-3xl md:text-4xl' : 'text-3xl md:text-4xl'
-            } leading-none tracking-tight text-foreground text-right`}>
+            <p className={`font-fighter uppercase ${
+              isMainEvent ? 'text-6xl md:text-8xl' : isCoMain ? 'text-5xl md:text-6xl' : 'text-4xl md:text-5xl'
+            } leading-none tracking-tight text-foreground text-right font-black drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)]`}>
               {bout.fighter1 || 'TBD'}
             </p>
           </div>
           
           <div className="flex flex-col items-center justify-center px-4">
             <p className={`font-display ${
-              isMainEvent ? 'text-4xl' : 'text-3xl'
-            } text-primary`}>VS</p>
+              isMainEvent ? 'text-5xl md:text-6xl' : 'text-4xl md:text-5xl'
+            } text-primary font-black drop-shadow-[0_0_20px_rgba(var(--primary),0.5)]`}>VS</p>
           </div>
           
           <div className="flex-1 flex flex-col items-start gap-3">
@@ -108,9 +108,9 @@ export function FightCardDisplay({ fightCard }: FightCardDisplayProps) {
                 )}
               </div>
             )}
-            <p className={`font-display uppercase ${
-              isMainEvent ? 'text-5xl md:text-6xl' : isCoMain ? 'text-3xl md:text-4xl' : 'text-3xl md:text-4xl'
-            } leading-none tracking-tight text-foreground text-left`}>
+            <p className={`font-fighter uppercase ${
+              isMainEvent ? 'text-6xl md:text-8xl' : isCoMain ? 'text-5xl md:text-6xl' : 'text-4xl md:text-5xl'
+            } leading-none tracking-tight text-foreground text-left font-black drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)]`}>
               {bout.fighter2 || 'TBD'}
             </p>
           </div>
@@ -129,12 +129,28 @@ export function FightCardDisplay({ fightCard }: FightCardDisplayProps) {
       )}
       <div className={`relative ${fightCard.backgroundImage ? 'bg-card/95 backdrop-blur-sm' : 'bg-gradient-to-br from-card via-card to-muted'} p-8 md:p-12 flex flex-col gap-8`}>
         <div className="text-center space-y-2">
-          <h1 className="font-display text-6xl md:text-7xl uppercase tracking-wider text-secondary drop-shadow-lg">
-            LSBA
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground font-medium">
-            Los Santos Boxing Association
-          </p>
+          {fightCard.customLogo ? (
+            <div className="flex justify-center">
+              <img 
+                src={fightCard.customLogo} 
+                alt="LSBA Logo" 
+                className="max-h-32 md:max-h-40 object-contain drop-shadow-2xl"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            </div>
+          ) : (
+            <>
+              <h1 className="font-display text-7xl md:text-8xl uppercase tracking-[0.15em] text-transparent bg-clip-text bg-gradient-to-r from-secondary via-accent to-secondary drop-shadow-lg relative">
+                <span className="absolute inset-0 text-secondary/20 blur-lg">LSBA</span>
+                <span className="relative">LSBA</span>
+              </h1>
+              <p className="text-lg md:text-xl text-muted-foreground font-semibold tracking-[0.3em] uppercase">
+                Los Santos Boxing Association
+              </p>
+            </>
+          )}
         </div>
 
         <Separator className="bg-primary/50" />
@@ -152,7 +168,7 @@ export function FightCardDisplay({ fightCard }: FightCardDisplayProps) {
           <>
             <Separator className="bg-muted-foreground/20" />
             <div className="flex flex-col gap-6">
-              <h3 className="font-display text-2xl uppercase text-center text-secondary tracking-wide">
+              <h3 className="font-display text-3xl md:text-4xl uppercase text-center text-secondary tracking-[0.2em] font-extrabold drop-shadow-md">
                 Fight Card
               </h3>
               {fightCard.otherBouts.map((bout) => {
@@ -160,16 +176,16 @@ export function FightCardDisplay({ fightCard }: FightCardDisplayProps) {
                 return (
                   <div key={bout.id} className="flex flex-col items-center gap-2">
                     {bout.title && (
-                      <p className="text-sm text-muted-foreground uppercase tracking-wide">
+                      <p className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">
                         {bout.title}
                       </p>
                     )}
                     <div className="flex items-center gap-4">
-                      <p className="font-display text-xl md:text-2xl uppercase text-foreground">
+                      <p className="font-fighter text-3xl md:text-4xl uppercase text-foreground font-bold drop-shadow-md">
                         {bout.fighter1 || 'TBD'}
                       </p>
-                      <span className="text-primary font-display text-xl">VS</span>
-                      <p className="font-display text-xl md:text-2xl uppercase text-foreground">
+                      <span className="text-primary font-display text-2xl md:text-3xl font-bold">VS</span>
+                      <p className="font-fighter text-3xl md:text-4xl uppercase text-foreground font-bold drop-shadow-md">
                         {bout.fighter2 || 'TBD'}
                       </p>
                     </div>

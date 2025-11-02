@@ -83,6 +83,42 @@ export function FightCardEditor({ fightCard, onChange }: FightCardEditorProps) {
         <h2 className="text-xl font-semibold mb-4 text-secondary">Event Details</h2>
         <div className="flex flex-col gap-4">
           <div>
+            <Label htmlFor="custom-logo">Custom LSBA Logo URL (Optional)</Label>
+            <div className="flex gap-2 mt-1">
+              <Input
+                id="custom-logo"
+                placeholder="https://example.com/logo.png or imgur link"
+                value={fightCard.customLogo || ''}
+                onChange={(e) => onChange({ ...fightCard, customLogo: e.target.value })}
+              />
+              {fightCard.customLogo && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onChange({ ...fightCard, customLogo: '' })}
+                  className="shrink-0"
+                >
+                  <Trash className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Replace the default LSBA text with your custom logo image
+            </p>
+            {fightCard.customLogo && (
+              <div className="mt-2 p-4 bg-muted rounded-lg flex justify-center">
+                <img 
+                  src={fightCard.customLogo} 
+                  alt="Custom Logo Preview" 
+                  className="max-h-24 object-contain"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              </div>
+            )}
+          </div>
+          <div>
             <Label htmlFor="event-date">Event Date</Label>
             <Input
               id="event-date"

@@ -70,3 +70,8 @@ body {
 .font-display {
   font-family: 'Bebas Neue', sans-serif;
 }
+
+.font-fighter {
+  font-family: 'Teko', sans-serif;
+  font-weight: 700;
+}
