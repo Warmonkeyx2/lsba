@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useKV } from "@github/spark/hooks";
 import { Eye, PencilSimple, FloppyDisk, DownloadSimple, Copy } from "@phosphor-icons/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,7 +8,6 @@ import { FightCardDisplay } from "@/components/FightCardDisplay";
 import { toast, Toaster } from "sonner";
 import type { FightCard } from "@/types/fightCard";
 import html2canvas from "html2canvas";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const defaultFightCard: FightCard = {
   eventDate: '',
@@ -28,12 +27,18 @@ function App() {
   const [editingCard, setEditingCard] = useState<FightCard>(savedCard || defaultFightCard);
   const [activeTab, setActiveTab] = useState<string>('edit');
   const [isExporting, setIsExporting] = useState(false);
-  const [imagePreviewOpen, setImagePreviewOpen] = useState(false);
-  const [previewImageUrl, setPreviewImageUrl] = useState<string>('');
+  const [previewImageDataUrl, setPreviewImageDataUrl] = useState<string>('');
   const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (activeTab === 'preview' && !previewImageDataUrl) {
+      handleGeneratePreview();
+    }
+  }, [activeTab]);
 
   const handleSave = () => {
     setSavedCard(editingCard);
+    setPreviewImageDataUrl('');
     toast.success('Fight card saved successfully!');
   };
 
@@ -146,7 +151,7 @@ function App() {
     }
   };
 
-  const handleShowImagePreview = async () => {
+  const handleGeneratePreview = async () => {
     if (!cardRef.current) return;
     
     setIsExporting(true);
@@ -174,14 +179,19 @@ function App() {
       document.body.removeChild(tempContainer);
 
       const dataUrl = canvas.toDataURL('image/png');
-      setPreviewImageUrl(dataUrl);
-      setImagePreviewOpen(true);
+      setPreviewImageDataUrl(dataUrl);
       setIsExporting(false);
-      toast.success('Right-click the image and select "Save Image As..." to download');
     } catch (error) {
       console.error('Error generating preview:', error);
       toast.error('Failed to generate preview. Please try again.');
       setIsExporting(false);
+    }
+  };
+
+  const handleShowImagePreview = async () => {
+    await handleGeneratePreview();
+    if (previewImageDataUrl) {
+      toast.success('Preview image generated! Right-click to copy or save.');
     }
   };
 
@@ -257,53 +267,46 @@ function App() {
                       {isExporting ? 'Downloading...' : 'Download PNG'}
                     </Button>
                     <Button
-                      onClick={handleShowImagePreview}
+                      onClick={handleGeneratePreview}
                       disabled={isExporting}
                       variant="secondary"
                       size="lg"
                     >
                       <Eye className="w-5 h-5 mr-2" />
-                      {isExporting ? 'Loading...' : 'View & Copy Image'}
+                      {isExporting ? 'Generating...' : 'Refresh Preview'}
                     </Button>
                   </div>
                   
-                  <div ref={cardRef}>
-                    <FightCardDisplay fightCard={savedCard || defaultFightCard} />
+                  <div className="hidden">
+                    <div ref={cardRef}>
+                      <FightCardDisplay fightCard={savedCard || defaultFightCard} />
+                    </div>
                   </div>
                   
-                  <div className="text-center text-sm text-muted-foreground">
-                    <p>Download PNG to save locally, or View & Copy to right-click and save the image.</p>
-                  </div>
+                  {previewImageDataUrl ? (
+                    <div className="flex flex-col items-center gap-4">
+                      <img 
+                        src={previewImageDataUrl} 
+                        alt="Fight Card Preview" 
+                        className="w-full h-auto rounded-lg border border-border max-w-3xl"
+                      />
+                      <p className="text-sm text-muted-foreground text-center">
+                        Right-click the image to copy or save it
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center gap-4 p-12 border border-border rounded-lg">
+                      <p className="text-muted-foreground">
+                        {isExporting ? 'Generating preview...' : 'Loading preview...'}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
             </Tabs>
           </div>
         </div>
       </div>
-
-      <Dialog open={imagePreviewOpen} onOpenChange={setImagePreviewOpen}>
-        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="font-display text-2xl uppercase">Fight Card Image</DialogTitle>
-            <DialogDescription>
-              Right-click on the image below and select "Save Image As..." to download the fight card.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col items-center gap-4 py-4">
-            {previewImageUrl && (
-              <img 
-                src={previewImageUrl} 
-                alt="Fight Card Preview" 
-                className="w-full h-auto rounded-lg border border-border"
-                style={{ maxWidth: '100%' }}
-              />
-            )}
-            <p className="text-sm text-muted-foreground text-center">
-              Right-click the image above and choose "Save Image As..." to download
-            </p>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
