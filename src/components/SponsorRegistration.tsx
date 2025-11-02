@@ -13,6 +13,7 @@ interface SponsorRegistrationProps {
 
 export function SponsorRegistration({ onRegister }: SponsorRegistrationProps) {
   const [formData, setFormData] = useState({
+    stateId: '',
     name: '',
     contactPerson: '',
     phoneNumber: '',
@@ -21,13 +22,14 @@ export function SponsorRegistration({ onRegister }: SponsorRegistrationProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name || !formData.contactPerson || !formData.phoneNumber) {
+    if (!formData.stateId || !formData.name || !formData.contactPerson || !formData.phoneNumber) {
       toast.error('Please fill in all required fields');
       return;
     }
 
     const newSponsor: Sponsor = {
       id: `sponsor-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      stateId: formData.stateId,
       name: formData.name,
       contactPerson: formData.contactPerson,
       phoneNumber: formData.phoneNumber,
@@ -39,6 +41,7 @@ export function SponsorRegistration({ onRegister }: SponsorRegistrationProps) {
     toast.success(`${formData.name} registered successfully!`);
     
     setFormData({
+      stateId: '',
       name: '',
       contactPerson: '',
       phoneNumber: '',
@@ -52,6 +55,18 @@ export function SponsorRegistration({ onRegister }: SponsorRegistrationProps) {
         <h2 className="text-2xl font-display uppercase text-accent">Register New Sponsor</h2>
       </div>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div>
+          <Label htmlFor="sponsor-state-id">State ID *</Label>
+          <Input
+            id="sponsor-state-id"
+            placeholder="Enter State ID"
+            value={formData.stateId}
+            onChange={(e) => setFormData({ ...formData, stateId: e.target.value })}
+            required
+            className="mt-1"
+          />
+        </div>
+
         <div>
           <Label htmlFor="sponsor-name">Sponsor Name *</Label>
           <Input

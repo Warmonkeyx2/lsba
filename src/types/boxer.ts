@@ -27,6 +27,7 @@ export interface FightHistory {
 
 export interface Sponsor {
   id: string;
+  stateId: string;
   name: string;
   contactPerson: string;
   phoneNumber: string;
