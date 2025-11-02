@@ -19,6 +19,8 @@ export function FightCardDisplay({ fightCard }: FightCardDisplayProps) {
 
     const hasTitle = bout.title && bout.title.trim().length > 0;
     const isMainEvent = bout.type === 'main';
+    const isCoMain = bout.type === 'co-main';
+    const showImages = (isMainEvent || isCoMain) && (bout.fighter1Image || bout.fighter2Image);
 
     return (
       <div className="flex flex-col items-center gap-3">
@@ -45,10 +47,22 @@ export function FightCardDisplay({ fightCard }: FightCardDisplayProps) {
         )}
 
         <div className="flex items-center justify-center gap-6 w-full">
-          <div className="flex-1 text-right">
+          <div className="flex-1 flex flex-col items-end gap-3">
+            {bout.fighter1Image && showImages && (
+              <div className="w-32 h-32 md:w-40 md:h-40 rounded-lg overflow-hidden border-2 border-primary/50 shadow-lg">
+                <img 
+                  src={bout.fighter1Image} 
+                  alt={bout.fighter1 || 'Fighter 1'}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              </div>
+            )}
             <p className={`font-display uppercase ${
-              isMainEvent ? 'text-5xl md:text-6xl' : 'text-3xl md:text-4xl'
-            } leading-none tracking-tight text-foreground`}>
+              isMainEvent ? 'text-5xl md:text-6xl' : isCoMain ? 'text-3xl md:text-4xl' : 'text-3xl md:text-4xl'
+            } leading-none tracking-tight text-foreground text-right`}>
               {bout.fighter1 || 'TBD'}
             </p>
           </div>
@@ -59,10 +73,22 @@ export function FightCardDisplay({ fightCard }: FightCardDisplayProps) {
             } text-primary`}>VS</p>
           </div>
           
-          <div className="flex-1 text-left">
+          <div className="flex-1 flex flex-col items-start gap-3">
+            {bout.fighter2Image && showImages && (
+              <div className="w-32 h-32 md:w-40 md:h-40 rounded-lg overflow-hidden border-2 border-primary/50 shadow-lg">
+                <img 
+                  src={bout.fighter2Image} 
+                  alt={bout.fighter2 || 'Fighter 2'}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              </div>
+            )}
             <p className={`font-display uppercase ${
-              isMainEvent ? 'text-5xl md:text-6xl' : 'text-3xl md:text-4xl'
-            } leading-none tracking-tight text-foreground`}>
+              isMainEvent ? 'text-5xl md:text-6xl' : isCoMain ? 'text-3xl md:text-4xl' : 'text-3xl md:text-4xl'
+            } leading-none tracking-tight text-foreground text-left`}>
               {bout.fighter2 || 'TBD'}
             </p>
           </div>
@@ -72,8 +98,14 @@ export function FightCardDisplay({ fightCard }: FightCardDisplayProps) {
   };
 
   return (
-    <Card className="w-full max-w-5xl mx-auto overflow-hidden bg-gradient-to-br from-card via-card to-muted border-2 border-primary/30">
-      <div className="p-8 md:p-12 flex flex-col gap-8">
+    <Card className="w-full max-w-5xl mx-auto overflow-hidden border-2 border-primary/30 relative">
+      {fightCard.backgroundImage && (
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-20"
+          style={{ backgroundImage: `url(${fightCard.backgroundImage})` }}
+        />
+      )}
+      <div className={`relative ${fightCard.backgroundImage ? 'bg-card/95 backdrop-blur-sm' : 'bg-gradient-to-br from-card via-card to-muted'} p-8 md:p-12 flex flex-col gap-8`}>
         <div className="text-center space-y-2">
           <h1 className="font-display text-6xl md:text-7xl uppercase tracking-wider text-secondary drop-shadow-lg">
             LSBA

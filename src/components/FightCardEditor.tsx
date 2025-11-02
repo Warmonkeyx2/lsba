@@ -1,4 +1,4 @@
-import { Plus, Trash } from "@phosphor-icons/react";
+import { Plus, Trash, Image } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -102,6 +102,30 @@ export function FightCardEditor({ fightCard, onChange }: FightCardEditorProps) {
               className="mt-1"
             />
           </div>
+          <div>
+            <Label htmlFor="background-image">Background Image URL (Optional)</Label>
+            <div className="flex gap-2 mt-1">
+              <Input
+                id="background-image"
+                placeholder="https://example.com/image.jpg or imgur link"
+                value={fightCard.backgroundImage || ''}
+                onChange={(e) => onChange({ ...fightCard, backgroundImage: e.target.value })}
+              />
+              {fightCard.backgroundImage && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onChange({ ...fightCard, backgroundImage: '' })}
+                  className="shrink-0"
+                >
+                  <Trash className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Add a background image URL (works with Imgur, Discord CDN, etc.)
+            </p>
+          </div>
         </div>
       </Card>
 
@@ -121,6 +145,14 @@ export function FightCardEditor({ fightCard, onChange }: FightCardEditorProps) {
                 onChange={(e) => updateMainEvent('fighter1', e.target.value)}
                 className="mt-1"
               />
+              <Label htmlFor="main-fighter1-image" className="mt-2 inline-block">Fighter 1 Image URL (Optional)</Label>
+              <Input
+                id="main-fighter1-image"
+                placeholder="https://example.com/fighter1.jpg"
+                value={fightCard.mainEvent.fighter1Image || ''}
+                onChange={(e) => updateMainEvent('fighter1Image', e.target.value)}
+                className="mt-1"
+              />
             </div>
             <div>
               <Label htmlFor="main-fighter2">Fighter 2</Label>
@@ -129,6 +161,14 @@ export function FightCardEditor({ fightCard, onChange }: FightCardEditorProps) {
                 placeholder="Second fighter name"
                 value={fightCard.mainEvent.fighter2}
                 onChange={(e) => updateMainEvent('fighter2', e.target.value)}
+                className="mt-1"
+              />
+              <Label htmlFor="main-fighter2-image" className="mt-2 inline-block">Fighter 2 Image URL (Optional)</Label>
+              <Input
+                id="main-fighter2-image"
+                placeholder="https://example.com/fighter2.jpg"
+                value={fightCard.mainEvent.fighter2Image || ''}
+                onChange={(e) => updateMainEvent('fighter2Image', e.target.value)}
                 className="mt-1"
               />
             </div>
@@ -174,6 +214,14 @@ export function FightCardEditor({ fightCard, onChange }: FightCardEditorProps) {
                 onChange={(e) => updateCoMainEvent('fighter1', e.target.value)}
                 className="mt-1"
               />
+              <Label htmlFor="co-fighter1-image" className="mt-2 inline-block">Fighter 1 Image URL (Optional)</Label>
+              <Input
+                id="co-fighter1-image"
+                placeholder="https://example.com/fighter1.jpg"
+                value={fightCard.coMainEvent?.fighter1Image || ''}
+                onChange={(e) => updateCoMainEvent('fighter1Image', e.target.value)}
+                className="mt-1"
+              />
             </div>
             <div>
               <Label htmlFor="co-fighter2">Fighter 2</Label>
@@ -182,6 +230,14 @@ export function FightCardEditor({ fightCard, onChange }: FightCardEditorProps) {
                 placeholder="Second fighter name"
                 value={fightCard.coMainEvent?.fighter2 || ''}
                 onChange={(e) => updateCoMainEvent('fighter2', e.target.value)}
+                className="mt-1"
+              />
+              <Label htmlFor="co-fighter2-image" className="mt-2 inline-block">Fighter 2 Image URL (Optional)</Label>
+              <Input
+                id="co-fighter2-image"
+                placeholder="https://example.com/fighter2.jpg"
+                value={fightCard.coMainEvent?.fighter2Image || ''}
+                onChange={(e) => updateCoMainEvent('fighter2Image', e.target.value)}
                 className="mt-1"
               />
             </div>
@@ -235,6 +291,14 @@ export function FightCardEditor({ fightCard, onChange }: FightCardEditorProps) {
                         onChange={(e) => updateBout(index, 'fighter1', e.target.value)}
                         className="mt-1"
                       />
+                      <Label htmlFor={`bout-${index}-fighter1-image`} className="mt-2 inline-block text-xs">Image URL (Optional)</Label>
+                      <Input
+                        id={`bout-${index}-fighter1-image`}
+                        placeholder="Fighter 1 image URL"
+                        value={bout.fighter1Image || ''}
+                        onChange={(e) => updateBout(index, 'fighter1Image', e.target.value)}
+                        className="mt-1"
+                      />
                     </div>
                     <div>
                       <Label htmlFor={`bout-${index}-fighter2`}>Fighter 2</Label>
@@ -243,6 +307,14 @@ export function FightCardEditor({ fightCard, onChange }: FightCardEditorProps) {
                         placeholder="Second fighter"
                         value={bout.fighter2}
                         onChange={(e) => updateBout(index, 'fighter2', e.target.value)}
+                        className="mt-1"
+                      />
+                      <Label htmlFor={`bout-${index}-fighter2-image`} className="mt-2 inline-block text-xs">Image URL (Optional)</Label>
+                      <Input
+                        id={`bout-${index}-fighter2-image`}
+                        placeholder="Fighter 2 image URL"
+                        value={bout.fighter2Image || ''}
+                        onChange={(e) => updateBout(index, 'fighter2Image', e.target.value)}
                         className="mt-1"
                       />
                     </div>

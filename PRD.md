@@ -20,11 +20,11 @@ This is a focused tool with clear edit/preview modes, persistent data storage, a
 - Success criteria: All fields save correctly and persist between sessions; validation prevents empty critical fields
 
 **Fight Card Display**
-- Functionality: Professional poster-style display showing the complete fight card with visual hierarchy
-- Purpose: Creates shareable, screenshot-ready promotional material for Discord, forums, in-game
+- Functionality: Professional poster-style display showing the complete fight card with visual hierarchy, optional background images, and fighter photos
+- Purpose: Creates shareable, screenshot-ready promotional material for Discord, forums, in-game with customizable visuals
 - Trigger: User saves fight card data or toggles to preview mode
 - Progression: Save data → Render poster → Adjust if needed → Screenshot/share
-- Success criteria: Card displays clearly with proper typography, fighter names prominent, all info legible
+- Success criteria: Card displays clearly with proper typography, fighter names prominent, all info legible; background images blend well with text; fighter photos display properly without breaking layout
 
 **Multiple Bouts Support**
 - Functionality: Add/remove multiple fights beyond main/co-main events
@@ -40,6 +40,20 @@ This is a focused tool with clear edit/preview modes, persistent data storage, a
 - Progression: Type sponsor names → Position on card → Display on poster
 - Success criteria: Sponsors appear in designated area without cluttering main content
 
+**Background Image Customization**
+- Functionality: Add custom background image URL (Imgur, Discord CDN, etc.) to personalize fight card poster
+- Purpose: Allow organizers to brand events with venue photos, logos, or thematic imagery
+- Trigger: User enters image URL in background image field
+- Progression: Paste URL → Image loads as background → Adjusts opacity for text readability
+- Success criteria: Background displays without breaking layout; text remains legible with automatic overlay; handles broken image URLs gracefully
+
+**Fighter Photos**
+- Functionality: Add individual fighter photos via image URLs for main event and co-main event fighters
+- Purpose: Increase visual appeal and professionalism by showcasing fighter faces/poses
+- Trigger: User enters image URLs for fighter 1 and/or fighter 2 in bout fields
+- Progression: Enter URL → Photo displays beside fighter name → Scales appropriately → Falls back gracefully if image fails
+- Success criteria: Photos display in consistent sizes; handle both portrait and landscape images; don't break layout if one fighter has photo and other doesn't
+
 ## Edge Case Handling
 
 - **Empty fields** - Display placeholder text or hide sections when optional fields are empty
@@ -47,6 +61,9 @@ This is a focused tool with clear edit/preview modes, persistent data storage, a
 - **No bouts added** - Show helpful prompt to add at least a main event
 - **Data persistence failure** - Gracefully handle with toast notification and retry mechanism
 - **Many sponsors** - Wrap or truncate sponsor list if it exceeds available space
+- **Invalid image URLs** - Hide broken images gracefully with error handling; show fighter names without disruption
+- **Large background images** - Apply opacity overlay to ensure text readability regardless of image brightness
+- **Mixed image availability** - Handle cases where only one fighter has a photo while the other doesn't; maintain layout symmetry
 
 ## Design Direction
 
