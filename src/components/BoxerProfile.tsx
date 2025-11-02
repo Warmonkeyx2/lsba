@@ -1,4 +1,4 @@
-import { ArrowLeft, Plus, Minus, User, Trophy, Target } from '@phosphor-icons/react';
+import { ArrowLeft, Plus, Minus, User, Trophy, Target, Lightning } from '@phosphor-icons/react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +6,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import type { Boxer, FightHistory } from '@/types/boxer';
-import { calculateWinRate, getBoxerRecord, calculateRank } from '@/lib/boxerUtils';
+import { getRanking, getSortedBoxers } from '@/lib/rankingUtils';
 
 interface BoxerProfileProps {
   boxer: Boxer;
@@ -16,9 +16,9 @@ interface BoxerProfileProps {
 }
 
 export function BoxerProfile({ boxer, allBoxers, onBack, onUpdateBoxer }: BoxerProfileProps) {
-  const winRate = calculateWinRate(boxer);
-  const rank = calculateRank(boxer, allBoxers);
+  const rank = getRanking(boxer, allBoxers);
   const totalFights = boxer.wins + boxer.losses;
+  const winRate = totalFights > 0 ? (boxer.wins / totalFights) * 100 : 0;
 
   const updateStat = (stat: 'wins' | 'losses' | 'knockouts', increment: boolean) => {
     const newValue = Math.max(0, boxer[stat] + (increment ? 1 : -1));
@@ -72,7 +72,9 @@ export function BoxerProfile({ boxer, allBoxers, onBack, onUpdateBoxer }: BoxerP
             <div className="text-center">
               <div className="flex items-center gap-2 justify-center mb-2">
                 <Trophy className="w-6 h-6 text-secondary" weight="fill" />
-                <span className="text-4xl font-display font-bold text-secondary">#{rank}</span>
+                <span className="text-4xl font-display font-bold text-secondary">
+                  {rank !== null ? `#${rank}` : 'Unranked'}
+                </span>
               </div>
               <Badge className="bg-primary text-primary-foreground text-sm px-4 py-1">
                 Licensed Boxer
@@ -102,7 +104,14 @@ export function BoxerProfile({ boxer, allBoxers, onBack, onUpdateBoxer }: BoxerP
 
             <Separator />
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <div className="text-center p-4 bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/30 rounded-lg">
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <Lightning className="w-5 h-5 text-accent" weight="fill" />
+                </div>
+                <div className="text-3xl font-display font-bold text-accent">{boxer.rankingPoints}</div>
+                <div className="text-xs uppercase text-muted-foreground mt-1">Ranking Points</div>
+              </div>
               <div className="text-center p-4 bg-muted/30 rounded-lg">
                 <div className="text-3xl font-display font-bold text-foreground">{totalFights}</div>
                 <div className="text-xs uppercase text-muted-foreground mt-1">Total Fights</div>
@@ -112,7 +121,7 @@ export function BoxerProfile({ boxer, allBoxers, onBack, onUpdateBoxer }: BoxerP
                 <div className="text-xs uppercase text-muted-foreground mt-1">Win Rate</div>
               </div>
               <div className="text-center p-4 bg-muted/30 rounded-lg">
-                <div className="text-3xl font-display font-bold text-foreground">{getBoxerRecord(boxer)}</div>
+                <div className="text-3xl font-display font-bold text-foreground">{boxer.wins}-{boxer.losses}-{boxer.knockouts}</div>
                 <div className="text-xs uppercase text-muted-foreground mt-1">W-L-K Record</div>
               </div>
               <div className="text-center p-4 bg-muted/30 rounded-lg">
@@ -210,21 +219,32 @@ export function BoxerProfile({ boxer, allBoxers, onBack, onUpdateBoxer }: BoxerP
               {boxer.fightHistory.map((fight) => (
                 <div key={fight.id} className="p-4 border border-border rounded-lg">
                   <div className="flex items-center justify-between mb-2">
-                    {fight.result === 'pending' ? (
-                      <Badge variant="outline" className="bg-muted text-muted-foreground">
-                        UPCOMING
-                      </Badge>
-                    ) : (
-                      <Badge
-                        className={
-                          fight.result === 'win' || fight.result === 'knockout'
-                            ? 'bg-secondary text-secondary-foreground'
-                            : 'bg-destructive text-destructive-foreground'
-                        }
-                      >
-                        {fight.result === 'knockout' ? 'KO WIN' : fight.result.toUpperCase()}
-                      </Badge>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {fight.result === 'pending' ? (
+                        <Badge variant="outline" className="bg-muted text-muted-foreground">
+                          UPCOMING
+                        </Badge>
+                      ) : (
+                        <Badge
+                          className={
+                            fight.result === 'win' || fight.result === 'knockout'
+                              ? 'bg-secondary text-secondary-foreground'
+                              : 'bg-destructive text-destructive-foreground'
+                          }
+                        >
+                          {fight.result === 'knockout' ? 'KO WIN' : fight.result.toUpperCase()}
+                        </Badge>
+                      )}
+                      {fight.pointsChange !== undefined && fight.pointsChange !== 0 && (
+                        <Badge 
+                          variant="outline" 
+                          className={fight.pointsChange > 0 ? 'text-accent border-accent' : 'text-destructive border-destructive'}
+                        >
+                          <Lightning className="w-3 h-3 mr-1" weight="fill" />
+                          {fight.pointsChange > 0 ? '+' : ''}{fight.pointsChange}
+                        </Badge>
+                      )}
+                    </div>
                     <span className="text-xs text-muted-foreground">
                       {new Date(fight.date).toLocaleDateString()}
                     </span>

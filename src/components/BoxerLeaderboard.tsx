@@ -1,10 +1,10 @@
-import { Trophy, User, ChartLine } from '@phosphor-icons/react';
+import { Trophy, User, ChartLine, Lightning } from '@phosphor-icons/react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import type { Boxer } from '@/types/boxer';
-import { calculateWinRate, getBoxerRecord, sortBoxersByRank } from '@/lib/boxerUtils';
+import { getSortedBoxers } from '@/lib/rankingUtils';
 
 interface BoxerLeaderboardProps {
   boxers: Boxer[];
@@ -12,7 +12,7 @@ interface BoxerLeaderboardProps {
 }
 
 export function BoxerLeaderboard({ boxers, onSelectBoxer }: BoxerLeaderboardProps) {
-  const sortedBoxers = sortBoxersByRank(boxers);
+  const sortedBoxers = getSortedBoxers(boxers);
 
   const getRankColor = (rank: number) => {
     if (rank === 1) return 'text-secondary';
@@ -33,18 +33,19 @@ export function BoxerLeaderboard({ boxers, onSelectBoxer }: BoxerLeaderboardProp
       <div className="flex items-center gap-3 mb-6">
         <ChartLine className="w-7 h-7 text-secondary" weight="bold" />
         <h2 className="text-2xl font-display uppercase text-secondary">Leaderboard</h2>
+        <Badge variant="outline" className="ml-auto">Point-Based Ranking</Badge>
       </div>
 
       {sortedBoxers.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <User className="w-16 h-16 mx-auto mb-4 opacity-50" />
-          <p>No boxers registered yet</p>
+          <p className="mb-2 font-semibold">No ranked fighters yet</p>
+          <p className="text-sm">Fighters appear on the leaderboard once they earn points through competition</p>
         </div>
       ) : (
         <div className="flex flex-col gap-2">
           {sortedBoxers.map((boxer, index) => {
             const rank = index + 1;
-            const winRate = calculateWinRate(boxer);
             const totalFights = boxer.wins + boxer.losses;
 
             return (
@@ -79,22 +80,20 @@ export function BoxerLeaderboard({ boxers, onSelectBoxer }: BoxerLeaderboardProp
                     )}
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    State ID: {boxer.stateId}
+                    {boxer.wins}W - {boxer.losses}L - {boxer.knockouts}KO
                   </p>
                 </div>
 
                 <div className="flex flex-col items-end gap-2">
-                  <div className="font-fighter text-3xl font-bold text-primary">
-                    {getBoxerRecord(boxer)}
+                  <div className="flex items-center gap-2">
+                    <Lightning className="w-5 h-5 text-accent" weight="fill" />
+                    <div className="font-display text-3xl font-bold text-accent">
+                      {boxer.rankingPoints}
+                    </div>
                   </div>
                   <div className="flex items-center gap-4 text-sm">
                     <div className="text-center">
-                      <div className="text-xs text-muted-foreground uppercase">Win Rate</div>
-                      <div className="font-semibold text-foreground">{winRate.toFixed(1)}%</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-xs text-muted-foreground uppercase">Fights</div>
-                      <div className="font-semibold text-foreground">{totalFights}</div>
+                      <div className="text-xs text-muted-foreground uppercase">Points</div>
                     </div>
                   </div>
                 </div>

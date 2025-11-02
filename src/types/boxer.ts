@@ -8,6 +8,7 @@ export interface Boxer {
   wins: number;
   losses: number;
   knockouts: number;
+  rankingPoints: number;
   registeredDate: string;
   profileImage?: string;
   fightHistory: FightHistory[];
@@ -21,6 +22,7 @@ export interface FightHistory {
   eventName?: string;
   notes?: string;
   fightCardId?: string;
+  pointsChange?: number;
 }
 
 export interface Sponsor {
@@ -30,4 +32,12 @@ export interface Sponsor {
   phoneNumber: string;
   registeredDate: string;
   boxersSponsored: string[];
+}
+
+export interface RankingSettings {
+  baseWinPoints: number;
+  baseLossPoints: number;
+  koBonus: number;
+  rankDifferenceMultiplier: number;
+  upsetBonusMultiplier: number;
 }

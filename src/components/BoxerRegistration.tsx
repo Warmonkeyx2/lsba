@@ -39,6 +39,7 @@ export function BoxerRegistration({ onRegister }: BoxerRegistrationProps) {
       wins: 0,
       losses: 0,
       knockouts: 0,
+      rankingPoints: 0,
       registeredDate: new Date().toISOString(),
       profileImage: formData.profileImage || undefined,
       fightHistory: [],

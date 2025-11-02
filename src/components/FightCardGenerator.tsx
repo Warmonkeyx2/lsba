@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import type { Boxer } from '@/types/boxer';
 import type { FightCard, Bout } from '@/types/fightCard';
-import { getBoxerRecord, getBoxerFullName, calculateRank } from '@/lib/boxerUtils';
+import { getRanking } from '@/lib/rankingUtils';
 
 interface FightCardGeneratorProps {
   boxers: Boxer[];
@@ -49,14 +49,14 @@ export function FightCardGenerator({ boxers, allBoxers, onGenerate }: FightCardG
 
         const bout: Bout = {
           id: `bout-${Date.now()}-${i}`,
-          fighter1: getBoxerFullName(fighter1),
-          fighter2: getBoxerFullName(fighter2),
+          fighter1: `${fighter1.firstName} ${fighter1.lastName}`,
+          fighter2: `${fighter2.firstName} ${fighter2.lastName}`,
           fighter1Image: fighter1.profileImage,
           fighter2Image: fighter2.profileImage,
           fighter1Id: fighter1.id,
           fighter2Id: fighter2.id,
-          fighter1Rank: calculateRank(fighter1, allBoxers),
-          fighter2Rank: calculateRank(fighter2, allBoxers),
+          fighter1Rank: getRanking(fighter1, allBoxers) || undefined,
+          fighter2Rank: getRanking(fighter2, allBoxers) || undefined,
           fighter1Record: {
             wins: fighter1.wins.toString(),
             losses: fighter1.losses.toString(),
@@ -150,11 +150,11 @@ export function FightCardGenerator({ boxers, allBoxers, onGenerate }: FightCardG
                   />
                   <div className="flex-1 min-w-0">
                     <div className="font-fighter text-lg uppercase font-bold truncate">
-                      {getBoxerFullName(boxer)}
+                      {boxer.firstName} {boxer.lastName}
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <Badge variant="outline" className="text-xs">
-                        {getBoxerRecord(boxer)}
+                        {boxer.wins}-{boxer.losses}-{boxer.knockouts}
                       </Badge>
                       {boxer.sponsor && (
                         <span className="text-xs text-muted-foreground truncate">{boxer.sponsor}</span>
@@ -181,9 +181,9 @@ export function FightCardGenerator({ boxers, allBoxers, onGenerate }: FightCardG
                     <Badge className={i === 0 ? 'bg-primary' : i === 1 ? 'bg-accent' : 'bg-muted'}>
                       {i === 0 ? 'Main' : i === 1 ? 'Co-Main' : `Bout ${i + 1}`}
                     </Badge>
-                    <span className="font-semibold">{getBoxerFullName(fighter1)}</span>
+                    <span className="font-semibold">{fighter1.firstName} {fighter1.lastName}</span>
                     <span className="text-muted-foreground">vs</span>
-                    <span className="font-semibold">{getBoxerFullName(fighter2)}</span>
+                    <span className="font-semibold">{fighter2.firstName} {fighter2.lastName}</span>
                   </div>
                 );
               })}

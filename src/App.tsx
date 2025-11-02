@@ -10,7 +10,10 @@ import {
   SquaresFour,
   Briefcase,
   AddressBook,
-  Calendar
+  Calendar,
+  Sliders,
+  Info,
+  ArrowsClockwise
 } from "@phosphor-icons/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -25,9 +28,13 @@ import { SponsorList } from "@/components/SponsorList";
 import { BoxerDirectory } from "@/components/BoxerDirectory";
 import { UpcomingFights } from "@/components/UpcomingFights";
 import { FightResultsManager } from "@/components/FightResultsManager";
+import { RankingFAQ } from "@/components/RankingFAQ";
+import { RankingSettingsComponent } from "@/components/RankingSettings";
+import { SeasonReset } from "@/components/SeasonReset";
 import { toast, Toaster } from "sonner";
 import type { FightCard } from "@/types/fightCard";
-import type { Boxer, Sponsor } from "@/types/boxer";
+import type { Boxer, Sponsor, RankingSettings } from "@/types/boxer";
+import { DEFAULT_RANKING_SETTINGS, calculatePointsForFight, getSortedBoxers } from "@/lib/rankingUtils";
 
 const defaultFightCard: FightCard = {
   eventDate: '',
@@ -49,6 +56,7 @@ function App() {
   const [fightCards, setFightCards] = useKV<FightCard[]>('lsba-fight-cards', []);
   const [boxers, setBoxers] = useKV<Boxer[]>('lsba-boxers', []);
   const [sponsors, setSponsors] = useKV<Sponsor[]>('lsba-sponsors', []);
+  const [rankingSettings, setRankingSettings] = useKV<RankingSettings>('lsba-ranking-settings', DEFAULT_RANKING_SETTINGS);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [selectedBoxer, setSelectedBoxer] = useState<Boxer | null>(null);
 
@@ -56,6 +64,7 @@ function App() {
   const sponsorsList = sponsors || [];
   const fightCardsList = fightCards || [];
   const currentCard = savedCard || defaultFightCard;
+  const currentSettings = rankingSettings || DEFAULT_RANKING_SETTINGS;
 
   const handleSave = () => {
     setSavedCard(editingCard);
@@ -148,6 +157,63 @@ function App() {
 
     setBoxers((current) => {
       const updated = [...(current || [])];
+      
+      const allBouts = [
+        updatedCard.mainEvent,
+        ...(updatedCard.coMainEvent ? [updatedCard.coMainEvent] : []),
+        ...updatedCard.otherBouts,
+      ];
+
+      allBouts.forEach((bout) => {
+        if (bout.winner && bout.fighter1Id && bout.fighter2Id) {
+          const winnerIndex = updated.findIndex((b) => 
+            b.id === (bout.winner === 'fighter1' ? bout.fighter1Id : bout.fighter2Id)
+          );
+          const loserIndex = updated.findIndex((b) => 
+            b.id === (bout.winner === 'fighter1' ? bout.fighter2Id : bout.fighter1Id)
+          );
+
+          if (winnerIndex !== -1 && loserIndex !== -1) {
+            const winner = updated[winnerIndex];
+            const loser = updated[loserIndex];
+            const knockout = bout.knockout || false;
+
+            const { winnerPoints, loserPoints } = calculatePointsForFight(
+              winner,
+              loser,
+              knockout,
+              updated,
+              currentSettings
+            );
+
+            updated[winnerIndex].rankingPoints += winnerPoints;
+            updated[loserIndex].rankingPoints = Math.max(0, updated[loserIndex].rankingPoints + loserPoints);
+
+            updated[winnerIndex].fightHistory = updated[winnerIndex].fightHistory.map((fight) => {
+              if (fight.fightCardId === updatedCard.id && fight.result === 'pending') {
+                return {
+                  ...fight,
+                  result: knockout ? 'knockout' : 'win',
+                  pointsChange: winnerPoints,
+                };
+              }
+              return fight;
+            });
+
+            updated[loserIndex].fightHistory = updated[loserIndex].fightHistory.map((fight) => {
+              if (fight.fightCardId === updatedCard.id && fight.result === 'pending') {
+                return {
+                  ...fight,
+                  result: 'loss',
+                  pointsChange: loserPoints,
+                };
+              }
+              return fight;
+            });
+          }
+        }
+      });
+
       boxerUpdates.forEach((updates, boxerId) => {
         const index = updated.findIndex((b) => b.id === boxerId);
         if (index !== -1) {
@@ -157,36 +223,35 @@ function App() {
             losses: updates.losses ?? updated[index].losses,
             knockouts: updates.knockouts ?? updated[index].knockouts,
           };
-
-          updated[index].fightHistory = updated[index].fightHistory.map((fight) => {
-            if (fight.fightCardId === updatedCard.id && fight.result === 'pending') {
-              const allBouts = [
-                updatedCard.mainEvent,
-                ...(updatedCard.coMainEvent ? [updatedCard.coMainEvent] : []),
-                ...updatedCard.otherBouts,
-              ];
-
-              const bout = allBouts.find(
-                (b) => b.fighter1Id === boxerId || b.fighter2Id === boxerId
-              );
-
-              if (bout && bout.winner) {
-                const isWinner = 
-                  (bout.winner === 'fighter1' && bout.fighter1Id === boxerId) ||
-                  (bout.winner === 'fighter2' && bout.fighter2Id === boxerId);
-
-                return {
-                  ...fight,
-                  result: isWinner ? (bout.knockout ? 'knockout' : 'win') : 'loss',
-                };
-              }
-            }
-            return fight;
-          });
         }
       });
+
       return updated;
     });
+
+    toast.success('Fight results declared! Rankings updated with new points.');
+  };
+
+  const handleResetSeason = () => {
+    setBoxers((current) =>
+      (current || []).map((boxer) => ({
+        ...boxer,
+        rankingPoints: 0,
+      }))
+    );
+    toast.success('Season reset! All ranking points reset to zero.');
+  };
+
+  const handleClearAll = () => {
+    setBoxers([]);
+    setFightCards([]);
+    setSavedCard(defaultFightCard);
+    setEditingCard(defaultFightCard);
+    toast.success('All data cleared. Starting fresh!');
+  };
+
+  const handleSaveSettings = (settings: RankingSettings) => {
+    setRankingSettings(settings);
   };
 
   const hasChanges = JSON.stringify(currentCard) !== JSON.stringify(editingCard);
@@ -228,7 +293,7 @@ function App() {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-4 md:grid-cols-7 h-auto">
+              <TabsList className="grid w-full grid-cols-5 md:grid-cols-10 h-auto gap-1">
                 <TabsTrigger value="dashboard" className="flex items-center gap-2 py-3">
                   <SquaresFour className="w-4 h-4" />
                   <span className="hidden sm:inline">Dashboard</span>
@@ -257,6 +322,18 @@ function App() {
                   <PencilSimple className="w-4 h-4" />
                   <span className="hidden sm:inline">Fight Card</span>
                 </TabsTrigger>
+                <TabsTrigger value="faq" className="flex items-center gap-2 py-3">
+                  <Info className="w-4 h-4" />
+                  <span className="hidden sm:inline">FAQ</span>
+                </TabsTrigger>
+                <TabsTrigger value="settings" className="flex items-center gap-2 py-3">
+                  <Sliders className="w-4 h-4" />
+                  <span className="hidden sm:inline">Settings</span>
+                </TabsTrigger>
+                <TabsTrigger value="season" className="flex items-center gap-2 py-3">
+                  <ArrowsClockwise className="w-4 h-4" />
+                  <span className="hidden sm:inline">Season</span>
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="dashboard" className="mt-6">
@@ -266,11 +343,11 @@ function App() {
                       <div className="flex items-center gap-3 mb-2">
                         <ChartLine className="w-8 h-8 text-primary" weight="bold" />
                         <div className="text-4xl font-display font-bold text-primary">
-                          {boxersList.length}
+                          {getSortedBoxers(boxersList).length}
                         </div>
                       </div>
                       <div className="text-sm uppercase tracking-wide text-muted-foreground">
-                        Registered Boxers
+                        Ranked Fighters
                       </div>
                     </div>
 
@@ -290,14 +367,11 @@ function App() {
                       <div className="flex items-center gap-3 mb-2">
                         <Sparkle className="w-8 h-8 text-accent" weight="fill" />
                         <div className="text-4xl font-display font-bold text-accent">
-                          {fightCardsList.filter(card => card.status === 'upcoming').reduce((total, card) => {
-                            const allBouts = [card.mainEvent, ...(card.coMainEvent ? [card.coMainEvent] : []), ...card.otherBouts];
-                            return total + allBouts.filter(bout => bout.fighter1 && bout.fighter2).length;
-                          }, 0)}
+                          {boxersList.length}
                         </div>
                       </div>
                       <div className="text-sm uppercase tracking-wide text-muted-foreground">
-                        Scheduled Fights
+                        Total Registered
                       </div>
                     </div>
                   </div>
@@ -430,6 +504,22 @@ function App() {
                     </TabsContent>
                   </Tabs>
                 </div>
+              </TabsContent>
+
+              <TabsContent value="faq" className="mt-6">
+                <RankingFAQ settings={currentSettings} />
+              </TabsContent>
+
+              <TabsContent value="settings" className="mt-6">
+                <RankingSettingsComponent settings={currentSettings} onSave={handleSaveSettings} />
+              </TabsContent>
+
+              <TabsContent value="season" className="mt-6">
+                <SeasonReset 
+                  boxers={boxersList} 
+                  onResetSeason={handleResetSeason}
+                  onClearAll={handleClearAll}
+                />
               </TabsContent>
             </Tabs>
           </div>
