@@ -15,14 +15,13 @@ export function SponsorRegistration({ onRegister }: SponsorRegistrationProps) {
   const [formData, setFormData] = useState({
     name: '',
     contactPerson: '',
-    email: '',
     phoneNumber: '',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name || !formData.contactPerson || !formData.email || !formData.phoneNumber) {
+    if (!formData.name || !formData.contactPerson || !formData.phoneNumber) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -31,7 +30,6 @@ export function SponsorRegistration({ onRegister }: SponsorRegistrationProps) {
       id: `sponsor-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       name: formData.name,
       contactPerson: formData.contactPerson,
-      email: formData.email,
       phoneNumber: formData.phoneNumber,
       registeredDate: new Date().toISOString(),
       boxersSponsored: [],
@@ -43,7 +41,6 @@ export function SponsorRegistration({ onRegister }: SponsorRegistrationProps) {
     setFormData({
       name: '',
       contactPerson: '',
-      email: '',
       phoneNumber: '',
     });
   };
@@ -80,30 +77,17 @@ export function SponsorRegistration({ onRegister }: SponsorRegistrationProps) {
             />
           </div>
           <div>
-            <Label htmlFor="sponsor-email">Email Address *</Label>
+            <Label htmlFor="sponsor-phone">Phone Number *</Label>
             <Input
-              id="sponsor-email"
-              type="email"
-              placeholder="email@example.com"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              id="sponsor-phone"
+              type="tel"
+              placeholder="(555) 123-4567"
+              value={formData.phoneNumber}
+              onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
               required
               className="mt-1"
             />
           </div>
-        </div>
-
-        <div>
-          <Label htmlFor="sponsor-phone">Phone Number *</Label>
-          <Input
-            id="sponsor-phone"
-            type="tel"
-            placeholder="(555) 123-4567"
-            value={formData.phoneNumber}
-            onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-            required
-            className="mt-1"
-          />
         </div>
 
         <Button type="submit" size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground mt-2">

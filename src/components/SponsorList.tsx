@@ -1,4 +1,4 @@
-import { Briefcase, Envelope, Phone, Calendar } from '@phosphor-icons/react';
+import { Briefcase, Phone, Calendar } from '@phosphor-icons/react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Sponsor } from '@/types/boxer';
@@ -33,10 +33,6 @@ export function SponsorList({ sponsors }: SponsorListProps) {
               <p className="text-sm text-muted-foreground mb-3">{sponsor.contactPerson}</p>
               
               <div className="flex flex-col gap-2 text-sm">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Envelope className="w-4 h-4" />
-                  <span className="truncate">{sponsor.email}</span>
-                </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Phone className="w-4 h-4" />
                   <span>{sponsor.phoneNumber}</span>
