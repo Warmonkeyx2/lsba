@@ -55,6 +55,7 @@ export function FightCardDisplay({ fightCard }: FightCardDisplayProps) {
                     src={bout.fighter1Image} 
                     alt={bout.fighter1 || 'Fighter 1'}
                     className="w-full h-full object-cover"
+                    crossOrigin="anonymous"
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
                     }}
@@ -92,6 +93,7 @@ export function FightCardDisplay({ fightCard }: FightCardDisplayProps) {
                     src={bout.fighter2Image} 
                     alt={bout.fighter2 || 'Fighter 2'}
                     className="w-full h-full object-cover"
+                    crossOrigin="anonymous"
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
                     }}
@@ -135,6 +137,7 @@ export function FightCardDisplay({ fightCard }: FightCardDisplayProps) {
                 src={fightCard.customLogo} 
                 alt="LSBA Logo" 
                 className="max-h-32 md:max-h-40 object-contain drop-shadow-2xl"
+                crossOrigin="anonymous"
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
                 }}

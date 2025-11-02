@@ -48,7 +48,15 @@ function App() {
       const dataUrl = await toPng(cardRef.current, {
         quality: 1,
         pixelRatio: 2,
-        backgroundColor: '#1e1e1e',
+        backgroundColor: '#262626',
+        cacheBust: true,
+        filter: (node) => {
+          return true;
+        },
+        style: {
+          transform: 'scale(1)',
+          transformOrigin: 'top left',
+        },
       });
       
       if ('showSaveFilePicker' in window) {
@@ -84,7 +92,7 @@ function App() {
       }
     } catch (error) {
       console.error('Error exporting image:', error);
-      toast.error('Failed to export fight card');
+      toast.error('Failed to export fight card. Try removing external images or try again.');
     } finally {
       setIsExporting(false);
     }
@@ -96,7 +104,15 @@ function App() {
     const dataUrl = await toPng(cardRef.current, {
       quality: 1,
       pixelRatio: 2,
-      backgroundColor: '#1e1e1e',
+      backgroundColor: '#262626',
+      cacheBust: true,
+      filter: (node) => {
+        return true;
+      },
+      style: {
+        transform: 'scale(1)',
+        transformOrigin: 'top left',
+      },
     });
 
     const base64Data = dataUrl.split(',')[1];
