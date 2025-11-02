@@ -25,6 +25,13 @@ export interface FightHistory {
   pointsChange?: number;
 }
 
+export interface SponsorContact {
+  id: string;
+  name: string;
+  phoneNumber: string;
+  role?: string;
+}
+
 export interface Sponsor {
   id: string;
   stateId: string;
@@ -33,6 +40,8 @@ export interface Sponsor {
   phoneNumber: string;
   registeredDate: string;
   boxersSponsored: string[];
+  logoUrl?: string;
+  additionalContacts: SponsorContact[];
 }
 
 export interface RankingSettings {

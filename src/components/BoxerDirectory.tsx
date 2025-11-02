@@ -41,9 +41,10 @@ interface BoxerDirectoryProps {
   onUpdateBoxer: (boxer: Boxer) => void;
   onDeleteBoxer: (boxerId: string) => void;
   onViewProfile: (boxer: Boxer) => void;
+  onViewSponsorProfile: (sponsor: Sponsor) => void;
 }
 
-export function BoxerDirectory({ boxers, sponsors, onUpdateBoxer, onDeleteBoxer, onViewProfile }: BoxerDirectoryProps) {
+export function BoxerDirectory({ boxers, sponsors, onUpdateBoxer, onDeleteBoxer, onViewProfile, onViewSponsorProfile }: BoxerDirectoryProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [showBoxers, setShowBoxers] = useState(true);
   const [showSponsors, setShowSponsors] = useState(true);
@@ -384,6 +385,15 @@ export function BoxerDirectory({ boxers, sponsors, onUpdateBoxer, onDeleteBoxer,
                                 </Badge>
                               </div>
                             </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => onViewSponsorProfile(sponsor)}
+                              className="hover:bg-primary hover:text-primary-foreground"
+                            >
+                              <Eye className="w-4 h-4 md:mr-2" />
+                              <span className="hidden md:inline">View Profile</span>
+                            </Button>
                           </div>
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -5,13 +5,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
-import type { Boxer } from '@/types/boxer';
+import type { Boxer, Sponsor } from '@/types/boxer';
 
 interface BoxerRegistrationProps {
   onRegister: (boxer: Boxer) => void;
+  existingBoxers: Boxer[];
+  existingSponsors: Sponsor[];
 }
 
-export function BoxerRegistration({ onRegister }: BoxerRegistrationProps) {
+export function BoxerRegistration({ onRegister, existingBoxers, existingSponsors }: BoxerRegistrationProps) {
   const [formData, setFormData] = useState({
     stateId: '',
     firstName: '',
@@ -27,6 +29,26 @@ export function BoxerRegistration({ onRegister }: BoxerRegistrationProps) {
     if (!formData.stateId || !formData.firstName || !formData.lastName || !formData.phoneNumber) {
       toast.error('Please fill in all required fields');
       return;
+    }
+
+    const duplicateStateId = existingBoxers.find(
+      (boxer) => boxer.stateId.toLowerCase() === formData.stateId.toLowerCase()
+    );
+
+    if (duplicateStateId) {
+      toast.error(`State ID ${formData.stateId} is already registered to ${duplicateStateId.firstName} ${duplicateStateId.lastName}`);
+      return;
+    }
+
+    if (formData.sponsor) {
+      const sponsorExists = existingSponsors.find(
+        (sponsor) => sponsor.name.toLowerCase() === formData.sponsor.toLowerCase()
+      );
+
+      if (!sponsorExists) {
+        toast.error(`Sponsor "${formData.sponsor}" is not registered. Please register the sponsor first.`);
+        return;
+      }
     }
 
     const newBoxer: Boxer = {

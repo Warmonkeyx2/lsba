@@ -6,17 +6,20 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
 import type { Sponsor } from '@/types/boxer';
+import { ImageUpload } from '@/components/ImageUpload';
 
 interface SponsorRegistrationProps {
   onRegister: (sponsor: Sponsor) => void;
+  existingSponsors: Sponsor[];
 }
 
-export function SponsorRegistration({ onRegister }: SponsorRegistrationProps) {
+export function SponsorRegistration({ onRegister, existingSponsors }: SponsorRegistrationProps) {
   const [formData, setFormData] = useState({
     stateId: '',
     name: '',
     contactPerson: '',
     phoneNumber: '',
+    logoUrl: '',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -24,6 +27,24 @@ export function SponsorRegistration({ onRegister }: SponsorRegistrationProps) {
 
     if (!formData.stateId || !formData.name || !formData.contactPerson || !formData.phoneNumber) {
       toast.error('Please fill in all required fields');
+      return;
+    }
+
+    const duplicateStateId = existingSponsors.find(
+      (sponsor) => sponsor.stateId.toLowerCase() === formData.stateId.toLowerCase()
+    );
+
+    if (duplicateStateId) {
+      toast.error(`State ID ${formData.stateId} is already registered to ${duplicateStateId.name}`);
+      return;
+    }
+
+    const duplicateName = existingSponsors.find(
+      (sponsor) => sponsor.name.toLowerCase() === formData.name.toLowerCase()
+    );
+
+    if (duplicateName) {
+      toast.error(`Sponsor "${formData.name}" is already registered`);
       return;
     }
 
@@ -35,6 +56,8 @@ export function SponsorRegistration({ onRegister }: SponsorRegistrationProps) {
       phoneNumber: formData.phoneNumber,
       registeredDate: new Date().toISOString(),
       boxersSponsored: [],
+      logoUrl: formData.logoUrl || undefined,
+      additionalContacts: [],
     };
 
     onRegister(newSponsor);
@@ -45,6 +68,7 @@ export function SponsorRegistration({ onRegister }: SponsorRegistrationProps) {
       name: '',
       contactPerson: '',
       phoneNumber: '',
+      logoUrl: '',
     });
   };
 
@@ -103,6 +127,30 @@ export function SponsorRegistration({ onRegister }: SponsorRegistrationProps) {
               className="mt-1"
             />
           </div>
+        </div>
+
+        <div>
+          <Label htmlFor="sponsor-logo">Sponsor Logo URL</Label>
+          <Input
+            id="sponsor-logo"
+            placeholder="https://example.com/logo.png (Optional)"
+            value={formData.logoUrl}
+            onChange={(e) => setFormData({ ...formData, logoUrl: e.target.value })}
+            className="mt-1"
+          />
+          {formData.logoUrl && (
+            <div className="mt-2 p-4 border border-border rounded-md bg-card">
+              <p className="text-xs text-muted-foreground mb-2">Logo Preview:</p>
+              <img 
+                src={formData.logoUrl} 
+                alt="Sponsor logo preview" 
+                className="max-h-24 object-contain"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            </div>
+          )}
         </div>
 
         <Button type="submit" size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground mt-2">

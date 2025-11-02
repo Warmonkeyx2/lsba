@@ -25,6 +25,7 @@ import { BoxerProfile } from "@/components/BoxerProfile";
 import { FightCardGenerator } from "@/components/FightCardGenerator";
 import { SponsorRegistration } from "@/components/SponsorRegistration";
 import { SponsorList } from "@/components/SponsorList";
+import { SponsorProfile } from "@/components/SponsorProfile";
 import { BoxerDirectory } from "@/components/BoxerDirectory";
 import { UpcomingFights } from "@/components/UpcomingFights";
 import { FightResultsManager } from "@/components/FightResultsManager";
@@ -59,6 +60,7 @@ function App() {
   const [rankingSettings, setRankingSettings] = useKV<RankingSettings>('lsba-ranking-settings', DEFAULT_RANKING_SETTINGS);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [selectedBoxer, setSelectedBoxer] = useState<Boxer | null>(null);
+  const [selectedSponsor, setSelectedSponsor] = useState<Sponsor | null>(null);
 
   const boxersList = boxers || [];
   const sponsorsList = sponsors || [];
@@ -318,7 +320,33 @@ function App() {
     setRankingSettings(settings);
   };
 
+  const handleUpdateSponsor = (updatedSponsor: Sponsor) => {
+    setSponsors((current) =>
+      (current || []).map((s) => (s.id === updatedSponsor.id ? updatedSponsor : s))
+    );
+    setSelectedSponsor(updatedSponsor);
+    toast.success('Sponsor updated successfully!');
+  };
+
   const hasChanges = JSON.stringify(currentCard) !== JSON.stringify(editingCard);
+
+  if (selectedSponsor) {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <Toaster position="top-center" richColors />
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-6xl mx-auto">
+            <SponsorProfile
+              sponsor={selectedSponsor}
+              boxers={boxersList}
+              onBack={() => setSelectedSponsor(null)}
+              onUpdateSponsor={handleUpdateSponsor}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (selectedBoxer) {
     return (
@@ -491,11 +519,16 @@ function App() {
                   onUpdateBoxer={handleUpdateBoxer}
                   onDeleteBoxer={handleDeleteBoxer}
                   onViewProfile={setSelectedBoxer}
+                  onViewSponsorProfile={setSelectedSponsor}
                 />
               </TabsContent>
 
               <TabsContent value="register" className="mt-6">
-                <BoxerRegistration onRegister={handleRegisterBoxer} />
+                <BoxerRegistration 
+                  onRegister={handleRegisterBoxer} 
+                  existingBoxers={boxersList}
+                  existingSponsors={sponsorsList}
+                />
               </TabsContent>
 
               <TabsContent value="generator" className="mt-6">
@@ -504,8 +537,14 @@ function App() {
 
               <TabsContent value="sponsors" className="mt-6">
                 <div className="flex flex-col gap-6">
-                  <SponsorRegistration onRegister={handleRegisterSponsor} />
-                  <SponsorList sponsors={sponsorsList} />
+                  <SponsorRegistration 
+                    onRegister={handleRegisterSponsor} 
+                    existingSponsors={sponsorsList}
+                  />
+                  <SponsorList 
+                    sponsors={sponsorsList} 
+                    onViewProfile={setSelectedSponsor}
+                  />
                 </div>
               </TabsContent>
 
