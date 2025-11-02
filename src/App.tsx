@@ -39,21 +39,93 @@ function App() {
     toast.success('Fight card saved successfully!');
   };
 
+  const convertImageToDataURL = async (url: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL('image/png'));
+        } else {
+          reject(new Error('Failed to get canvas context'));
+        }
+      };
+      img.onerror = () => {
+        resolve(url);
+      };
+      img.src = url;
+    });
+  };
+
+  const cloneWithDataURLs = async (element: HTMLElement): Promise<HTMLElement> => {
+    const clone = element.cloneNode(true) as HTMLElement;
+    const images = clone.querySelectorAll('img');
+    
+    await Promise.all(
+      Array.from(images).map(async (img) => {
+        if (img.src && !img.src.startsWith('data:')) {
+          try {
+            const dataURL = await convertImageToDataURL(img.src);
+            img.src = dataURL;
+          } catch (error) {
+            console.warn('Failed to convert image:', img.src);
+          }
+        }
+      })
+    );
+
+    const bgElements = clone.querySelectorAll('[style*="background-image"]');
+    await Promise.all(
+      Array.from(bgElements).map(async (el) => {
+        const htmlEl = el as HTMLElement;
+        const style = htmlEl.style.backgroundImage;
+        const urlMatch = style.match(/url\(['"]?([^'"]+)['"]?\)/);
+        if (urlMatch && urlMatch[1] && !urlMatch[1].startsWith('data:')) {
+          try {
+            const dataURL = await convertImageToDataURL(urlMatch[1]);
+            htmlEl.style.backgroundImage = `url(${dataURL})`;
+          } catch (error) {
+            console.warn('Failed to convert background image:', urlMatch[1]);
+          }
+        }
+      })
+    );
+
+    return clone;
+  };
+
   const handleExportPNG = async () => {
     if (!cardRef.current) return;
     
     setIsExporting(true);
     
     try {
-      const canvas = await html2canvas(cardRef.current, {
+      const clonedElement = await cloneWithDataURLs(cardRef.current);
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.top = '0';
+      document.body.appendChild(tempContainer);
+      tempContainer.appendChild(clonedElement);
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const canvas = await html2canvas(clonedElement, {
         scale: 2,
         backgroundColor: '#262626',
-        useCORS: true,
+        useCORS: false,
         allowTaint: true,
         logging: false,
         imageTimeout: 0,
       });
       
+      document.body.removeChild(tempContainer);
+
       canvas.toBlob(async (blob) => {
         if (!blob) {
           throw new Error('Failed to create image blob');
@@ -104,14 +176,26 @@ function App() {
   const uploadToImgBB = async (): Promise<string> => {
     if (!cardRef.current) throw new Error('Card reference not found');
     
-    const canvas = await html2canvas(cardRef.current, {
+    const clonedElement = await cloneWithDataURLs(cardRef.current);
+    const tempContainer = document.createElement('div');
+    tempContainer.style.position = 'absolute';
+    tempContainer.style.left = '-9999px';
+    tempContainer.style.top = '0';
+    document.body.appendChild(tempContainer);
+    tempContainer.appendChild(clonedElement);
+
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    const canvas = await html2canvas(clonedElement, {
       scale: 2,
       backgroundColor: '#262626',
-      useCORS: true,
+      useCORS: false,
       allowTaint: true,
       logging: false,
       imageTimeout: 0,
     });
+
+    document.body.removeChild(tempContainer);
 
     const base64Data = canvas.toDataURL('image/png').split(',')[1];
     
