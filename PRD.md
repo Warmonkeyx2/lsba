@@ -1,81 +1,90 @@
 # Planning Guide
 
-A dynamic fight card management system for GTA FiveM Boxing Association organizers to create, edit, and display professional boxing event posters with real-time updates.
+A comprehensive boxing association management system for LSBA (Los Santos Boxing Association) that handles boxer registration, leaderboard rankings, fighter profiles, stat tracking, and automated fight card generation—all integrated into one cohesive application.
 
 **Experience Qualities**:
-1. **Professional** - The interface should feel like a legitimate sports promotion tool with polished, broadcast-quality fight card displays
-2. **Efficient** - Quick editing and instant preview allows organizers to make last-minute changes without technical friction
-3. **Empowering** - Non-technical users can produce visually stunning fight cards that match the prestige of their in-game events
+1. **Professional** - The interface should feel like a legitimate sports organization management platform with polished displays and data-driven insights
+2. **Comprehensive** - All aspects of boxing management in one place: from registering new fighters to generating event posters
+3. **Dynamic** - Auto-calculated rankings, real-time stat updates, and intelligent fight card generation that responds to the current roster
 
-**Complexity Level**: Light Application (multiple features with basic state)
-This is a focused tool with clear edit/preview modes, persistent data storage, and straightforward CRUD operations for fight card management.
+**Complexity Level**: Complex Application (advanced functionality, integrated modules)
+This is a full-featured management system with multiple interconnected modules: boxer registry, profile management, leaderboard calculations, fight history tracking, and automated fight card creation with persistent state across all features.
 
 ## Essential Features
 
-**Fight Card Editor**
-- Functionality: Form-based interface to input all fight card details (date, location, fighters, titles, sponsors)
-- Purpose: Enables quick creation and modification of event information without design skills
-- Trigger: User opens the app or clicks "Edit Card" button
-- Progression: Open form → Fill/update fields → Save → View generated card
-- Success criteria: All fields save correctly and persist between sessions; validation prevents empty critical fields
+**Boxer Registration Module**
+- Functionality: Form-based interface to register new boxers with State ID, name, phone, sponsor, and optional profile photo
+- Purpose: Onboard new fighters into the LSBA system with all required licensing information
+- Trigger: User navigates to Register tab and fills out registration form
+- Progression: Enter boxer details → Submit form → Boxer added to system → Appears on leaderboard → Profile created
+- Success criteria: All required fields validated; unique ID generated; boxer immediately appears in leaderboard; confirmation toast shown
 
-**Fight Card Display**
-- Functionality: Professional poster-style display showing the complete fight card with visual hierarchy, optional background images, and fighter photos
-- Purpose: Creates shareable, screenshot-ready promotional material for Discord, forums, in-game with customizable visuals
-- Trigger: User saves fight card data or toggles to preview mode
-- Progression: Save data → Render poster → Adjust if needed → Screenshot/share
-- Success criteria: Card displays clearly with proper typography, fighter names prominent, all info legible; background images blend well with text; fighter photos display properly without breaking layout
+**Dynamic Leaderboard**
+- Functionality: Auto-sorted list of all registered boxers ranked by win rate and total wins, displaying W-L-K records and stats
+- Purpose: Provide competitive rankings that motivate fighters and showcase top performers
+- Trigger: User opens Dashboard tab or when boxer stats are updated
+- Progression: Load boxers → Calculate win rates → Sort by performance → Display ranked list → Click boxer for profile
+- Success criteria: Rankings update automatically when stats change; top 3 get special visual treatment; win rate and record display accurately
 
-**Multiple Bouts Support**
-- Functionality: Add/remove multiple fights beyond main/co-main events
-- Purpose: Showcase full fight cards with undercard and preliminary bouts
-- Trigger: User clicks "Add Bout" or delete button on existing bout
-- Progression: Click add → Enter fighter names and bout type → Save → Appears on card
-- Success criteria: Dynamically adds/removes bouts; maintains visual hierarchy (main event most prominent)
+**Boxer Profile & Stats Management**
+- Functionality: Detailed profile page for each boxer with editable W/L/K stats, fight history, and visual stat tracking
+- Purpose: Manage individual fighter records and maintain comprehensive fight histories
+- Trigger: User clicks on a boxer from leaderboard
+- Progression: Select boxer → View profile → Adjust stats with +/- buttons → Add fight results → Stats update → Rank recalculates
+- Success criteria: Stats persist correctly; rank updates reflect new stats; fight history logs all results; quick add buttons for Win/Loss/KO work correctly
 
-**Sponsor Management**
-- Functionality: Add sponsor names/text that appear on the fight card
-- Purpose: Acknowledge in-game businesses and partners supporting the event
-- Trigger: User enters sponsor names in dedicated field
-- Progression: Type sponsor names → Position on card → Display on poster
-- Success criteria: Sponsors appear in designated area without cluttering main content
+**Fight History Tracking**
+- Functionality: Chronological log of all fights for each boxer with results, dates, and opponent names
+- Purpose: Maintain complete fight records for transparency and historical reference
+- Trigger: User adds fight result through quick buttons or manual stat adjustment
+- Progression: Add result → Opponent auto-set to TBD → Entry appears in history → Can be edited later
+- Success criteria: All fights logged with timestamps; results categorized properly; history displays in reverse chronological order
 
-**Background Image Customization**
-- Functionality: Add custom background image URL (Imgur, Discord CDN, etc.) to personalize fight card poster
-- Purpose: Allow organizers to brand events with venue photos, logos, or thematic imagery
-- Trigger: User enters image URL in background image field
-- Progression: Paste URL → Image loads as background → Adjusts opacity for text readability
-- Success criteria: Background displays without breaking layout; text remains legible with automatic overlay; handles broken image URLs gracefully
+**Auto-Generate Fight Card**
+- Functionality: Select multiple boxers from roster and automatically generate fight card with matchups
+- Purpose: Streamline event creation by intelligently pairing fighters based on selection order
+- Trigger: User navigates to Generator tab, selects boxers, enters event details, clicks generate
+- Progression: Select boxers → Set date/location → Preview matchups → Generate → Fight card created with all boxer data → Navigates to editor
+- Success criteria: Pairs fighters sequentially; first pair becomes main event; includes fighter photos and records automatically; preview shows bout structure
 
-**Fighter Photos**
-- Functionality: Add individual fighter photos via image URLs for main event and co-main event fighters
-- Purpose: Increase visual appeal and professionalism by showcasing fighter faces/poses
-- Trigger: User enters image URLs for fighter 1 and/or fighter 2 in bout fields
-- Progression: Enter URL → Photo displays beside fighter name → Scales appropriately → Falls back gracefully if image fails
-- Success criteria: Photos display in consistent sizes; handle both portrait and landscape images; don't break layout if one fighter has photo and other doesn't
+**Integrated Fight Card Editor**
+- Functionality: Full fight card editing system (existing feature) now integrated with boxer database
+- Purpose: Manual creation and editing of fight cards with option to pull from registered boxers or enter custom fighters
+- Trigger: User navigates to Fight Card tab or generates card from Generator
+- Progression: Edit card fields → Save → Preview → Share
+- Success criteria: Works seamlessly with auto-generated cards; can override or manually create cards; all existing editor features remain functional
+
+**Dashboard Overview**
+- Functionality: At-a-glance statistics showing total registered boxers, active fight cards, and possible match combinations
+- Purpose: Provide quick system status and encourage engagement with different modules
+- Trigger: User opens application (default view)
+- Progression: Load data → Display stats → Show leaderboard → Navigate to desired module
+- Success criteria: Stats update in real-time; leaderboard immediately visible; quick navigation to all modules
 
 ## Edge Case Handling
 
-- **Empty fields** - Display placeholder text or hide sections when optional fields are empty
-- **Long names** - Automatically scale font size or wrap text for exceptionally long fighter/location names
-- **No bouts added** - Show helpful prompt to add at least a main event
-- **Data persistence failure** - Gracefully handle with toast notification and retry mechanism
-- **Many sponsors** - Wrap or truncate sponsor list if it exceeds available space
-- **Invalid image URLs** - Hide broken images gracefully with error handling; show fighter names without disruption
-- **Large background images** - Apply opacity overlay to ensure text readability regardless of image brightness
-- **Mixed image availability** - Handle cases where only one fighter has a photo while the other doesn't; maintain layout symmetry
+- **No boxers registered** - Show empty state with prompt to register first boxer
+- **Odd number selected in generator** - Handle gracefully by leaving last boxer unmatched with notification
+- **Boxer with no fights** - Display 0-0-0 record and 0% win rate; show empty fight history message
+- **Duplicate State IDs** - Accept duplicates (boxers can have same ID in different jurisdictions)
+- **Very long names** - Truncate with ellipsis in leaderboard; full display in profiles
+- **Missing profile images** - Show initials in avatar fallback with consistent styling
+- **Zero total fights** - Handle win rate calculation (0/0) as 0% without errors
+- **Deleting boxer stats** - Can reduce to 0 but not negative values
+- **Many registered boxers** - Leaderboard scrolls; maintain performance with 100+ boxers
+- **Broken image URLs** - Fallback to initials in fight card generator and profiles
 
 ## Design Direction
 
-The design should evoke the high-energy, bold aesthetic of professional boxing promotions—think UFC/boxing PPV posters with dramatic typography, strong contrast, and unmistakable visual hierarchy. A rich interface serves the core purpose better than minimal, as this is about creating excitement and prestige for in-game events.
+The design should evoke the professional, data-driven aesthetic of modern sports management platforms (think ESPN stats pages, UFC rankings) while maintaining the bold, high-energy boxing promotion feel. A rich interface with clear information hierarchy serves the core purpose of managing a complete boxing organization.
 
 ## Color Selection
 
-Triadic color scheme (red, gold, black) creating a championship, premium boxing aesthetic that signals importance and excitement.
+Triadic color scheme (red, gold, black) creating a championship, premium boxing aesthetic that signals importance and excitement while maintaining data readability.
 
-- **Primary Color**: Deep Crimson Red (oklch(0.45 0.21 25)) - Represents the intensity and drama of boxing, used for main event emphasis and action elements
-- **Secondary Colors**: Championship Gold (oklch(0.80 0.15 85)) for titles and highlights; Pure Black (oklch(0.15 0 0)) for backgrounds and grounding elements
-- **Accent Color**: Electric Gold (oklch(0.85 0.18 90)) - High-impact highlight for championship belts, CTAs, and main fighter names
+- **Primary Color**: Deep Crimson Red (oklch(0.45 0.21 25)) - Represents the intensity and drama of boxing, used for main actions and key stats
+- **Secondary Colors**: Championship Gold (oklch(0.80 0.15 85)) for achievements, rankings, and highlights; Pure Black (oklch(0.15 0 0)) for backgrounds
+- **Accent Color**: Electric Gold (oklch(0.85 0.18 90)) - High-impact highlight for top rankings, CTAs, and special indicators
 - **Foreground/Background Pairings**:
   - Background (Black oklch(0.15 0 0)): White text (oklch(0.98 0 0)) - Ratio 15.2:1 ✓
   - Card (Dark Charcoal oklch(0.20 0 0)): White text (oklch(0.98 0 0)) - Ratio 13.8:1 ✓
@@ -86,59 +95,69 @@ Triadic color scheme (red, gold, black) creating a championship, premium boxing 
 
 ## Font Selection
 
-Typography should convey power, prestige, and athletic authority—combining bold condensed display fonts for fighter names with clean sans-serifs for supporting information.
+Typography should convey power, prestige, and athletic authority while maintaining excellent readability for data-heavy displays combining bold condensed display fonts with clean sans-serifs.
 
 - **Typographic Hierarchy**:
-  - H1 (Main Event Fighters): Bebas Neue Bold / 48px / Tight letter spacing / Uppercase
-  - H2 (Event Title/Championship): Bebas Neue Regular / 32px / Normal spacing / Uppercase
-  - H3 (Co-Main/Other Bouts): Bebas Neue Regular / 28px / Tight spacing
-  - Body (Date/Location): Inter Medium / 16px / Normal spacing
-  - Small (Sponsors): Inter Regular / 14px / Relaxed spacing
+  - H1 (Page Titles): Bebas Neue Bold / 56px / Wide letter spacing / Uppercase
+  - H2 (Section Headers): Bebas Neue Regular / 32px / Normal spacing / Uppercase
+  - Fighter Names (Display): Teko Bold / 32px / Tight spacing / Uppercase
+  - Body (Data/Forms): Inter Medium / 16px / Normal spacing
+  - Small (Labels/Meta): Inter Regular / 14px / Relaxed spacing
+  - Stats (Numbers): Bebas Neue / 36px / Tight spacing
 
 ## Animations
 
-Animations should be minimal and functional—subtle transitions between edit/preview modes and smooth form interactions that maintain focus on content creation over flashy effects.
+Animations should be purposeful and enhance data comprehension—smooth transitions between modules, satisfying feedback on stat updates, and subtle hover states that guide interaction.
 
-- **Purposeful Meaning**: Quick fade transitions communicate mode switching; form field highlights guide input focus
-- **Hierarchy of Movement**: Save button gets satisfying scale feedback; bout additions slide in smoothly; no distracting motion on the poster display itself
+- **Purposeful Meaning**: Tab transitions fade content; stat increments scale briefly; rank changes highlight temporarily; form submissions show success state
+- **Hierarchy of Movement**: Critical actions (register boxer, save card) get prominent feedback; stat adjustments feel responsive; leaderboard updates smoothly
 
 ## Component Selection
 
 - **Components**: 
-  - Card (main fight card display with dramatic styling)
-  - Input (all text fields with boxing-themed styling)
-  - Button (primary for save, secondary for add bout, destructive for delete)
-  - Separator (dividing bouts and sections)
-  - Badge (for bout types: "Main Event", "Co-Main Event", "Undercard")
-  - ScrollArea (for managing many bouts in editor)
-  - Tabs (switching between Edit and Preview modes)
-  - Label (form field labels)
-  - Textarea (multi-line fields for sponsors or notes)
+  - Card (profiles, registration forms, leaderboard containers)
+  - Input (all form fields with consistent styling)
+  - Button (primary actions, stat adjustments, navigation)
+  - Tabs (main navigation between modules)
+  - Avatar (boxer profile images with fallback)
+  - Badge (bout types, rankings, status indicators)
+  - Checkbox (multi-select in fight card generator)
+  - Separator (section dividers)
+  - ScrollArea (leaderboard, fight history)
+  - Label (form labels throughout)
 
 - **Customizations**: 
-  - Custom fight card poster component with dramatic gradient backgrounds
-  - Fighter name display with VS separator graphic
-  - Championship belt icon/graphic for title fights
-  - Sponsor footer section with subtle styling
+  - Custom leaderboard card with rank indicators and trophy icons for top 3
+  - Stat adjustment interface with +/- buttons
+  - Fight card generator with selection preview
+  - Profile page with comprehensive stat display
+  - Dashboard stat cards with gradient backgrounds
 
 - **States**: 
-  - Buttons: Bold hover states with scale transforms; disabled state for save when no changes
-  - Inputs: Strong focus rings in accent color; error states for validation
-  - Bouts: Hover state shows edit controls; selected state for active editing
+  - Buttons: Bold hover with scale; disabled for invalid actions; loading for submissions
+  - List items: Hover shows interactivity; selected state for fight card generator
+  - Inputs: Strong focus rings; validation feedback; success confirmation
+  - Stats: Brief highlight animation when updated
 
 - **Icon Selection**: 
-  - Plus (add bout)
-  - Trash (remove bout) 
-  - FloppyDisk (save)
-  - Eye (preview mode)
-  - PencilSimple (edit mode)
-  - Trophy (championship indicator)
+  - UserPlus (register)
+  - ChartLine (leaderboard/stats)
+  - Sparkle (auto-generate)
+  - Trophy (rankings)
+  - Plus/Minus (stat adjustments)
+  - Target (stat management)
+  - SquaresFour (dashboard)
+  - ArrowLeft (back navigation)
 
-- **Spacing**: Generous padding on card (p-8), consistent gaps between form fields (gap-4), tight spacing for fighter names to create drama (gap-2)
+- **Spacing**: 
+  - Consistent gap-4 between form elements
+  - gap-6 between major sections
+  - p-6 for card padding
+  - Generous spacing in stat displays for readability
 
 - **Mobile**: 
-  - Stack form fields vertically
-  - Reduce fight card poster font sizes proportionally
-  - Make tabs full-width
-  - Collapse sponsor section to single column
-  - Maintain readability of fighter names as top priority
+  - Stack all form fields vertically
+  - Collapse leaderboard to single column
+  - Tab labels hide text on smallest screens, show icons only
+  - Profile stats grid adjusts to 2 columns
+  - Stat adjustment buttons remain touch-friendly (44px minimum)
