@@ -505,7 +505,7 @@ function App() {
               <TabsContent value="sponsors" className="mt-6">
                 <div className="flex flex-col gap-6">
                   <SponsorRegistration onRegister={handleRegisterSponsor} />
-                  <SponsorList sponsors={sponsorsList} boxers={boxersList} />
+                  <SponsorList sponsors={sponsorsList} />
                 </div>
               </TabsContent>
 

@@ -1,24 +1,12 @@
-import { Briefcase, Phone, Calendar, Users, User } from '@phosphor-icons/react';
+import { Briefcase, Phone, Calendar, Users } from '@phosphor-icons/react';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import type { Sponsor, Boxer } from '@/types/boxer';
+import type { Sponsor } from '@/types/boxer';
 
 interface SponsorListProps {
   sponsors: Sponsor[];
-  boxers?: Boxer[];
 }
 
-export function SponsorList({ sponsors, boxers = [] }: SponsorListProps) {
-  const getBoxerById = (boxerId: string) => {
-    return boxers.find(b => b.id === boxerId);
-  };
-
-  const getSponsoredBoxers = (sponsor: Sponsor) => {
-    return sponsor.boxersSponsored
-      .map(id => getBoxerById(id))
-      .filter((boxer): boxer is Boxer => boxer !== undefined);
-  };
+export function SponsorList({ sponsors }: SponsorListProps) {
   if (sponsors.length === 0) {
     return (
       <Card className="p-12 text-center">
@@ -32,8 +20,6 @@ export function SponsorList({ sponsors, boxers = [] }: SponsorListProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {sponsors.map((sponsor) => {
-        const sponsoredBoxers = getSponsoredBoxers(sponsor);
-        
         return (
           <Card key={sponsor.id} className="p-6 hover:border-accent/50 transition-colors">
             <div className="flex items-start gap-4">
@@ -70,31 +56,6 @@ export function SponsorList({ sponsors, boxers = [] }: SponsorListProps) {
                     </div>
                   </div>
                 </div>
-
-                {sponsoredBoxers.length > 0 && (
-                  <>
-                    <Separator className="my-4" />
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <User className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                          Sponsored Fighters
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {sponsoredBoxers.map((boxer) => (
-                          <Badge 
-                            key={boxer.id} 
-                            variant="secondary"
-                            className="text-xs"
-                          >
-                            {boxer.firstName} {boxer.lastName}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  </>
-                )}
               </div>
             </div>
           </Card>
