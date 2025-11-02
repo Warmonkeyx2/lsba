@@ -1,11 +1,11 @@
-import { Plus, Trash, Image } from "@phosphor-icons/react";
+import { Plus, Trash } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Card } from "@/components/ui/card";
+import { ImageUpload } from "@/components/ImageUpload";
 import type { FightCard, Bout } from "@/types/fightCard";
 
 interface FightCardEditorProps {
@@ -82,42 +82,16 @@ export function FightCardEditor({ fightCard, onChange }: FightCardEditorProps) {
       <Card className="p-6">
         <h2 className="text-xl font-semibold mb-4 text-secondary">Event Details</h2>
         <div className="flex flex-col gap-4">
-          <div>
-            <Label htmlFor="custom-logo">Custom LSBA Logo URL (Optional)</Label>
-            <div className="flex gap-2 mt-1">
-              <Input
-                id="custom-logo"
-                placeholder="https://example.com/logo.png or imgur link"
-                value={fightCard.customLogo || ''}
-                onChange={(e) => onChange({ ...fightCard, customLogo: e.target.value })}
-              />
-              {fightCard.customLogo && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onChange({ ...fightCard, customLogo: '' })}
-                  className="shrink-0"
-                >
-                  <Trash className="w-4 h-4" />
-                </Button>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Replace the default LSBA text with your custom logo image
-            </p>
-            {fightCard.customLogo && (
-              <div className="mt-2 p-4 bg-muted rounded-lg flex justify-center">
-                <img 
-                  src={fightCard.customLogo} 
-                  alt="Custom Logo Preview" 
-                  className="max-h-24 object-contain"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
-              </div>
-            )}
-          </div>
+          <ImageUpload
+            id="custom-logo"
+            label="Custom LSBA Logo (Optional)"
+            value={fightCard.customLogo || ''}
+            onChange={(value) => onChange({ ...fightCard, customLogo: value })}
+            onClear={() => onChange({ ...fightCard, customLogo: '' })}
+            placeholder="https://example.com/logo.png or upload a file"
+            helperText="Replace the default LSBA text with your custom logo image"
+            maxSizeMB={2}
+          />
           <div>
             <Label htmlFor="event-date">Event Date</Label>
             <Input
@@ -138,30 +112,16 @@ export function FightCardEditor({ fightCard, onChange }: FightCardEditorProps) {
               className="mt-1"
             />
           </div>
-          <div>
-            <Label htmlFor="background-image">Background Image URL (Optional)</Label>
-            <div className="flex gap-2 mt-1">
-              <Input
-                id="background-image"
-                placeholder="https://example.com/image.jpg or imgur link"
-                value={fightCard.backgroundImage || ''}
-                onChange={(e) => onChange({ ...fightCard, backgroundImage: e.target.value })}
-              />
-              {fightCard.backgroundImage && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onChange({ ...fightCard, backgroundImage: '' })}
-                  className="shrink-0"
-                >
-                  <Trash className="w-4 h-4" />
-                </Button>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Add a background image URL (works with Imgur, Discord CDN, etc.)
-            </p>
-          </div>
+          <ImageUpload
+            id="background-image"
+            label="Background Image (Optional)"
+            value={fightCard.backgroundImage || ''}
+            onChange={(value) => onChange({ ...fightCard, backgroundImage: value })}
+            onClear={() => onChange({ ...fightCard, backgroundImage: '' })}
+            placeholder="https://example.com/image.jpg or upload a file"
+            helperText="Add a background image URL or upload a file (works with Imgur, Discord CDN, etc.)"
+            maxSizeMB={3}
+          />
         </div>
       </Card>
 
@@ -181,14 +141,17 @@ export function FightCardEditor({ fightCard, onChange }: FightCardEditorProps) {
                 onChange={(e) => updateMainEvent('fighter1', e.target.value)}
                 className="mt-1"
               />
-              <Label htmlFor="main-fighter1-image" className="mt-2 inline-block">Fighter 1 Image URL (Optional)</Label>
-              <Input
-                id="main-fighter1-image"
-                placeholder="https://example.com/fighter1.jpg"
-                value={fightCard.mainEvent.fighter1Image || ''}
-                onChange={(e) => updateMainEvent('fighter1Image', e.target.value)}
-                className="mt-1"
-              />
+              <div className="mt-3">
+                <ImageUpload
+                  id="main-fighter1-image"
+                  label="Fighter 1 Image (Optional)"
+                  value={fightCard.mainEvent.fighter1Image || ''}
+                  onChange={(value) => updateMainEvent('fighter1Image', value)}
+                  onClear={() => updateMainEvent('fighter1Image', '')}
+                  placeholder="URL or upload file"
+                  maxSizeMB={1}
+                />
+              </div>
               <Label className="mt-2 inline-block">Fighter 1 Record (Optional)</Label>
               <div className="grid grid-cols-3 gap-2 mt-1">
                 <div>
@@ -241,14 +204,17 @@ export function FightCardEditor({ fightCard, onChange }: FightCardEditorProps) {
                 onChange={(e) => updateMainEvent('fighter2', e.target.value)}
                 className="mt-1"
               />
-              <Label htmlFor="main-fighter2-image" className="mt-2 inline-block">Fighter 2 Image URL (Optional)</Label>
-              <Input
-                id="main-fighter2-image"
-                placeholder="https://example.com/fighter2.jpg"
-                value={fightCard.mainEvent.fighter2Image || ''}
-                onChange={(e) => updateMainEvent('fighter2Image', e.target.value)}
-                className="mt-1"
-              />
+              <div className="mt-3">
+                <ImageUpload
+                  id="main-fighter2-image"
+                  label="Fighter 2 Image (Optional)"
+                  value={fightCard.mainEvent.fighter2Image || ''}
+                  onChange={(value) => updateMainEvent('fighter2Image', value)}
+                  onClear={() => updateMainEvent('fighter2Image', '')}
+                  placeholder="URL or upload file"
+                  maxSizeMB={1}
+                />
+              </div>
               <Label className="mt-2 inline-block">Fighter 2 Record (Optional)</Label>
               <div className="grid grid-cols-3 gap-2 mt-1">
                 <div>
@@ -334,14 +300,17 @@ export function FightCardEditor({ fightCard, onChange }: FightCardEditorProps) {
                 onChange={(e) => updateCoMainEvent('fighter1', e.target.value)}
                 className="mt-1"
               />
-              <Label htmlFor="co-fighter1-image" className="mt-2 inline-block">Fighter 1 Image URL (Optional)</Label>
-              <Input
-                id="co-fighter1-image"
-                placeholder="https://example.com/fighter1.jpg"
-                value={fightCard.coMainEvent?.fighter1Image || ''}
-                onChange={(e) => updateCoMainEvent('fighter1Image', e.target.value)}
-                className="mt-1"
-              />
+              <div className="mt-3">
+                <ImageUpload
+                  id="co-fighter1-image"
+                  label="Fighter 1 Image (Optional)"
+                  value={fightCard.coMainEvent?.fighter1Image || ''}
+                  onChange={(value) => updateCoMainEvent('fighter1Image', value)}
+                  onClear={() => updateCoMainEvent('fighter1Image', '')}
+                  placeholder="URL or upload file"
+                  maxSizeMB={1}
+                />
+              </div>
               <Label className="mt-2 inline-block text-sm">Fighter 1 Record (Optional)</Label>
               <div className="grid grid-cols-3 gap-2 mt-1">
                 <div>
@@ -394,14 +363,17 @@ export function FightCardEditor({ fightCard, onChange }: FightCardEditorProps) {
                 onChange={(e) => updateCoMainEvent('fighter2', e.target.value)}
                 className="mt-1"
               />
-              <Label htmlFor="co-fighter2-image" className="mt-2 inline-block">Fighter 2 Image URL (Optional)</Label>
-              <Input
-                id="co-fighter2-image"
-                placeholder="https://example.com/fighter2.jpg"
-                value={fightCard.coMainEvent?.fighter2Image || ''}
-                onChange={(e) => updateCoMainEvent('fighter2Image', e.target.value)}
-                className="mt-1"
-              />
+              <div className="mt-3">
+                <ImageUpload
+                  id="co-fighter2-image"
+                  label="Fighter 2 Image (Optional)"
+                  value={fightCard.coMainEvent?.fighter2Image || ''}
+                  onChange={(value) => updateCoMainEvent('fighter2Image', value)}
+                  onClear={() => updateCoMainEvent('fighter2Image', '')}
+                  placeholder="URL or upload file"
+                  maxSizeMB={1}
+                />
+              </div>
               <Label className="mt-2 inline-block text-sm">Fighter 2 Record (Optional)</Label>
               <div className="grid grid-cols-3 gap-2 mt-1">
                 <div>
@@ -495,14 +467,17 @@ export function FightCardEditor({ fightCard, onChange }: FightCardEditorProps) {
                         onChange={(e) => updateBout(index, 'fighter1', e.target.value)}
                         className="mt-1"
                       />
-                      <Label htmlFor={`bout-${index}-fighter1-image`} className="mt-2 inline-block text-xs">Image URL (Optional)</Label>
-                      <Input
-                        id={`bout-${index}-fighter1-image`}
-                        placeholder="Fighter 1 image URL"
-                        value={bout.fighter1Image || ''}
-                        onChange={(e) => updateBout(index, 'fighter1Image', e.target.value)}
-                        className="mt-1"
-                      />
+                      <div className="mt-2">
+                        <ImageUpload
+                          id={`bout-${index}-fighter1-image`}
+                          label="Image (Optional)"
+                          value={bout.fighter1Image || ''}
+                          onChange={(value) => updateBout(index, 'fighter1Image', value)}
+                          onClear={() => updateBout(index, 'fighter1Image', '')}
+                          placeholder="URL or upload"
+                          maxSizeMB={1}
+                        />
+                      </div>
                       <Label className="mt-2 inline-block text-xs">Record (Optional)</Label>
                       <div className="grid grid-cols-3 gap-1 mt-1">
                         <Input
@@ -540,14 +515,17 @@ export function FightCardEditor({ fightCard, onChange }: FightCardEditorProps) {
                         onChange={(e) => updateBout(index, 'fighter2', e.target.value)}
                         className="mt-1"
                       />
-                      <Label htmlFor={`bout-${index}-fighter2-image`} className="mt-2 inline-block text-xs">Image URL (Optional)</Label>
-                      <Input
-                        id={`bout-${index}-fighter2-image`}
-                        placeholder="Fighter 2 image URL"
-                        value={bout.fighter2Image || ''}
-                        onChange={(e) => updateBout(index, 'fighter2Image', e.target.value)}
-                        className="mt-1"
-                      />
+                      <div className="mt-2">
+                        <ImageUpload
+                          id={`bout-${index}-fighter2-image`}
+                          label="Image (Optional)"
+                          value={bout.fighter2Image || ''}
+                          onChange={(value) => updateBout(index, 'fighter2Image', value)}
+                          onClear={() => updateBout(index, 'fighter2Image', '')}
+                          placeholder="URL or upload"
+                          maxSizeMB={1}
+                        />
+                      </div>
                       <Label className="mt-2 inline-block text-xs">Record (Optional)</Label>
                       <div className="grid grid-cols-3 gap-1 mt-1">
                         <Input
