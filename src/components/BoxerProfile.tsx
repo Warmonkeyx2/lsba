@@ -210,15 +210,21 @@ export function BoxerProfile({ boxer, allBoxers, onBack, onUpdateBoxer }: BoxerP
               {boxer.fightHistory.map((fight) => (
                 <div key={fight.id} className="p-4 border border-border rounded-lg">
                   <div className="flex items-center justify-between mb-2">
-                    <Badge
-                      className={
-                        fight.result === 'win' || fight.result === 'knockout'
-                          ? 'bg-secondary text-secondary-foreground'
-                          : 'bg-destructive text-destructive-foreground'
-                      }
-                    >
-                      {fight.result === 'knockout' ? 'KO WIN' : fight.result.toUpperCase()}
-                    </Badge>
+                    {fight.result === 'pending' ? (
+                      <Badge variant="outline" className="bg-muted text-muted-foreground">
+                        UPCOMING
+                      </Badge>
+                    ) : (
+                      <Badge
+                        className={
+                          fight.result === 'win' || fight.result === 'knockout'
+                            ? 'bg-secondary text-secondary-foreground'
+                            : 'bg-destructive text-destructive-foreground'
+                        }
+                      >
+                        {fight.result === 'knockout' ? 'KO WIN' : fight.result.toUpperCase()}
+                      </Badge>
+                    )}
                     <span className="text-xs text-muted-foreground">
                       {new Date(fight.date).toLocaleDateString()}
                     </span>

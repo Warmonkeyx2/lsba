@@ -9,7 +9,8 @@ import {
   Calendar,
   Briefcase,
   X,
-  Check
+  Check,
+  Eye
 } from "@phosphor-icons/react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -35,9 +36,10 @@ interface BoxerDirectoryProps {
   sponsors: Sponsor[];
   onUpdateBoxer: (boxer: Boxer) => void;
   onDeleteBoxer: (boxerId: string) => void;
+  onViewProfile: (boxer: Boxer) => void;
 }
 
-export function BoxerDirectory({ boxers, sponsors, onUpdateBoxer, onDeleteBoxer }: BoxerDirectoryProps) {
+export function BoxerDirectory({ boxers, sponsors, onUpdateBoxer, onDeleteBoxer, onViewProfile }: BoxerDirectoryProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [editingBoxer, setEditingBoxer] = useState<Boxer | null>(null);
   const [deletingBoxer, setDeletingBoxer] = useState<Boxer | null>(null);
@@ -169,6 +171,15 @@ export function BoxerDirectory({ boxers, sponsors, onUpdateBoxer, onDeleteBoxer 
                       <Button
                         variant="outline"
                         size="sm"
+                        onClick={() => onViewProfile(boxer)}
+                        className="hover:bg-accent hover:text-accent-foreground"
+                      >
+                        <Eye className="w-4 h-4 md:mr-2" />
+                        <span className="hidden md:inline">View</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => setEditingBoxer(boxer)}
                         className="hover:bg-secondary hover:text-secondary-foreground"
                       >
@@ -217,16 +228,22 @@ export function BoxerDirectory({ boxers, sponsors, onUpdateBoxer, onDeleteBoxer 
                       <div className="space-y-1">
                         {boxer.fightHistory.slice(0, 3).map((fight) => (
                           <div key={fight.id} className="text-sm flex items-center gap-2">
-                            <Badge 
-                              variant={fight.result === 'win' || fight.result === 'knockout' ? 'default' : 'secondary'}
-                              className={
-                                fight.result === 'win' || fight.result === 'knockout' 
-                                  ? 'bg-accent text-accent-foreground' 
-                                  : ''
-                              }
-                            >
-                              {fight.result === 'knockout' ? 'KO' : fight.result.toUpperCase()}
-                            </Badge>
+                            {fight.result === 'pending' ? (
+                              <Badge variant="outline" className="bg-muted text-muted-foreground">
+                                UPCOMING
+                              </Badge>
+                            ) : (
+                              <Badge 
+                                variant={fight.result === 'win' || fight.result === 'knockout' ? 'default' : 'secondary'}
+                                className={
+                                  fight.result === 'win' || fight.result === 'knockout' 
+                                    ? 'bg-accent text-accent-foreground' 
+                                    : ''
+                                }
+                              >
+                                {fight.result === 'knockout' ? 'KO' : fight.result.toUpperCase()}
+                              </Badge>
+                            )}
                             <span className="text-muted-foreground">vs {fight.opponent}</span>
                             <span className="text-muted-foreground text-xs">
                               {new Date(fight.date).toLocaleDateString()}

@@ -79,12 +79,15 @@ export function FightCardGenerator({ boxers, allBoxers, onGenerate }: FightCardG
     const otherBouts = bouts.slice(2);
 
     const fightCard: FightCard = {
+      id: `fight-card-${Date.now()}`,
       eventDate,
       location,
       mainEvent,
       coMainEvent,
       otherBouts,
       sponsors: '',
+      status: 'upcoming',
+      createdDate: new Date().toISOString(),
     };
 
     onGenerate(fightCard, selectedBoxers);

@@ -18,11 +18,14 @@ export interface Bout {
     losses: string;
     knockouts: string;
   };
+  winner?: 'fighter1' | 'fighter2';
+  knockout?: boolean;
   title?: string;
   type: 'main' | 'co-main' | 'undercard' | 'preliminary';
 }
 
 export interface FightCard {
+  id?: string;
   eventDate: string;
   location: string;
   mainEvent: Bout;
@@ -31,4 +34,6 @@ export interface FightCard {
   sponsors: string;
   backgroundImage?: string;
   customLogo?: string;
+  status: 'upcoming' | 'completed';
+  createdDate?: string;
 }

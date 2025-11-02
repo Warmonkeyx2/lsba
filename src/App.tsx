@@ -9,7 +9,8 @@ import {
   Sparkle,
   SquaresFour,
   Briefcase,
-  AddressBook
+  AddressBook,
+  Calendar
 } from "@phosphor-icons/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,8 @@ import { FightCardGenerator } from "@/components/FightCardGenerator";
 import { SponsorRegistration } from "@/components/SponsorRegistration";
 import { SponsorList } from "@/components/SponsorList";
 import { BoxerDirectory } from "@/components/BoxerDirectory";
+import { UpcomingFights } from "@/components/UpcomingFights";
+import { FightResultsManager } from "@/components/FightResultsManager";
 import { toast, Toaster } from "sonner";
 import type { FightCard } from "@/types/fightCard";
 import type { Boxer, Sponsor } from "@/types/boxer";
@@ -37,11 +40,13 @@ const defaultFightCard: FightCard = {
   },
   otherBouts: [],
   sponsors: '',
+  status: 'upcoming',
 };
 
 function App() {
   const [savedCard, setSavedCard] = useKV<FightCard>('lsba-fight-card', defaultFightCard);
   const [editingCard, setEditingCard] = useState<FightCard>(savedCard || defaultFightCard);
+  const [fightCards, setFightCards] = useKV<FightCard[]>('lsba-fight-cards', []);
   const [boxers, setBoxers] = useKV<Boxer[]>('lsba-boxers', []);
   const [sponsors, setSponsors] = useKV<Sponsor[]>('lsba-sponsors', []);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
@@ -49,6 +54,7 @@ function App() {
 
   const boxersList = boxers || [];
   const sponsorsList = sponsors || [];
+  const fightCardsList = fightCards || [];
   const currentCard = savedCard || defaultFightCard;
 
   const handleSave = () => {
@@ -80,8 +86,10 @@ function App() {
     setEditingCard(fightCard);
     setSavedCard(fightCard);
     
-    const eventName = `LSBA Event - ${fightCard.eventDate}`;
-    const eventDate = new Date().toISOString();
+    setFightCards((current) => [...(current || []), fightCard]);
+    
+    const eventName = fightCard.mainEvent.title || `LSBA Event - ${fightCard.eventDate}`;
+    const eventDate = fightCard.createdDate || new Date().toISOString();
     
     const matchedPairs: Array<[string, string]> = [];
     for (let i = 0; i < boxerIds.length; i += 2) {
@@ -103,8 +111,9 @@ function App() {
               id: `fight-${Date.now()}-${fighterId1}`,
               opponent: opponent ? `${opponent.firstName} ${opponent.lastName}` : 'TBD',
               date: eventDate,
-              result: 'win',
+              result: 'pending',
               eventName,
+              fightCardId: fightCard.id,
             },
             ...updated[boxer1Index].fightHistory,
           ];
@@ -117,8 +126,9 @@ function App() {
               id: `fight-${Date.now()}-${fighterId2}`,
               opponent: opponent ? `${opponent.firstName} ${opponent.lastName}` : 'TBD',
               date: eventDate,
-              result: 'win',
+              result: 'pending',
               eventName,
+              fightCardId: fightCard.id,
             },
             ...updated[boxer2Index].fightHistory,
           ];
@@ -127,7 +137,56 @@ function App() {
       return updated;
     });
     
-    setActiveTab('fight-card');
+    setActiveTab('upcoming-fights');
+    toast.success('Fight card generated! View upcoming fights.');
+  };
+
+  const handleDeclareResults = (updatedCard: FightCard, boxerUpdates: Map<string, Partial<Boxer>>) => {
+    setFightCards((current) =>
+      (current || []).map((card) => (card.id === updatedCard.id ? updatedCard : card))
+    );
+
+    setBoxers((current) => {
+      const updated = [...(current || [])];
+      boxerUpdates.forEach((updates, boxerId) => {
+        const index = updated.findIndex((b) => b.id === boxerId);
+        if (index !== -1) {
+          updated[index] = {
+            ...updated[index],
+            wins: updates.wins ?? updated[index].wins,
+            losses: updates.losses ?? updated[index].losses,
+            knockouts: updates.knockouts ?? updated[index].knockouts,
+          };
+
+          updated[index].fightHistory = updated[index].fightHistory.map((fight) => {
+            if (fight.fightCardId === updatedCard.id && fight.result === 'pending') {
+              const allBouts = [
+                updatedCard.mainEvent,
+                ...(updatedCard.coMainEvent ? [updatedCard.coMainEvent] : []),
+                ...updatedCard.otherBouts,
+              ];
+
+              const bout = allBouts.find(
+                (b) => b.fighter1Id === boxerId || b.fighter2Id === boxerId
+              );
+
+              if (bout && bout.winner) {
+                const isWinner = 
+                  (bout.winner === 'fighter1' && bout.fighter1Id === boxerId) ||
+                  (bout.winner === 'fighter2' && bout.fighter2Id === boxerId);
+
+                return {
+                  ...fight,
+                  result: isWinner ? (bout.knockout ? 'knockout' : 'win') : 'loss',
+                };
+              }
+            }
+            return fight;
+          });
+        }
+      });
+      return updated;
+    });
   };
 
   const hasChanges = JSON.stringify(currentCard) !== JSON.stringify(editingCard);
@@ -169,10 +228,14 @@ function App() {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto">
+              <TabsList className="grid w-full grid-cols-4 md:grid-cols-7 h-auto">
                 <TabsTrigger value="dashboard" className="flex items-center gap-2 py-3">
                   <SquaresFour className="w-4 h-4" />
                   <span className="hidden sm:inline">Dashboard</span>
+                </TabsTrigger>
+                <TabsTrigger value="upcoming-fights" className="flex items-center gap-2 py-3">
+                  <Calendar className="w-4 h-4" />
+                  <span className="hidden sm:inline">Upcoming</span>
                 </TabsTrigger>
                 <TabsTrigger value="directory" className="flex items-center gap-2 py-3">
                   <AddressBook className="w-4 h-4" />
@@ -213,13 +276,13 @@ function App() {
 
                     <div className="bg-gradient-to-br from-secondary/20 to-secondary/5 border border-secondary/30 rounded-lg p-6">
                       <div className="flex items-center gap-3 mb-2">
-                        <FloppyDisk className="w-8 h-8 text-secondary" weight="bold" />
+                        <Calendar className="w-8 h-8 text-secondary" weight="bold" />
                         <div className="text-4xl font-display font-bold text-secondary">
-                          {currentCard.mainEvent.fighter1 ? '1' : '0'}
+                          {fightCardsList.filter(card => card.status === 'upcoming').length}
                         </div>
                       </div>
                       <div className="text-sm uppercase tracking-wide text-muted-foreground">
-                        Active Fight Cards
+                        Upcoming Events
                       </div>
                     </div>
 
@@ -227,16 +290,59 @@ function App() {
                       <div className="flex items-center gap-3 mb-2">
                         <Sparkle className="w-8 h-8 text-accent" weight="fill" />
                         <div className="text-4xl font-display font-bold text-accent">
-                          {Math.floor(boxersList.length / 2)}
+                          {fightCardsList.filter(card => card.status === 'upcoming').reduce((total, card) => {
+                            const allBouts = [card.mainEvent, ...(card.coMainEvent ? [card.coMainEvent] : []), ...card.otherBouts];
+                            return total + allBouts.filter(bout => bout.fighter1 && bout.fighter2).length;
+                          }, 0)}
                         </div>
                       </div>
                       <div className="text-sm uppercase tracking-wide text-muted-foreground">
-                        Possible Matches
+                        Scheduled Fights
                       </div>
                     </div>
                   </div>
 
+                  <UpcomingFights fightCards={fightCardsList} boxers={boxersList} />
+
                   <BoxerLeaderboard boxers={boxersList} onSelectBoxer={setSelectedBoxer} />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="upcoming-fights" className="mt-6">
+                <div className="flex flex-col gap-6">
+                  <div className="flex flex-col gap-4">
+                    <div>
+                      <h2 className="font-display text-3xl uppercase text-secondary tracking-wide">
+                        Upcoming Fights
+                      </h2>
+                      <p className="text-muted-foreground mt-1">
+                        Scheduled bouts awaiting results
+                      </p>
+                    </div>
+                  </div>
+
+                  <UpcomingFights fightCards={fightCardsList} boxers={boxersList} />
+
+                  {fightCardsList.filter(card => card.status === 'upcoming').length > 0 && (
+                    <>
+                      <div className="mt-8">
+                        <h3 className="font-display text-2xl uppercase text-secondary tracking-wide mb-4">
+                          Declare Results
+                        </h3>
+                        <p className="text-muted-foreground mb-6">
+                          Select a fight card below to declare winners and update fighter records
+                        </p>
+                      </div>
+                      {fightCardsList.filter(card => card.status === 'upcoming').map((card) => (
+                        <FightResultsManager
+                          key={card.id}
+                          fightCard={card}
+                          boxers={boxersList}
+                          onDeclareResults={handleDeclareResults}
+                        />
+                      ))}
+                    </>
+                  )}
                 </div>
               </TabsContent>
 
@@ -246,6 +352,7 @@ function App() {
                   sponsors={sponsorsList}
                   onUpdateBoxer={handleUpdateBoxer}
                   onDeleteBoxer={handleDeleteBoxer}
+                  onViewProfile={setSelectedBoxer}
                 />
               </TabsContent>
 

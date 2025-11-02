@@ -17,9 +17,10 @@ export interface FightHistory {
   id: string;
   opponent: string;
   date: string;
-  result: 'win' | 'loss' | 'knockout';
+  result: 'win' | 'loss' | 'knockout' | 'pending';
   eventName?: string;
   notes?: string;
+  fightCardId?: string;
 }
 
 export interface Sponsor {
