@@ -18,7 +18,7 @@ import {
 } from "@phosphor-icons/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { DesktopFrame } from "@/components/DesktopFrame";
+
 import { FightCardEditor } from "@/components/FightCardEditor";
 import { FightCardDisplay } from "@/components/FightCardDisplay";
 import { BoxerRegistration } from "@/components/BoxerRegistration";
@@ -385,9 +385,9 @@ function App() {
 
   if (selectedSponsor) {
     return (
-      <DesktopFrame>
+      <>
         <Toaster position="top-center" richColors />
-        <div className="h-full overflow-auto">
+        <div className="min-h-screen bg-background">
           <div className="container mx-auto px-4 py-8">
             <div className="max-w-6xl mx-auto">
               <SponsorProfile
@@ -399,15 +399,15 @@ function App() {
             </div>
           </div>
         </div>
-      </DesktopFrame>
+      </>
     );
   }
 
   if (selectedBoxer) {
     return (
-      <DesktopFrame>
+      <>
         <Toaster position="top-center" richColors />
-        <div className="h-full overflow-auto">
+        <div className="min-h-screen bg-background">
           <div className="container mx-auto px-4 py-8">
             <div className="max-w-6xl mx-auto">
               <BoxerProfile
@@ -419,15 +419,15 @@ function App() {
             </div>
           </div>
         </div>
-      </DesktopFrame>
+      </>
     );
   }
 
   return (
-    <DesktopFrame>
+    <>
       <Toaster position="top-center" richColors />
       
-      <div className="h-full overflow-auto">
+      <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col gap-6">
@@ -700,7 +700,7 @@ function App() {
           </div>
         </div>
       </div>
-    </DesktopFrame>
+    </>
   );
 }
 
