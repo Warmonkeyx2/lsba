@@ -45,6 +45,7 @@ import {
   DEFAULT_PAYOUT_SETTINGS,
   CASINO_NAME,
   calculatePayoutBreakdown,
+  convertOddsForDisplay,
 } from '@/lib/bettingUtils';
 
 interface BettingManagerProps {
@@ -178,7 +179,8 @@ export function BettingManager({
         ? currentFightOdds.fighter1Odds
         : currentFightOdds.fighter2Odds;
 
-    const potentialPayout = calculatePayout(amount, odds, oddsFormat);
+    const storedOddsFormat = currentFightOdds.oddsFormat || 'american';
+    const potentialPayout = calculatePayout(amount, odds, storedOddsFormat);
 
     const bet: Bet = {
       id: `bet-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -542,10 +544,10 @@ export function BettingManager({
                         >
                           <div className="font-semibold">{selectedBout.fighter1}</div>
                           <div className="text-2xl font-display font-bold text-primary mt-1">
-                            {formatOdds(
+                            {convertOddsForDisplay(
                               currentFightOdds.fighter1Odds,
                               oddsFormat,
-                              currentFightOdds.fighter1ImpliedProbability
+                              currentFightOdds.fighter1ImpliedProbability || 0.5
                             )}
                           </div>
                           <div className="text-xs text-muted-foreground mt-1">
@@ -566,10 +568,10 @@ export function BettingManager({
                         >
                           <div className="font-semibold">{selectedBout.fighter2}</div>
                           <div className="text-2xl font-display font-bold text-primary mt-1">
-                            {formatOdds(
+                            {convertOddsForDisplay(
                               currentFightOdds.fighter2Odds,
                               oddsFormat,
-                              currentFightOdds.fighter2ImpliedProbability
+                              currentFightOdds.fighter2ImpliedProbability || 0.5
                             )}
                           </div>
                           <div className="text-xs text-muted-foreground mt-1">
@@ -613,13 +615,15 @@ export function BettingManager({
                           <span className="text-sm text-muted-foreground">Total Potential Payout:</span>
                           <span className="text-2xl font-display font-bold text-accent">
                             $
-                            {calculatePayout(
-                              parseFloat(betAmount),
-                              selectedFighter === currentFightOdds.fighter1Id
+                            {(() => {
+                              const amount = parseFloat(betAmount);
+                              const odds = selectedFighter === currentFightOdds.fighter1Id
                                 ? currentFightOdds.fighter1Odds
-                                : currentFightOdds.fighter2Odds,
-                              oddsFormat
-                            ).toLocaleString()}
+                                : currentFightOdds.fighter2Odds;
+                              const storedOddsFormat = currentFightOdds.oddsFormat || 'american';
+                              const payout = calculatePayout(amount, odds, storedOddsFormat);
+                              return (isNaN(payout) ? 0 : payout).toLocaleString();
+                            })()}
                           </span>
                         </div>
 
@@ -628,13 +632,16 @@ export function BettingManager({
                         <div className="text-sm space-y-1">
                           {(() => {
                             const betAmountNum = parseFloat(betAmount);
-                            const totalPayout = calculatePayout(
-                              betAmountNum,
-                              selectedFighter === currentFightOdds.fighter1Id
-                                ? currentFightOdds.fighter1Odds
-                                : currentFightOdds.fighter2Odds,
-                              oddsFormat
-                            );
+                            if (isNaN(betAmountNum) || betAmountNum <= 0) {
+                              return null;
+                            }
+                            
+                            const odds = selectedFighter === currentFightOdds.fighter1Id
+                              ? currentFightOdds.fighter1Odds
+                              : currentFightOdds.fighter2Odds;
+                            
+                            const storedOddsFormat = currentFightOdds.oddsFormat || 'american';
+                            const totalPayout = calculatePayout(betAmountNum, odds, storedOddsFormat);
                             const lsbaFee = (betAmountNum * currentSettings.lsbaFeePercentage) / 100;
                             const bettorPayout = totalPayout - lsbaFee;
                             const bookerProfit = betAmountNum - totalPayout;
@@ -644,19 +651,19 @@ export function BettingManager({
                                 <div className="flex justify-between">
                                   <span className="text-muted-foreground">Bettor receives:</span>
                                   <span className="font-semibold text-secondary">
-                                    ${bettorPayout.toLocaleString()}
+                                    ${(isNaN(bettorPayout) ? 0 : bettorPayout).toLocaleString()}
                                   </span>
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-muted-foreground">LSBA Fee:</span>
                                   <span className="font-semibold">
-                                    ${lsbaFee.toLocaleString()}
+                                    ${(isNaN(lsbaFee) ? 0 : lsbaFee).toLocaleString()}
                                   </span>
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-muted-foreground">{CASINO_NAME} Profit:</span>
                                   <span className="font-semibold">
-                                    ${bookerProfit.toLocaleString()}
+                                    ${(isNaN(bookerProfit) ? 0 : bookerProfit).toLocaleString()}
                                   </span>
                                 </div>
                               </>

@@ -221,6 +221,20 @@ export function formatOdds(odds: number, format: 'american' | 'decimal' | 'fract
   }
 }
 
+export function convertOddsForDisplay(
+  americanOdds: number,
+  targetFormat: 'american' | 'decimal' | 'fractional',
+  probability: number
+): string {
+  if (targetFormat === 'american') {
+    return americanOdds > 0 ? `+${americanOdds}` : `${americanOdds}`;
+  } else if (targetFormat === 'decimal') {
+    return probabilityToDecimalOdds(probability).toFixed(2);
+  } else {
+    return probabilityToFractionalOdds(probability);
+  }
+}
+
 export function getMinimumBet(eventType: EventType): number {
   switch (eventType) {
     case 'regular':
