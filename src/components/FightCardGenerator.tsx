@@ -30,7 +30,7 @@ interface BoutSetup {
   title?: string;
 }
 
-export function FightCardGenerator({ boxers, allBoxers, onGenerate }: FightCardGeneratorProps) {
+export function FightCardGenerator({ boxers = [], allBoxers = [], onGenerate }: FightCardGeneratorProps) {
   const [selectedBoxers, setSelectedBoxers] = useState<string[]>([]);
   const [bouts, setBouts] = useState<BoutSetup[]>([]);
   const [eventDate, setEventDate] = useState('');
@@ -44,8 +44,10 @@ export function FightCardGenerator({ boxers, allBoxers, onGenerate }: FightCardG
     }
   };
 
+  const boxerList = boxers ?? [];
+
   const toggleBoxer = (boxerId: string) => {
-    const boxer = boxers.find(b => b.id === boxerId);
+    const boxer = boxerList.find(b => b.id === boxerId);
     if (boxer && !isLicenseValid(boxer)) {
       toast.error(`${boxer.firstName} ${boxer.lastName} has an expired license and cannot be added to a fight card`);
       return;

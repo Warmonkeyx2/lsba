@@ -12,8 +12,8 @@ interface FighterOddsDisplayProps {
   fightCards: FightCard[];
 }
 
-export function FighterOddsDisplay({ boxer, bettingPools, fightCards }: FighterOddsDisplayProps) {
-  const upcomingFights = fightCards
+export function FighterOddsDisplay({ boxer, bettingPools = [], fightCards = [] }: FighterOddsDisplayProps) {
+  const upcomingFights = (fightCards ?? [])
     .filter(fc => fc.status === 'upcoming')
     .flatMap(fc => {
       const allBouts = [
@@ -27,7 +27,7 @@ export function FighterOddsDisplay({ boxer, bettingPools, fightCards }: FighterO
         .map(bout => {
           const isF1 = bout.fighter1Id === boxer.id;
           const opponentName = isF1 ? bout.fighter2 : bout.fighter1;
-          const odds = getFighterCurrentOdds(boxer.id, fc.id!, bettingPools);
+          const odds = getFighterCurrentOdds(boxer.id, fc.id!, bettingPools ?? []);
           
           return {
             fightCardId: fc.id!,

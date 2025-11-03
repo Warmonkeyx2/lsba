@@ -16,7 +16,7 @@ interface SponsorProfileProps {
   onUpdateSponsor: (sponsor: Sponsor) => void;
 }
 
-export function SponsorProfile({ sponsor, boxers, onBack, onUpdateSponsor }: SponsorProfileProps) {
+export function SponsorProfile({ sponsor, boxers = [], onBack, onUpdateSponsor }: SponsorProfileProps) {
   const [isAddingContact, setIsAddingContact] = useState(false);
   const [isEditingLogo, setIsEditingLogo] = useState(false);
   const [isEditingDetails, setIsEditingDetails] = useState(false);
@@ -42,7 +42,8 @@ export function SponsorProfile({ sponsor, boxers, onBack, onUpdateSponsor }: Spo
   const additionalContacts = sponsor.additionalContacts || [];
   const boxersSponsored = sponsor.boxersSponsored || [];
 
-  const sponsoredBoxers = boxers.filter(boxer => 
+  const boxerList = boxers ?? [];
+  const sponsoredBoxers = boxerList.filter(boxer => 
     boxersSponsored.includes(boxer.id)
   );
 

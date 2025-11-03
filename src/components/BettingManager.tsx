@@ -58,10 +58,10 @@ interface BettingManagerProps {
 }
 
 export function BettingManager({
-  fightCards,
-  boxers,
-  bets,
-  bettingPools,
+  fightCards = [],
+  boxers = [],
+  bets = [],
+  bettingPools = [],
   onPlaceBet,
   onUpdatePool,
 }: BettingManagerProps) {
@@ -77,10 +77,10 @@ export function BettingManager({
   const [maxBetLimit, setMaxBetLimit] = useState<string>('');
   const [editingFightId, setEditingFightId] = useState<string>('');
 
-  const upcomingFightCards = fightCards.filter(fc => fc.status === 'upcoming');
+  const upcomingFightCards = fightCards?.filter(fc => fc.status === 'upcoming') ?? [];
 
   const currentPool = useMemo(() => {
-    if (!selectedFightCard) return null;
+    if (!selectedFightCard || !bettingPools) return null;
     return bettingPools.find(p => p.fightCardId === selectedFightCard);
   }, [selectedFightCard, bettingPools]);
 
@@ -101,7 +101,7 @@ export function BettingManager({
   const selectedBout = allBouts.find(b => b.id === selectedFight);
 
   useEffect(() => {
-    if (selectedFightCard && !currentPool) {
+    if (selectedFightCard && !currentPool && upcomingFightCards.length > 0 && boxers && boxers.length > 0) {
       const fightCardData = upcomingFightCards.find(fc => fc.id === selectedFightCard);
       if (!fightCardData) return;
 
@@ -121,6 +121,8 @@ export function BettingManager({
         })
         .filter(Boolean) as Array<{ fighter1: Boxer; fighter2: Boxer; fightId: string }>;
 
+      if (fights.length === 0) return;
+
       const newPool = createBettingPool(
         selectedFightCard,
         fightCardData.mainEvent.title || `LSBA Event - ${fightCardData.eventDate}`,
@@ -128,8 +130,8 @@ export function BettingManager({
         fights,
         boxers,
         eventType,
-        bets,
-        payoutSettings || DEFAULT_PAYOUT_SETTINGS
+        bets ?? [],
+        payoutSettings ?? DEFAULT_PAYOUT_SETTINGS
       );
 
       onUpdatePool(newPool);
@@ -264,22 +266,22 @@ export function BettingManager({
     toast.success('Payout settings updated!');
   };
 
-  const allBets = bets;
+  const allBets = bets ?? [];
   const activeBets = allBets.filter(b => b.status === 'pending');
   const settledBets = allBets.filter(b => b.status === 'won' || b.status === 'lost');
 
   const totalWagered = allBets.reduce((sum, b) => sum + b.amount, 0);
-  const totalWonByBettors = allBets.filter(b => b.status === 'won').reduce((sum, b) => sum + (b.actualPayout || 0), 0);
+  const totalWonByBettors = allBets.filter(b => b.status === 'won').reduce((sum, b) => sum + (b.actualPayout ?? 0), 0);
   
   const totalBookerRevenue = allBets
     .filter(b => b.payoutBreakdown)
-    .reduce((sum, b) => sum + (b.payoutBreakdown?.bookerProfit || 0), 0);
+    .reduce((sum, b) => sum + (b.payoutBreakdown?.bookerProfit ?? 0), 0);
 
   const totalLsbaRevenue = allBets
     .filter(b => b.payoutBreakdown)
-    .reduce((sum, b) => sum + (b.payoutBreakdown?.lsbaFee || 0), 0);
+    .reduce((sum, b) => sum + (b.payoutBreakdown?.lsbaFee ?? 0), 0);
 
-  const currentSettings = payoutSettings || DEFAULT_PAYOUT_SETTINGS;
+  const currentSettings = payoutSettings ?? DEFAULT_PAYOUT_SETTINGS;
 
   return (
     <div className="flex flex-col gap-6">

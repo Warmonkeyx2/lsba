@@ -16,8 +16,9 @@ interface BoxerProfileProps {
   onUpdateBoxer: (boxer: Boxer) => void;
 }
 
-export function BoxerProfile({ boxer, allBoxers, onBack, onUpdateBoxer }: BoxerProfileProps) {
-  const rank = getRanking(boxer, allBoxers);
+export function BoxerProfile({ boxer, allBoxers = [], onBack, onUpdateBoxer }: BoxerProfileProps) {
+  const boxerList = allBoxers ?? [];
+  const rank = getRanking(boxer, boxerList);
   const totalFights = boxer.wins + boxer.losses;
   const winRate = totalFights > 0 ? (boxer.wins / totalFights) * 100 : 0;
   const hasValidLicense = isLicenseValid(boxer);

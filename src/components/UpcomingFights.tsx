@@ -10,12 +10,12 @@ interface UpcomingFightsProps {
   boxers: Boxer[];
 }
 
-export function UpcomingFights({ fightCards, boxers }: UpcomingFightsProps) {
-  const upcomingCards = fightCards.filter(card => card.status === 'upcoming');
+export function UpcomingFights({ fightCards = [], boxers = [] }: UpcomingFightsProps) {
+  const upcomingCards = (fightCards ?? []).filter(card => card.status === 'upcoming');
 
   const getBoxerById = (id?: string) => {
     if (!id) return null;
-    return boxers.find(b => b.id === id);
+    return (boxers ?? []).find(b => b.id === id);
   };
 
   const getInitials = (name: string) => {

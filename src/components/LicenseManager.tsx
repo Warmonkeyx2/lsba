@@ -13,11 +13,12 @@ interface LicenseManagerProps {
   onUpdateBoxer: (boxer: Boxer) => void;
 }
 
-export function LicenseManager({ boxers, onUpdateBoxer }: LicenseManagerProps) {
+export function LicenseManager({ boxers = [], onUpdateBoxer }: LicenseManagerProps) {
   const [filter, setFilter] = useState<'all' | 'active' | 'expired' | 'dueSoon'>('all');
 
   const getFilteredBoxers = () => {
-    let filtered = [...boxers];
+    const boxerList = boxers ?? [];
+    let filtered = [...boxerList];
 
     if (filter === 'active') {
       filtered = filtered.filter(b => isLicenseValid(b) && getDaysUntilDue(b) > 7);
@@ -44,15 +45,16 @@ export function LicenseManager({ boxers, onUpdateBoxer }: LicenseManagerProps) {
   };
 
   const filteredBoxers = getFilteredBoxers();
+  const boxerList = boxers ?? [];
 
   const stats = {
-    total: boxers.length,
-    active: boxers.filter(b => isLicenseValid(b) && getDaysUntilDue(b) > 7).length,
-    dueSoon: boxers.filter(b => {
+    total: boxerList.length,
+    active: boxerList.filter(b => isLicenseValid(b) && getDaysUntilDue(b) > 7).length,
+    dueSoon: boxerList.filter(b => {
       const days = getDaysUntilDue(b);
       return days >= 0 && days <= 7;
     }).length,
-    expired: boxers.filter(b => !isLicenseValid(b)).length,
+    expired: boxerList.filter(b => !isLicenseValid(b)).length,
   };
 
   const getLicenseStatusBadge = (boxer: Boxer) => {

@@ -27,7 +27,7 @@ interface TournamentBracketProps {
   onUpdateTournament: (tournament: Tournament) => void;
 }
 
-export function TournamentBracket({ boxers, tournaments, onCreateTournament, onUpdateTournament }: TournamentBracketProps) {
+export function TournamentBracket({ boxers = [], tournaments = [], onCreateTournament, onUpdateTournament }: TournamentBracketProps) {
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [tournamentName, setTournamentName] = useState('');
@@ -35,7 +35,7 @@ export function TournamentBracket({ boxers, tournaments, onCreateTournament, onU
   const [showMatchDialog, setShowMatchDialog] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState<TournamentMatch | null>(null);
 
-  const top32 = getTop32Boxers(boxers);
+  const top32 = getTop32Boxers(boxers ?? []);
   const canCreateTournament = top32.length === 32;
 
   const handleCreateTournament = () => {

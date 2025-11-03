@@ -8,8 +8,10 @@ interface SponsorListProps {
   onViewProfile: (sponsor: Sponsor) => void;
 }
 
-export function SponsorList({ sponsors, onViewProfile }: SponsorListProps) {
-  if (sponsors.length === 0) {
+export function SponsorList({ sponsors = [], onViewProfile }: SponsorListProps) {
+  const sponsorList = sponsors ?? [];
+  
+  if (sponsorList.length === 0) {
     return (
       <Card className="p-12 text-center">
         <Briefcase className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-30" />
@@ -27,7 +29,7 @@ export function SponsorList({ sponsors, onViewProfile }: SponsorListProps) {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {sponsors.map((sponsor) => {
+        {sponsorList.map((sponsor) => {
           const boxersSponsored = sponsor.boxersSponsored || [];
           return (
             <Card key={sponsor.id} className="p-6 hover:border-accent/50 transition-colors">

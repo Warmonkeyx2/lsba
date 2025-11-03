@@ -73,7 +73,6 @@ const defaultFightCard: FightCard = {
 
 function App() {
   const [savedCard, setSavedCard] = useKV<FightCard>('lsba-fight-card', defaultFightCard);
-  const [editingCard, setEditingCard] = useState<FightCard>(savedCard || defaultFightCard);
   const [fightCards, setFightCards] = useKV<FightCard[]>('lsba-fight-cards', []);
   const [boxers, setBoxers] = useKV<Boxer[]>('lsba-boxers', []);
   const [sponsors, setSponsors] = useKV<Sponsor[]>('lsba-sponsors', []);
@@ -82,18 +81,26 @@ function App() {
   const [bets, setBets] = useKV<Bet[]>('lsba-bets', []);
   const [bettingPools, setBettingPools] = useKV<BettingPool[]>('lsba-betting-pools', []);
   const [payoutSettings] = useKV<PayoutSettings>('lsba-payout-settings', DEFAULT_PAYOUT_SETTINGS);
+  
+  const [editingCard, setEditingCard] = useState<FightCard>(defaultFightCard);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [selectedBoxer, setSelectedBoxer] = useState<Boxer | null>(null);
   const [selectedSponsor, setSelectedSponsor] = useState<Sponsor | null>(null);
 
-  const boxersList = boxers || [];
-  const sponsorsList = sponsors || [];
-  const fightCardsList = fightCards || [];
-  const tournamentsList = tournaments || [];
-  const betsList = bets || [];
-  const bettingPoolsList = bettingPools || [];
-  const currentCard = savedCard || defaultFightCard;
-  const currentSettings = rankingSettings || DEFAULT_RANKING_SETTINGS;
+  const boxersList = boxers ?? [];
+  const sponsorsList = sponsors ?? [];
+  const fightCardsList = fightCards ?? [];
+  const tournamentsList = tournaments ?? [];
+  const betsList = bets ?? [];
+  const bettingPoolsList = bettingPools ?? [];
+  const currentCard = savedCard ?? defaultFightCard;
+  const currentSettings = rankingSettings ?? DEFAULT_RANKING_SETTINGS;
+
+  useEffect(() => {
+    if (savedCard) {
+      setEditingCard(savedCard);
+    }
+  }, [savedCard]);
 
   useEffect(() => {
     if (sponsors && sponsors.length > 0) {

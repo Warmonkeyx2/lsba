@@ -11,8 +11,8 @@ interface BoxerLeaderboardProps {
   onSelectBoxer: (boxer: Boxer) => void;
 }
 
-export function BoxerLeaderboard({ boxers, onSelectBoxer }: BoxerLeaderboardProps) {
-  const sortedBoxers = getSortedBoxers(boxers);
+export function BoxerLeaderboard({ boxers = [], onSelectBoxer }: BoxerLeaderboardProps) {
+  const sortedBoxers = getSortedBoxers(boxers ?? []);
 
   const getRankColor = (rank: number) => {
     if (rank === 1) return 'text-secondary';

@@ -13,7 +13,7 @@ interface SponsorRegistrationProps {
   existingSponsors: Sponsor[];
 }
 
-export function SponsorRegistration({ onRegister, existingSponsors }: SponsorRegistrationProps) {
+export function SponsorRegistration({ onRegister, existingSponsors = [] }: SponsorRegistrationProps) {
   const [formData, setFormData] = useState({
     stateId: '',
     name: '',
@@ -30,7 +30,8 @@ export function SponsorRegistration({ onRegister, existingSponsors }: SponsorReg
       return;
     }
 
-    const duplicateStateId = existingSponsors.find(
+    const sponsorList = existingSponsors ?? [];
+    const duplicateStateId = sponsorList.find(
       (sponsor) => sponsor.stateId.toLowerCase() === formData.stateId.toLowerCase()
     );
 
@@ -39,7 +40,7 @@ export function SponsorRegistration({ onRegister, existingSponsors }: SponsorReg
       return;
     }
 
-    const duplicateName = existingSponsors.find(
+    const duplicateName = sponsorList.find(
       (sponsor) => sponsor.name.toLowerCase() === formData.name.toLowerCase()
     );
 

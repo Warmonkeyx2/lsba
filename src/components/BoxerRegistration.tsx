@@ -15,7 +15,7 @@ interface BoxerRegistrationProps {
   existingSponsors: Sponsor[];
 }
 
-export function BoxerRegistration({ onRegister, existingBoxers, existingSponsors }: BoxerRegistrationProps) {
+export function BoxerRegistration({ onRegister, existingBoxers = [], existingSponsors = [] }: BoxerRegistrationProps) {
   const [formData, setFormData] = useState({
     stateId: '',
     firstName: '',
@@ -34,7 +34,8 @@ export function BoxerRegistration({ onRegister, existingBoxers, existingSponsors
       return;
     }
 
-    const duplicateStateId = existingBoxers.find(
+    const boxerList = existingBoxers ?? [];
+    const duplicateStateId = boxerList.find(
       (boxer) => boxer.stateId.toLowerCase() === formData.stateId.toLowerCase()
     );
 

@@ -44,7 +44,7 @@ interface BoxerDirectoryProps {
   onViewSponsorProfile: (sponsor: Sponsor) => void;
 }
 
-export function BoxerDirectory({ boxers, sponsors, onUpdateBoxer, onDeleteBoxer, onViewProfile, onViewSponsorProfile }: BoxerDirectoryProps) {
+export function BoxerDirectory({ boxers = [], sponsors = [], onUpdateBoxer, onDeleteBoxer, onViewProfile, onViewSponsorProfile }: BoxerDirectoryProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [showBoxers, setShowBoxers] = useState(true);
   const [showSponsors, setShowSponsors] = useState(true);
@@ -53,10 +53,11 @@ export function BoxerDirectory({ boxers, sponsors, onUpdateBoxer, onDeleteBoxer,
 
   const filteredBoxers = useMemo(() => {
     if (!showBoxers) return [];
-    if (!searchQuery.trim()) return boxers;
+    const boxerList = boxers ?? [];
+    if (!searchQuery.trim()) return boxerList;
 
     const query = searchQuery.toLowerCase();
-    return boxers.filter((boxer) => {
+    return boxerList.filter((boxer) => {
       const fullName = `${boxer.firstName} ${boxer.lastName}`.toLowerCase();
       const reverseName = `${boxer.lastName} ${boxer.firstName}`.toLowerCase();
       const stateId = boxer.stateId.toLowerCase();
@@ -77,10 +78,11 @@ export function BoxerDirectory({ boxers, sponsors, onUpdateBoxer, onDeleteBoxer,
 
   const filteredSponsors = useMemo(() => {
     if (!showSponsors) return [];
-    if (!searchQuery.trim()) return sponsors;
+    const sponsorList = sponsors ?? [];
+    if (!searchQuery.trim()) return sponsorList;
 
     const query = searchQuery.toLowerCase();
-    return sponsors.filter((sponsor) => {
+    return sponsorList.filter((sponsor) => {
       const name = sponsor.name.toLowerCase();
       const contactPerson = sponsor.contactPerson.toLowerCase();
       const stateId = sponsor.stateId.toLowerCase();

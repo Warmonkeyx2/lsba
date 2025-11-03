@@ -17,7 +17,7 @@ interface FightResultsManagerProps {
   onDeclareResults: (updatedCard: FightCard, boxerUpdates: Map<string, Partial<Boxer>>) => void;
 }
 
-export function FightResultsManager({ fightCard, boxers, onDeclareResults }: FightResultsManagerProps) {
+export function FightResultsManager({ fightCard, boxers = [], onDeclareResults }: FightResultsManagerProps) {
   const [boutResults, setBoutResults] = useState<Map<string, { winner: 'fighter1' | 'fighter2', knockout: boolean }>>(new Map());
 
   const allBouts = [
