@@ -161,16 +161,12 @@ export function UpcomingFights({ fightCards = [], boxers = [] }: UpcomingFightsP
       </div>
 
       <Dialog open={!!selectedCard} onOpenChange={(open) => !open && setSelectedCard(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="font-display text-3xl uppercase text-secondary tracking-wide">
-              Official Fight Card
-            </DialogTitle>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-2 sm:p-4">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Official Fight Card</DialogTitle>
           </DialogHeader>
           {selectedCard && (
-            <div className="mt-4">
-              <FightCardDisplay fightCard={selectedCard} />
-            </div>
+            <FightCardDisplay fightCard={selectedCard} compact />
           )}
         </DialogContent>
       </Dialog>
