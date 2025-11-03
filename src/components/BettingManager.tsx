@@ -159,7 +159,7 @@ export function BettingManager({
     }
 
     if (currentFightOdds.maxBetLimit && amount > currentFightOdds.maxBetLimit) {
-      toast.error(`Maximum bet limit for this fight is $${currentFightOdds.maxBetLimit.toLocaleString()}`);
+      toast.error(`Maximum bet limit for this fight is $${(currentFightOdds.maxBetLimit || 0).toLocaleString()}`);
       return;
     }
 
@@ -224,7 +224,7 @@ export function BettingManager({
     const lsbaFee = (amount * ((payoutSettings || DEFAULT_PAYOUT_SETTINGS).lsbaFeePercentage)) / 100;
     const bettorPayout = potentialPayout - lsbaFee;
     toast.success(
-      `Bet placed for ${bettorName}! Potential bettor payout: $${bettorPayout.toLocaleString()}`
+      `Bet placed for ${bettorName}! Potential bettor payout: $${(bettorPayout || 0).toLocaleString()}`
     );
     setBetAmount('');
     setSelectedFighter('');
@@ -245,7 +245,7 @@ export function BettingManager({
     };
 
     onUpdatePool(updatedPool);
-    toast.success(limit ? `Max bet set to $${limit.toLocaleString()}` : 'Max bet limit removed');
+    toast.success(limit ? `Max bet set to $${(limit || 0).toLocaleString()}` : 'Max bet limit removed');
     setMaxBetLimit('');
     setEditingFightId('');
   };
@@ -549,10 +549,10 @@ export function BettingManager({
                             )}
                           </div>
                           <div className="text-xs text-muted-foreground mt-1">
-                            {(currentFightOdds.fighter1ImpliedProbability * 100).toFixed(1)}% probability
+                            {((currentFightOdds.fighter1ImpliedProbability || 0) * 100).toFixed(1)}% probability
                           </div>
                           <div className="text-xs text-muted-foreground mt-1">
-                            Pool: ${currentFightOdds.fighter1Bets.toLocaleString()}
+                            Pool: ${(currentFightOdds.fighter1Bets || 0).toLocaleString()}
                           </div>
                         </button>
 
@@ -573,15 +573,15 @@ export function BettingManager({
                             )}
                           </div>
                           <div className="text-xs text-muted-foreground mt-1">
-                            {(currentFightOdds.fighter2ImpliedProbability * 100).toFixed(1)}% probability
+                            {((currentFightOdds.fighter2ImpliedProbability || 0) * 100).toFixed(1)}% probability
                           </div>
                           <div className="text-xs text-muted-foreground mt-1">
-                            Pool: ${currentFightOdds.fighter2Bets.toLocaleString()}
+                            Pool: ${(currentFightOdds.fighter2Bets || 0).toLocaleString()}
                           </div>
                         </button>
                       </div>
                       <div className="text-xs text-muted-foreground text-center pt-2 border-t">
-                        Total Pool: ${currentFightOdds.totalPool.toLocaleString()}
+                        Total Pool: ${(currentFightOdds.totalPool || 0).toLocaleString()}
                       </div>
                     </div>
 
@@ -793,20 +793,20 @@ export function BettingManager({
                                 <div className="space-y-2 py-4">
                                   <div className="flex justify-between">
                                     <span>Original Bet:</span>
-                                    <span className="font-bold">${bet.payoutBreakdown.originalBet.toLocaleString()}</span>
+                                    <span className="font-bold">${(bet.payoutBreakdown.originalBet || 0).toLocaleString()}</span>
                                   </div>
                                   <Separator />
                                   <div className="flex justify-between">
                                     <span>Bettor Payout:</span>
-                                    <span className="font-semibold text-secondary">${bet.payoutBreakdown.bettorPayout.toLocaleString()}</span>
+                                    <span className="font-semibold text-secondary">${(bet.payoutBreakdown.bettorPayout || 0).toLocaleString()}</span>
                                   </div>
                                   <div className="flex justify-between">
                                     <span>LSBA Fee:</span>
-                                    <span className="font-semibold">${bet.payoutBreakdown.lsbaFee.toLocaleString()}</span>
+                                    <span className="font-semibold">${(bet.payoutBreakdown.lsbaFee || 0).toLocaleString()}</span>
                                   </div>
                                   <div className="flex justify-between">
                                     <span>{CASINO_NAME} Profit:</span>
-                                    <span className="font-semibold">${bet.payoutBreakdown.bookerProfit.toLocaleString()}</span>
+                                    <span className="font-semibold">${(bet.payoutBreakdown.bookerProfit || 0).toLocaleString()}</span>
                                   </div>
                                 </div>
                               </DialogContent>

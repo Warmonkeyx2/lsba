@@ -113,7 +113,7 @@ export function FighterOddsDisplay({ boxer, bettingPools, fightCards }: FighterO
                     {formattedOdds}
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {(fight.probability * 100).toFixed(1)}% win probability
+                    {((fight.probability || 0) * 100).toFixed(1)}% win probability
                   </div>
                 </div>
               </div>
