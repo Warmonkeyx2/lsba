@@ -17,7 +17,8 @@ import {
   Trophy,
   CurrencyDollar,
   IdentificationCard,
-  CaretDown
+  CaretDown,
+  UserCircleGear
 } from "@phosphor-icons/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -48,11 +49,14 @@ import { TournamentBracket } from "@/components/TournamentBracket";
 import { BettingManager } from "@/components/BettingManager";
 import { FighterOddsDisplay } from "@/components/FighterOddsDisplay";
 import { LicenseManager } from "@/components/LicenseManager";
+import { RoleManager } from "@/components/RoleManager";
 import { toast, Toaster } from "sonner";
 import type { FightCard } from "@/types/fightCard";
 import type { Boxer, Sponsor, RankingSettings } from "@/types/boxer";
 import type { Tournament } from "@/types/tournament";
 import type { Bet, BettingPool, PayoutSettings } from "@/types/betting";
+import type { Role } from "@/types/permissions";
+import { DEFAULT_ROLES } from "@/types/permissions";
 import { DEFAULT_RANKING_SETTINGS, calculatePointsForFight, getSortedBoxers } from "@/lib/rankingUtils";
 import { settleBet, DEFAULT_PAYOUT_SETTINGS } from "@/lib/bettingUtils";
 import { LICENSE_FEE } from "@/lib/licenseUtils";
@@ -81,6 +85,7 @@ function App() {
   const [bets, setBets] = useKV<Bet[]>('lsba-bets', []);
   const [bettingPools, setBettingPools] = useKV<BettingPool[]>('lsba-betting-pools', []);
   const [payoutSettings] = useKV<PayoutSettings>('lsba-payout-settings', DEFAULT_PAYOUT_SETTINGS);
+  const [roles, setRoles] = useKV<Role[]>('lsba-roles', DEFAULT_ROLES);
   
   const [editingCard, setEditingCard] = useState<FightCard>(defaultFightCard);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
@@ -95,6 +100,7 @@ function App() {
   const bettingPoolsList = bettingPools ?? [];
   const currentCard = savedCard ?? defaultFightCard;
   const currentSettings = rankingSettings ?? DEFAULT_RANKING_SETTINGS;
+  const rolesList = roles ?? DEFAULT_ROLES;
 
   useEffect(() => {
     if (savedCard) {
@@ -451,6 +457,20 @@ function App() {
     });
   };
 
+  const handleCreateRole = (role: Role) => {
+    setRoles((current) => [...(current || []), role]);
+  };
+
+  const handleUpdateRole = (role: Role) => {
+    setRoles((current) =>
+      (current || []).map((r) => (r.id === role.id ? role : r))
+    );
+  };
+
+  const handleDeleteRole = (roleId: string) => {
+    setRoles((current) => (current || []).filter((r) => r.id !== roleId));
+  };
+
   const hasChanges = JSON.stringify(currentCard) !== JSON.stringify(editingCard);
 
   if (selectedSponsor) {
@@ -597,6 +617,10 @@ function App() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem onClick={() => setActiveTab('roles')}>
+                        <UserCircleGear className="w-4 h-4 mr-2" />
+                        Roles & Permissions
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setActiveTab('settings')}>
                         <Sliders className="w-4 h-4 mr-2" />
                         Settings
@@ -830,6 +854,15 @@ function App() {
 
               <TabsContent value="settings" className="mt-6">
                 <RankingSettingsComponent settings={currentSettings} onSave={handleSaveSettings} />
+              </TabsContent>
+
+              <TabsContent value="roles" className="mt-6">
+                <RoleManager
+                  roles={rolesList}
+                  onCreateRole={handleCreateRole}
+                  onUpdateRole={handleUpdateRole}
+                  onDeleteRole={handleDeleteRole}
+                />
               </TabsContent>
 
               <TabsContent value="season" className="mt-6">
