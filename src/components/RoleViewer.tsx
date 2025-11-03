@@ -1,7 +1,9 @@
-import { ArrowLeft, PencilSimple, Check, X, Info } from "@phosphor-icons/react";
+import { useState } from "react";
+import { ArrowLeft, PencilSimple, Check, X, Info, Eye } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
@@ -10,6 +12,7 @@ import {
 } from "@/components/ui/tooltip";
 import type { Role, Permission } from "@/types/permissions";
 import { PERMISSION_CATEGORIES, PERMISSION_DESCRIPTIONS } from "@/types/permissions";
+import { RolePreviewApp } from "@/components/RolePreviewApp";
 
 interface RoleViewerProps {
   role: Role;
@@ -18,6 +21,7 @@ interface RoleViewerProps {
 }
 
 export function RoleViewer({ role, onBack, onEdit }: RoleViewerProps) {
+  const [activeView, setActiveView] = useState<"preview" | "permissions">("preview");
   const permissionSet = new Set(role.permissions);
 
   return (
@@ -65,125 +69,157 @@ export function RoleViewer({ role, onBack, onEdit }: RoleViewerProps) {
         </Button>
       </div>
 
-      <Card className="bg-card border border-border p-6">
-        <div className="flex flex-col gap-6">
-          <div className="flex items-center justify-between pb-4 border-b border-border">
-            <div>
-              <h3 className="font-semibold text-lg">Permission Overview</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                View all permissions assigned to this role
-              </p>
-            </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-primary">
-                {role.permissions.length}
+      <Tabs value={activeView} onValueChange={(v) => setActiveView(v as any)} className="w-full">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="preview" className="flex items-center gap-2">
+            <Eye className="w-4 h-4" />
+            Live Preview
+          </TabsTrigger>
+          <TabsTrigger value="permissions" className="flex items-center gap-2">
+            <Info className="w-4 h-4" />
+            Permissions
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="preview" className="mt-6">
+          <Card className="bg-card border-2 border-primary/30 p-1 overflow-hidden">
+            <div className="bg-muted/30 rounded-sm overflow-auto max-h-[70vh]">
+              <div className="scale-90 origin-top-left" style={{ width: "111.11%" }}>
+                <RolePreviewApp role={role} />
               </div>
-              <div className="text-xs text-muted-foreground uppercase tracking-wide">
-                Total Permissions
-              </div>
             </div>
+          </Card>
+          <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 border border-border rounded-lg p-4">
+            <Info className="w-4 h-4 flex-shrink-0" />
+            <p>
+              This preview shows the application interface as it would appear to a user with this role. 
+              Disabled items indicate missing permissions.
+            </p>
           </div>
+        </TabsContent>
 
-          <div className="space-y-6">
-            {Object.entries(PERMISSION_CATEGORIES).map(([key, category]) => {
-              const categoryPermissions = category.permissions;
-              const enabledPermissions = categoryPermissions.filter(p => 
-                permissionSet.has(p)
-              );
-              const allEnabled = enabledPermissions.length === categoryPermissions.length;
-              const someEnabled = enabledPermissions.length > 0;
-
-              return (
-                <div key={key} className="space-y-3">
-                  <div className="flex items-start gap-3 pb-3 border-b border-border">
-                    <div
-                      className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                        allEnabled
-                          ? 'bg-primary/20 text-primary'
-                          : someEnabled
-                          ? 'bg-secondary/20 text-secondary'
-                          : 'bg-muted text-muted-foreground'
-                      }`}
-                    >
-                      {someEnabled ? (
-                        <Check className="w-4 h-4" weight="bold" />
-                      ) : (
-                        <X className="w-4 h-4" />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-semibold">{category.name}</h4>
-                        <Badge
-                          variant={allEnabled ? "default" : someEnabled ? "secondary" : "outline"}
-                          className="text-xs"
-                        >
-                          {enabledPermissions.length}/{categoryPermissions.length}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {category.description}
-                      </p>
-                    </div>
+        <TabsContent value="permissions" className="mt-6">
+          <Card className="bg-card border border-border p-6">
+            <div className="flex flex-col gap-6">
+              <div className="flex items-center justify-between pb-4 border-b border-border">
+                <div>
+                  <h3 className="font-semibold text-lg">Permission Overview</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    View all permissions assigned to this role
+                  </p>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-primary">
+                    {role.permissions.length}
                   </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 ml-9">
-                    {categoryPermissions.map((permission) => {
-                      const hasPermission = permissionSet.has(permission);
-                      return (
-                        <PermissionItem
-                          key={permission}
-                          permission={permission}
-                          enabled={hasPermission}
-                        />
-                      );
-                    })}
+                  <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                    Total Permissions
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      </Card>
+              </div>
 
-      <Card className="bg-card border border-border p-6">
-        <div className="flex flex-col gap-4">
-          <h3 className="font-semibold text-lg">Role Information</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
-                Role ID
-              </div>
-              <div className="text-sm font-mono bg-muted px-2 py-1 rounded">
-                {role.id}
-              </div>
-            </div>
-            
-            <div>
-              <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
-                Created Date
-              </div>
-              <div className="text-sm">
-                {new Date(role.createdDate).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
+              <div className="space-y-6">
+                {Object.entries(PERMISSION_CATEGORIES).map(([key, category]) => {
+                  const categoryPermissions = category.permissions;
+                  const enabledPermissions = categoryPermissions.filter(p => 
+                    permissionSet.has(p)
+                  );
+                  const allEnabled = enabledPermissions.length === categoryPermissions.length;
+                  const someEnabled = enabledPermissions.length > 0;
+
+                  return (
+                    <div key={key} className="space-y-3">
+                      <div className="flex items-start gap-3 pb-3 border-b border-border">
+                        <div
+                          className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                            allEnabled
+                              ? 'bg-primary/20 text-primary'
+                              : someEnabled
+                              ? 'bg-secondary/20 text-secondary'
+                              : 'bg-muted text-muted-foreground'
+                          }`}
+                        >
+                          {someEnabled ? (
+                            <Check className="w-4 h-4" weight="bold" />
+                          ) : (
+                            <X className="w-4 h-4" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-semibold">{category.name}</h4>
+                            <Badge
+                              variant={allEnabled ? "default" : someEnabled ? "secondary" : "outline"}
+                              className="text-xs"
+                            >
+                              {enabledPermissions.length}/{categoryPermissions.length}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {category.description}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 ml-9">
+                        {categoryPermissions.map((permission) => {
+                          const hasPermission = permissionSet.has(permission);
+                          return (
+                            <PermissionItem
+                              key={permission}
+                              permission={permission}
+                              enabled={hasPermission}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
                 })}
               </div>
             </div>
-            
-            <div>
-              <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
-                Role Type
-              </div>
-              <div className="text-sm">
-                {role.isSystemRole ? 'System Role' : 'Custom Role'}
+          </Card>
+
+          <Card className="bg-card border border-border p-6 mt-6">
+            <div className="flex flex-col gap-4">
+              <h3 className="font-semibold text-lg">Role Information</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
+                    Role ID
+                  </div>
+                  <div className="text-sm font-mono bg-muted px-2 py-1 rounded">
+                    {role.id}
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
+                    Created Date
+                  </div>
+                  <div className="text-sm">
+                    {new Date(role.createdDate).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
+                    Role Type
+                  </div>
+                  <div className="text-sm">
+                    {role.isSystemRole ? 'System Role' : 'Custom Role'}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </Card>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

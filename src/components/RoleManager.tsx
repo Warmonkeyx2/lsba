@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Eye, PencilSimple, Trash, Copy } from "@phosphor-icons/react";
+import { Plus, Eye, PencilSimple, Trash, Copy, ShieldCheck } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { RoleEditor } from "@/components/RoleEditor";
 import { RoleViewer } from "@/components/RoleViewer";
-import type { Role, Permission } from "@/types/permissions";
+import type { Role } from "@/types/permissions";
 import { toast } from "sonner";
 
 interface RoleManagerProps {
@@ -103,7 +103,7 @@ export function RoleManager({ roles, onCreateRole, onUpdateRole, onDeleteRole }:
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 className="font-display text-3xl uppercase text-secondary tracking-wide">
-            Role Management
+            Roles & Permissions
           </h2>
           <p className="text-muted-foreground mt-1">
             Create and manage user roles with custom permissions
@@ -119,16 +119,21 @@ export function RoleManager({ roles, onCreateRole, onUpdateRole, onDeleteRole }:
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 gap-8">
         {systemRoles.length > 0 && (
           <div className="space-y-4">
-            <div>
-              <h3 className="font-display text-xl uppercase text-foreground tracking-wide">
-                System Roles
-              </h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                Built-in roles with predefined permissions
-              </p>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <ShieldCheck className="w-5 h-5 text-primary" weight="bold" />
+              </div>
+              <div>
+                <h3 className="font-display text-xl uppercase text-foreground tracking-wide">
+                  System Roles
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Built-in roles with predefined permissions
+                </p>
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {systemRoles.map((role) => (
@@ -145,15 +150,20 @@ export function RoleManager({ roles, onCreateRole, onUpdateRole, onDeleteRole }:
           </div>
         )}
 
-        {customRoles.length > 0 && (
+        {customRoles.length > 0 ? (
           <div className="space-y-4">
-            <div>
-              <h3 className="font-display text-xl uppercase text-foreground tracking-wide">
-                Custom Roles
-              </h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                User-created roles tailored to your needs
-              </p>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
+                <Plus className="w-5 h-5 text-secondary" weight="bold" />
+              </div>
+              <div>
+                <h3 className="font-display text-xl uppercase text-foreground tracking-wide">
+                  Custom Roles
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  User-created roles tailored to your needs
+                </p>
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {customRoles.map((role) => (
@@ -168,26 +178,39 @@ export function RoleManager({ roles, onCreateRole, onUpdateRole, onDeleteRole }:
               ))}
             </div>
           </div>
-        )}
-
-        {customRoles.length === 0 && (
-          <Card className="bg-card border border-border p-12 text-center">
-            <div className="flex flex-col items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-                <Plus className="w-8 h-8 text-muted-foreground" />
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
+                <Plus className="w-5 h-5 text-secondary" weight="bold" />
               </div>
               <div>
-                <h3 className="font-semibold text-lg mb-1">No custom roles yet</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Create a custom role to define specific permissions for your team
+                <h3 className="font-display text-xl uppercase text-foreground tracking-wide">
+                  Custom Roles
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  User-created roles tailored to your needs
                 </p>
-                <Button onClick={() => setCreatingRole(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Your First Role
-                </Button>
               </div>
             </div>
-          </Card>
+            <Card className="bg-card border border-dashed border-border p-12 text-center">
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center">
+                  <Plus className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-1">No custom roles yet</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Create a custom role to define specific permissions for your team
+                  </p>
+                  <Button onClick={() => setCreatingRole(true)} size="lg">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Your First Role
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </div>
         )}
       </div>
 
@@ -225,21 +248,26 @@ interface RoleCardProps {
 
 function RoleCard({ role, onView, onEdit, onDelete, onDuplicate }: RoleCardProps) {
   return (
-    <Card className="bg-card border border-border p-6 hover:border-primary/50 transition-colors group">
-      <div className="flex flex-col gap-4">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-3 flex-1 min-w-0">
+    <Card className="bg-card border border-border hover:border-primary/50 transition-all duration-200 group overflow-hidden">
+      <div className="p-6 flex flex-col gap-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3 flex-1 min-w-0">
             <div
-              className="w-4 h-4 rounded-full flex-shrink-0"
+              className="w-12 h-12 rounded-lg flex-shrink-0 shadow-sm transition-transform group-hover:scale-110 duration-200"
               style={{ backgroundColor: role.color }}
             />
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-lg truncate">{role.name}</h3>
-              {role.isSystemRole && (
-                <Badge variant="secondary" className="text-xs mt-1">
-                  System
+              <h3 className="font-semibold text-lg truncate mb-1">{role.name}</h3>
+              <div className="flex items-center gap-2">
+                {role.isSystemRole && (
+                  <Badge variant="secondary" className="text-xs">
+                    System
+                  </Badge>
+                )}
+                <Badge variant="outline" className="text-xs">
+                  {role.permissions.length} permissions
                 </Badge>
-              )}
+              </div>
             </div>
           </div>
         </div>
@@ -248,52 +276,47 @@ function RoleCard({ role, onView, onEdit, onDelete, onDuplicate }: RoleCardProps
           {role.description}
         </p>
 
-        <div className="flex items-center justify-between pt-2 border-t border-border">
-          <span className="text-xs text-muted-foreground">
-            {role.permissions.length} {role.permissions.length === 1 ? 'permission' : 'permissions'}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 pt-2 border-t border-border">
           <Button
             variant="outline"
             size="sm"
             onClick={onView}
-            className="flex-1"
+            className="w-full justify-start"
           >
             <Eye className="w-4 h-4 mr-2" />
-            View
+            View & Preview
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onEdit}
-            className="flex-1"
-          >
-            <PencilSimple className="w-4 h-4 mr-2" />
-            Edit
-          </Button>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onDuplicate}
-            className="flex-1"
-          >
-            <Copy className="w-4 h-4 mr-2" />
-            Duplicate
-          </Button>
+          
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onEdit}
+              className="justify-start"
+            >
+              <PencilSimple className="w-4 h-4 mr-2" />
+              Edit
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onDuplicate}
+              className="justify-start"
+            >
+              <Copy className="w-4 h-4 mr-2" />
+              Clone
+            </Button>
+          </div>
+          
           {!role.isSystemRole && (
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={onDelete}
-              className="flex-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+              className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
             >
               <Trash className="w-4 h-4 mr-2" />
-              Delete
+              Delete Role
             </Button>
           )}
         </div>
