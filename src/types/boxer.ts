@@ -13,9 +13,12 @@ export interface Boxer {
   profileImage?: string;
   fightHistory: FightHistory[];
   timezone?: 'NA' | 'EU' | 'AU';
-  licenseStatus: 'active' | 'expired' | 'suspended';
+  licenseStatus: 'active' | 'expired' | 'suspended' | 'banned';
   lastPaymentDate: string;
   licenseFee: number;
+  feePaid?: boolean;
+  suspensionReason?: string;
+  suspensionDate?: string;
 }
 
 export interface FightHistory {

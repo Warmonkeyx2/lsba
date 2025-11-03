@@ -127,14 +127,19 @@ function App() {
         boxer.lastPaymentDate === undefined || 
         boxer.licenseFee === undefined
       );
+      const needsNewFieldsMigration = boxers.some(boxer =>
+        boxer.feePaid === undefined ||
+        (boxer.licenseStatus === 'suspended' && !boxer.suspensionReason)
+      );
       
-      if (needsTimezoneMigration || needsLicenseMigration) {
+      if (needsTimezoneMigration || needsLicenseMigration || needsNewFieldsMigration) {
         const migratedBoxers = boxers.map(boxer => ({
           ...boxer,
           timezone: boxer.timezone || 'NA',
           licenseStatus: boxer.licenseStatus || 'active',
           lastPaymentDate: boxer.lastPaymentDate || boxer.registeredDate || new Date().toISOString(),
           licenseFee: boxer.licenseFee || LICENSE_FEE,
+          feePaid: boxer.feePaid !== undefined ? boxer.feePaid : true,
         }));
         setBoxers(migratedBoxers);
       }

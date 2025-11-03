@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import type { Boxer, Sponsor } from '@/types/boxer';
 import { LICENSE_FEE } from '@/lib/licenseUtils';
@@ -24,6 +25,7 @@ export function BoxerRegistration({ onRegister, existingBoxers = [], existingSpo
     sponsor: '',
     profileImage: '',
     timezone: 'NA' as 'NA' | 'EU' | 'AU',
+    feePaid: false,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -64,10 +66,12 @@ export function BoxerRegistration({ onRegister, existingBoxers = [], existingSpo
       licenseStatus: 'active',
       lastPaymentDate: now,
       licenseFee: LICENSE_FEE,
+      feePaid: formData.feePaid,
     };
 
     onRegister(newBoxer);
-    toast.success(`${formData.firstName} ${formData.lastName} registered successfully! License fee: $${LICENSE_FEE.toLocaleString()}`);
+    const paymentStatus = formData.feePaid ? 'Fee paid' : 'Payment pending';
+    toast.success(`${formData.firstName} ${formData.lastName} registered successfully! ${paymentStatus}`);
     
     setFormData({
       stateId: '',
@@ -77,6 +81,7 @@ export function BoxerRegistration({ onRegister, existingBoxers = [], existingSpo
       sponsor: '',
       profileImage: '',
       timezone: 'NA',
+      feePaid: false,
     });
   };
 
@@ -191,6 +196,25 @@ export function BoxerRegistration({ onRegister, existingBoxers = [], existingSpo
             onChange={(e) => setFormData({ ...formData, profileImage: e.target.value })}
             className="mt-1"
           />
+        </div>
+
+        <div className="flex items-start gap-3 p-4 bg-secondary/10 border border-secondary/30 rounded-lg">
+          <Checkbox
+            id="fee-paid"
+            checked={formData.feePaid}
+            onCheckedChange={(checked) => setFormData({ ...formData, feePaid: checked as boolean })}
+          />
+          <div className="flex flex-col gap-1">
+            <Label 
+              htmlFor="fee-paid" 
+              className="text-sm font-medium cursor-pointer leading-none"
+            >
+              Registration fee paid (${LICENSE_FEE.toLocaleString()})
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Check this box if the fighter has paid their registration fee
+            </p>
+          </div>
         </div>
 
         <Button type="submit" size="lg" className="bg-primary hover:bg-primary/90 mt-2">

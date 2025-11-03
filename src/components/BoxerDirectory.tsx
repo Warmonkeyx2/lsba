@@ -12,7 +12,9 @@ import {
   Check,
   Eye,
   User,
-  Users
+  Users,
+  Prohibit,
+  ProhibitInset
 } from "@phosphor-icons/react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -242,6 +244,16 @@ export function BoxerDirectory({ boxers = [], sponsors = [], onUpdateBoxer, onDe
                                 <IdentificationCard className="w-3 h-3 mr-1" />
                                 {boxer.stateId}
                               </Badge>
+                              {(boxer.licenseStatus === 'suspended' || boxer.licenseStatus === 'banned') && (
+                                <Badge variant="destructive" className="flex items-center gap-1">
+                                  {boxer.licenseStatus === 'banned' ? (
+                                    <ProhibitInset className="w-3 h-3" weight="fill" />
+                                  ) : (
+                                    <Prohibit className="w-3 h-3" />
+                                  )}
+                                  {boxer.licenseStatus === 'banned' ? 'BANNED' : 'Suspended'}
+                                </Badge>
+                              )}
                               <Badge 
                                 variant="secondary" 
                                 className="font-semibold"

@@ -48,7 +48,16 @@ export function FightCardGenerator({ boxers = [], allBoxers = [], onGenerate }: 
 
   const toggleBoxer = (boxerId: string) => {
     const boxer = boxerList.find(b => b.id === boxerId);
-    if (boxer && !isLicenseValid(boxer)) {
+    if (!boxer) return;
+
+    if (boxer.licenseStatus === 'suspended' || boxer.licenseStatus === 'banned') {
+      toast.error(
+        `${boxer.firstName} ${boxer.lastName} is ${boxer.licenseStatus} and cannot be added to a fight card. Reason: ${boxer.suspensionReason || 'N/A'}`
+      );
+      return;
+    }
+
+    if (!isLicenseValid(boxer)) {
       toast.error(`${boxer.firstName} ${boxer.lastName} has an expired license and cannot be added to a fight card`);
       return;
     }
@@ -268,13 +277,15 @@ export function FightCardGenerator({ boxers = [], allBoxers = [], onGenerate }: 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto p-1">
               {boxers.map((boxer) => {
                 const hasValidLicense = isLicenseValid(boxer);
+                const isSuspendedOrBanned = boxer.licenseStatus === 'suspended' || boxer.licenseStatus === 'banned';
+                const isDisabled = !hasValidLicense || isSuspendedOrBanned;
                 const daysUntilDue = getDaysUntilDue(boxer);
                 
                 return (
                   <div
                     key={boxer.id}
                     className={`flex items-center gap-3 p-3 border rounded-lg transition-colors ${
-                      !hasValidLicense
+                      isDisabled
                         ? 'border-destructive/50 bg-destructive/5 opacity-60 cursor-not-allowed'
                         : selectedBoxers.includes(boxer.id)
                         ? 'border-primary bg-primary/5 cursor-pointer'
@@ -285,14 +296,20 @@ export function FightCardGenerator({ boxers = [], allBoxers = [], onGenerate }: 
                     <Checkbox
                       checked={selectedBoxers.includes(boxer.id)}
                       onCheckedChange={() => toggleBoxer(boxer.id)}
-                      disabled={!hasValidLicense}
+                      disabled={isDisabled}
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <div className="font-fighter text-lg uppercase font-bold truncate">
                           {boxer.firstName} {boxer.lastName}
                         </div>
-                        {!hasValidLicense && (
+                        {isSuspendedOrBanned && (
+                          <Badge variant="destructive" className="text-xs flex items-center gap-1">
+                            <Warning className="w-3 h-3" />
+                            {boxer.licenseStatus === 'banned' ? 'BANNED' : 'Suspended'}
+                          </Badge>
+                        )}
+                        {!isSuspendedOrBanned && !hasValidLicense && (
                           <Badge variant="destructive" className="text-xs flex items-center gap-1">
                             <Warning className="w-3 h-3" />
                             Expired
@@ -307,7 +324,12 @@ export function FightCardGenerator({ boxers = [], allBoxers = [], onGenerate }: 
                           <span className="text-xs text-muted-foreground truncate">{boxer.sponsor}</span>
                         )}
                       </div>
-                      {!hasValidLicense && (
+                      {isSuspendedOrBanned && (
+                        <div className="text-xs text-destructive mt-1">
+                          {boxer.licenseStatus === 'banned' ? 'Permanently banned' : 'License suspended'} - Cannot fight
+                        </div>
+                      )}
+                      {!isSuspendedOrBanned && !hasValidLicense && (
                         <div className="text-xs text-destructive mt-1">
                           License expired - payment required
                         </div>

@@ -1,4 +1,4 @@
-import { ArrowLeft, Plus, Minus, User, Trophy, Target, Lightning, IdentificationCard, CheckCircle, WarningCircle, CurrencyDollar } from '@phosphor-icons/react';
+import { ArrowLeft, Plus, Minus, User, Trophy, Target, Lightning, IdentificationCard, CheckCircle, WarningCircle, CurrencyDollar, Prohibit, ProhibitInset } from '@phosphor-icons/react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -86,7 +86,17 @@ export function BoxerProfile({ boxer, allBoxers = [], onBack, onUpdateBoxer }: B
                   {rank !== null ? `#${rank}` : 'Unranked'}
                 </span>
               </div>
-              {hasValidLicense ? (
+              {boxer.licenseStatus === 'banned' ? (
+                <Badge variant="destructive" className="bg-destructive text-sm px-4 py-1 flex items-center gap-1">
+                  <ProhibitInset className="w-4 h-4" weight="fill" />
+                  BANNED
+                </Badge>
+              ) : boxer.licenseStatus === 'suspended' ? (
+                <Badge variant="destructive" className="bg-orange-500/80 text-sm px-4 py-1 flex items-center gap-1">
+                  <Prohibit className="w-4 h-4" />
+                  Suspended
+                </Badge>
+              ) : hasValidLicense ? (
                 <Badge className="bg-green-500/20 text-green-700 border-green-500/30 text-sm px-4 py-1 flex items-center gap-1">
                   <CheckCircle className="w-4 h-4" />
                   Licensed - Active
@@ -127,45 +137,85 @@ export function BoxerProfile({ boxer, allBoxers = [], onBack, onUpdateBoxer }: B
 
             <Separator />
 
-            <Card className={`p-4 ${!hasValidLicense ? 'border-destructive/50 bg-destructive/5' : 'border-green-500/30 bg-green-500/5'}`}>
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <IdentificationCard className="w-5 h-5" />
-                    <h3 className="font-semibold">License Status</h3>
-                  </div>
-                  <div className="text-sm text-muted-foreground space-y-1">
-                    <div>
-                      <span className="font-medium">Last Payment:</span>{' '}
-                      {new Date(boxer.lastPaymentDate).toLocaleDateString()}
+            {(boxer.licenseStatus === 'suspended' || boxer.licenseStatus === 'banned') && (
+              <>
+                <Card className="p-4 border-destructive bg-destructive/10">
+                  <div className="flex items-start gap-3">
+                    <ProhibitInset className="w-6 h-6 text-destructive mt-1" weight="fill" />
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-destructive mb-2">
+                        {boxer.licenseStatus === 'banned' ? 'Account Banned' : 'License Suspended'}
+                      </h3>
+                      {boxer.suspensionReason && (
+                        <div className="text-sm space-y-2">
+                          <div>
+                            <span className="font-medium">Reason:</span>
+                            <p className="text-foreground mt-1">{boxer.suspensionReason}</p>
+                          </div>
+                          {boxer.suspensionDate && (
+                            <div>
+                              <span className="font-medium">Date:</span>{' '}
+                              {new Date(boxer.suspensionDate).toLocaleDateString()}
+                            </div>
+                          )}
+                          <div className="text-destructive font-medium">
+                            ⚠ This fighter cannot participate in any fights. State ID is blocked from all activities except betting.
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div>
-                      <span className="font-medium">Monthly Fee:</span> ${LICENSE_FEE.toLocaleString()}
-                    </div>
-                    {!hasValidLicense ? (
-                      <div className="text-destructive font-medium">
-                        ⚠ Overdue by {Math.abs(daysUntilDue)} day{Math.abs(daysUntilDue) !== 1 ? 's' : ''}
-                      </div>
-                    ) : daysUntilDue <= 7 ? (
-                      <div className="text-yellow-600 font-medium">
-                        ⚠ Due in {daysUntilDue} day{daysUntilDue !== 1 ? 's' : ''}
-                      </div>
-                    ) : (
-                      <div className="text-green-600 font-medium">
-                        ✓ Active - Next payment due in {daysUntilDue} days
-                      </div>
-                    )}
                   </div>
+                </Card>
+                <Separator />
+              </>
+            )}
+
+            {boxer.licenseStatus !== 'suspended' && boxer.licenseStatus !== 'banned' && (
+              <Card className={`p-4 ${!hasValidLicense ? 'border-destructive/50 bg-destructive/5' : 'border-green-500/30 bg-green-500/5'}`}>
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <IdentificationCard className="w-5 h-5" />
+                      <h3 className="font-semibold">License Status</h3>
+                    </div>
+                    <div className="text-sm text-muted-foreground space-y-1">
+                      <div>
+                        <span className="font-medium">Last Payment:</span>{' '}
+                        {new Date(boxer.lastPaymentDate).toLocaleDateString()}
+                      </div>
+                      <div>
+                        <span className="font-medium">Monthly Fee:</span> ${LICENSE_FEE.toLocaleString()}
+                      </div>
+                      {boxer.feePaid === false && (
+                        <div className="text-yellow-600 font-medium">
+                          ⚠ Payment pending
+                        </div>
+                      )}
+                      {!hasValidLicense ? (
+                        <div className="text-destructive font-medium">
+                          ⚠ Overdue by {Math.abs(daysUntilDue)} day{Math.abs(daysUntilDue) !== 1 ? 's' : ''}
+                        </div>
+                      ) : daysUntilDue <= 7 ? (
+                        <div className="text-yellow-600 font-medium">
+                          ⚠ Due in {daysUntilDue} day{daysUntilDue !== 1 ? 's' : ''}
+                        </div>
+                      ) : (
+                        <div className="text-green-600 font-medium">
+                          ✓ Active - Next payment due in {daysUntilDue} days
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <Button
+                    onClick={handleProcessPayment}
+                    className="bg-primary hover:bg-primary/90"
+                  >
+                    <CurrencyDollar className="w-4 h-4 mr-2" />
+                    Process Payment
+                  </Button>
                 </div>
-                <Button
-                  onClick={handleProcessPayment}
-                  className="bg-primary hover:bg-primary/90"
-                >
-                  <CurrencyDollar className="w-4 h-4 mr-2" />
-                  Process Payment
-                </Button>
-              </div>
-            </Card>
+              </Card>
+            )}
 
             <Separator />
 
