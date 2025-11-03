@@ -89,3 +89,24 @@ export interface BettingLimits {
     entryPerBoxer: number;
   };
 }
+
+export interface EventPricing {
+  regular: number;
+  special: number;
+  tournament: number;
+}
+
+export interface WageLimits {
+  minimum: number;
+  maximum: number;
+  perFight: number;
+  perEvent: number;
+}
+
+export interface BettingConfig {
+  id: string;
+  eventPricing: EventPricing;
+  wageLimits: WageLimits;
+  enabled: boolean;
+  lastUpdated: string;
+}

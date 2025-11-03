@@ -48,6 +48,8 @@ import {
   convertOddsForDisplay,
 } from '@/lib/bettingUtils';
 import { BetSettlementManager } from '@/components/BetSettlementManager';
+import { BettingConfigComponent } from '@/components/BettingConfig';
+import type { BettingConfig } from '@/types/betting';
 
 interface BettingManagerProps {
   fightCards: FightCard[];
@@ -69,6 +71,22 @@ export function BettingManager({
   onSettleBets,
 }: BettingManagerProps) {
   const [payoutSettings, setPayoutSettings] = useKV<PayoutSettings>('lsba-payout-settings', DEFAULT_PAYOUT_SETTINGS);
+  const [bettingConfig, setBettingConfig] = useKV<BettingConfig>('lsba-betting-config', {
+    id: 'default',
+    eventPricing: {
+      regular: 500,
+      special: 1000,
+      tournament: 1500,
+    },
+    wageLimits: {
+      minimum: 50,
+      maximum: 10000,
+      perFight: 50000,
+      perEvent: 200000,
+    },
+    enabled: true,
+    lastUpdated: new Date().toISOString(),
+  });
   const [selectedFight, setSelectedFight] = useState<string>('');
   const [selectedFighter, setSelectedFighter] = useState<string>('');
   const [betAmount, setBetAmount] = useState<string>('');
@@ -174,6 +192,11 @@ export function BettingManager({
   }, [selectedFightData, currentPool, upcomingFightCards, boxers, bets, eventType, onUpdatePool, payoutSettings]);
 
   const handlePlaceBet = () => {
+    if (!bettingConfig?.enabled) {
+      toast.error('Betting system is currently disabled');
+      return;
+    }
+
     if (!selectedFight || !selectedFighter || !betAmount || !bettorStateId || !bettorName) {
       toast.error('Please fill in all fields including bettor State ID and name');
       return;
@@ -183,6 +206,38 @@ export function BettingManager({
     if (isNaN(amount) || amount <= 0) {
       toast.error('Please enter a valid bet amount');
       return;
+    }
+
+    if (bettingConfig) {
+      if (amount < bettingConfig.wageLimits.minimum) {
+        toast.error(`Minimum bet is $${bettingConfig.wageLimits.minimum}`);
+        return;
+      }
+
+      if (amount > bettingConfig.wageLimits.maximum) {
+        toast.error(`Maximum bet is $${bettingConfig.wageLimits.maximum}`);
+        return;
+      }
+
+      const fightTotalBets = (bets || [])
+        .filter(b => b.fightId === selectedFight && b.status === 'pending')
+        .reduce((sum, b) => sum + b.amount, 0);
+
+      if (fightTotalBets + amount > bettingConfig.wageLimits.perFight) {
+        toast.error(`Per-fight limit of $${bettingConfig.wageLimits.perFight} would be exceeded`);
+        return;
+      }
+
+      if (currentPool) {
+        const eventTotalBets = (bets || [])
+          .filter(b => b.fightCardId === currentPool.fightCardId && b.status === 'pending')
+          .reduce((sum, b) => sum + b.amount, 0);
+
+        if (eventTotalBets + amount > bettingConfig.wageLimits.perEvent) {
+          toast.error(`Per-event limit of $${bettingConfig.wageLimits.perEvent} would be exceeded`);
+          return;
+        }
+      }
     }
 
     const validation = validateBet(amount, eventType);
@@ -324,6 +379,22 @@ export function BettingManager({
 
   return (
     <div className="flex flex-col gap-6">
+      {bettingConfig && !bettingConfig.enabled && (
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <Lock className="w-6 h-6 text-destructive" />
+              <div>
+                <h3 className="font-semibold text-destructive">Betting System Disabled</h3>
+                <p className="text-sm text-muted-foreground">
+                  No new bets can be placed. Enable in Config tab to resume betting.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div>
           <h2 className="font-display text-3xl uppercase text-secondary tracking-wide">
@@ -469,12 +540,13 @@ export function BettingManager({
       </div>
 
       <Tabs defaultValue="place-bet" className="w-full">
-        <TabsList className="grid w-full max-w-2xl grid-cols-5">
+        <TabsList className="grid w-full max-w-3xl grid-cols-6">
           <TabsTrigger value="place-bet">Place Bet</TabsTrigger>
           <TabsTrigger value="settle">Settle</TabsTrigger>
           <TabsTrigger value="active-bets">Active ({activeBets.length})</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
           <TabsTrigger value="limits">Limits</TabsTrigger>
+          <TabsTrigger value="config">Config</TabsTrigger>
         </TabsList>
 
         <TabsContent value="settle" className="mt-6">
@@ -526,16 +598,24 @@ export function BettingManager({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="regular">
-                        Regular Event (${BETTING_LIMITS.regular.minimum.toLocaleString()} min)
+                        Regular Event
+                        {bettingConfig && ` (Cost: $${bettingConfig.eventPricing.regular})`}
                       </SelectItem>
                       <SelectItem value="special">
-                        Special Event (${BETTING_LIMITS.special.minimum.toLocaleString()} min)
+                        Special Event
+                        {bettingConfig && ` (Cost: $${bettingConfig.eventPricing.special})`}
                       </SelectItem>
                       <SelectItem value="tournament">
-                        Tournament (${BETTING_LIMITS.tournament.entryPerBoxer.toLocaleString()} entry)
+                        Tournament
+                        {bettingConfig && ` (Cost: $${bettingConfig.eventPricing.tournament})`}
                       </SelectItem>
                     </SelectContent>
                   </Select>
+                  {bettingConfig && (
+                    <p className="text-xs text-muted-foreground">
+                      Event cost: ${bettingConfig.eventPricing[eventType]}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -646,24 +726,28 @@ export function BettingManager({
 
                     <div className="space-y-2">
                       <Label>
-                        Bet Amount (Minimum: $
-                        {eventType === 'tournament'
-                          ? BETTING_LIMITS.tournament.entryPerBoxer.toLocaleString()
-                          : (BETTING_LIMITS[eventType] as { minimum: number }).minimum.toLocaleString()}
-                        )
+                        Bet Amount
+                        {bettingConfig && (
+                          <span className="text-muted-foreground">
+                            {' '}(Min: ${bettingConfig.wageLimits.minimum} / Max: ${bettingConfig.wageLimits.maximum})
+                          </span>
+                        )}
                       </Label>
                       <Input
                         type="number"
                         placeholder="Enter amount..."
                         value={betAmount}
                         onChange={(e) => setBetAmount(e.target.value)}
-                        min={
-                          eventType === 'tournament'
-                            ? BETTING_LIMITS.tournament.entryPerBoxer
-                            : (BETTING_LIMITS[eventType] as { minimum: number }).minimum
-                        }
-                        step="100"
+                        min={bettingConfig?.wageLimits.minimum || 50}
+                        max={bettingConfig?.wageLimits.maximum || 10000}
+                        step="50"
                       />
+                      {bettingConfig && currentPool && (
+                        <div className="text-xs text-muted-foreground space-y-1">
+                          <div>Per-fight limit: ${bettingConfig.wageLimits.perFight.toLocaleString()}</div>
+                          <div>Per-event limit: ${bettingConfig.wageLimits.perEvent.toLocaleString()}</div>
+                        </div>
+                      )}
                     </div>
 
                     {betAmount && selectedFighter && (
@@ -1005,6 +1089,15 @@ export function BettingManager({
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="config" className="mt-6">
+          {bettingConfig && (
+            <BettingConfigComponent
+              config={bettingConfig}
+              onSave={setBettingConfig}
+            />
+          )}
         </TabsContent>
       </Tabs>
     </div>
