@@ -69,11 +69,11 @@ This is a full-featured management system with multiple interconnected modules: 
 - Success criteria: Stats update in real-time; leaderboard immediately visible; quick navigation to all modules
 
 **Comprehensive Betting System**
-- Functionality: Full sports betting platform with dynamic odds calculation based on fighter records, rankings, and betting pool activity
-- Purpose: Enable wagering on fights with real-time odds that adjust based on fighter statistics and betting activity
+- Functionality: Full sports betting platform with dynamic odds calculation based on fighter records, rankings, and betting pool activity; fair and legal payout structure
+- Purpose: Enable wagering on fights with real-time odds that adjust based on fighter statistics and betting activity; LSBA receives 10% fee on all bets, booker (1068 Casino) profits from remaining amount
 - Trigger: User navigates to Betting tab and selects fight card and specific bout
-- Progression: Select event type (regular/special/tournament) → Choose odds format (American/Decimal/Fractional) → Select fight → View live odds for both fighters → Place bet → Track active bets → View betting history
-- Success criteria: Odds calculate accurately using fighter strength algorithm (30% rank, 25% win rate, 20% ranking points, 10% KO rate, 10% experience, 5% recent form); minimum bet enforcement ($2k regular, $5k special, $5k tournament); pool adjusts odds dynamically; bets auto-settle when results declared; profit/loss tracking accurate
+- Progression: Select event type (regular/special/tournament) → Choose odds format (American/Decimal/Fractional) → Select fight → View live odds for both fighters → Enter bettor's State ID and name → Place bet → Track active bets → View betting history with payouts
+- Success criteria: Odds calculate accurately using fighter strength algorithm (30% rank, 25% win rate, 20% ranking points, 10% KO rate, 10% experience, 5% recent form); minimum bet enforcement ($2k regular, $5k special, $5k tournament); pool adjusts odds dynamically; bets auto-settle when results declared; LSBA always receives 10% of original bet regardless of outcome; winning bettor receives total winnings minus LSBA fee; booker profits from bet amount minus payouts and LSBA fee; no sponsor or fighter cuts from betting revenue
 
 **Fighter Odds Display**
 - Functionality: Shows current betting odds for each fighter on their profile page with auto-updates when odds change
@@ -121,6 +121,7 @@ This is a full-featured management system with multiple interconnected modules: 
 - **Fighter with no ranking** - Use default strength score based on record and experience only
 - **Bet settlement with cancelled fight** - Provide mechanism to refund bets for cancelled bouts
 - **Multiple active bets on same fight** - Track and display all bets separately with individual potential payouts
+- **Negative booker profit** - When total payouts exceed bet amounts, booker takes loss while LSBA still receives fixed 10% fee
 
 ## Design Direction
 

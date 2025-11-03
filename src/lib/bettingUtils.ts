@@ -9,11 +9,7 @@ export const BETTING_LIMITS = {
 };
 
 export const DEFAULT_PAYOUT_SETTINGS: PayoutSettings = {
-  bettorPercentage: 70,
-  bookerPercentage: 15,
-  lsbaPercentage: 5,
-  sponsorPercentage: 5,
-  boxerPercentage: 5,
+  lsbaFeePercentage: 10,
 };
 
 export const CASINO_NAME = '1068 Casino';
@@ -294,22 +290,20 @@ export function createBettingPool(
 }
 
 export function calculatePayoutBreakdown(
+  originalBet: number,
   totalWinnings: number,
   payoutSettings: PayoutSettings
 ): PayoutBreakdown {
-  const bettorCut = (totalWinnings * payoutSettings.bettorPercentage) / 100;
-  const bookerCut = (totalWinnings * payoutSettings.bookerPercentage) / 100;
-  const lsbaCut = (totalWinnings * payoutSettings.lsbaPercentage) / 100;
-  const sponsorCut = (totalWinnings * payoutSettings.sponsorPercentage) / 100;
-  const boxerCut = (totalWinnings * payoutSettings.boxerPercentage) / 100;
+  const lsbaFee = (originalBet * payoutSettings.lsbaFeePercentage) / 100;
+  const bettorPayout = totalWinnings - lsbaFee;
+  const bookerProfit = originalBet - totalWinnings;
 
   return {
-    totalPayout: totalWinnings,
-    bettorCut,
-    bookerCut,
-    lsbaCut,
-    sponsorCut,
-    boxerCut,
+    originalBet,
+    totalWinnings,
+    bettorPayout,
+    lsbaFee,
+    bookerProfit,
   };
 }
 
@@ -324,21 +318,43 @@ export function settleBets(
       return bet;
     }
     
+    const lsbaFee = (bet.amount * payoutSettings.lsbaFeePercentage) / 100;
+    
     if (bet.fighterId === winnerId) {
-      const payoutBreakdown = calculatePayoutBreakdown(bet.potentialPayout, payoutSettings);
+      const bettorPayout = bet.potentialPayout - lsbaFee;
+      const bookerProfit = bet.amount - bet.potentialPayout;
+      
+      const payoutBreakdown: PayoutBreakdown = {
+        originalBet: bet.amount,
+        totalWinnings: bet.potentialPayout,
+        bettorPayout,
+        lsbaFee,
+        bookerProfit,
+      };
       
       return {
         ...bet,
         status: 'won',
-        actualPayout: payoutBreakdown.bettorCut,
+        actualPayout: bettorPayout,
         payoutBreakdown,
         settledDate: new Date().toISOString(),
       };
     } else {
+      const bookerProfit = bet.amount - lsbaFee;
+      
+      const payoutBreakdown: PayoutBreakdown = {
+        originalBet: bet.amount,
+        totalWinnings: 0,
+        bettorPayout: 0,
+        lsbaFee,
+        bookerProfit,
+      };
+      
       return {
         ...bet,
         status: 'lost',
         actualPayout: 0,
+        payoutBreakdown,
         settledDate: new Date().toISOString(),
       };
     }

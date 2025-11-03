@@ -36,12 +36,11 @@ export interface Bet {
 }
 
 export interface PayoutBreakdown {
-  totalPayout: number;
-  bettorCut: number;
-  bookerCut: number;
-  lsbaCut: number;
-  sponsorCut: number;
-  boxerCut: number;
+  originalBet: number;
+  totalWinnings: number;
+  bettorPayout: number;
+  lsbaFee: number;
+  bookerProfit: number;
 }
 
 export interface BettingPool {
@@ -61,11 +60,7 @@ export interface BettingPool {
 }
 
 export interface PayoutSettings {
-  bettorPercentage: number;
-  bookerPercentage: number;
-  lsbaPercentage: number;
-  sponsorPercentage: number;
-  boxerPercentage: number;
+  lsbaFeePercentage: number;
 }
 
 export interface UserBettingProfile {

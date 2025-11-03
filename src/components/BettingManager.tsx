@@ -221,9 +221,10 @@ export function BettingManager({
       onUpdatePool(updatedPool);
     }
 
-    const breakdown = calculatePayoutBreakdown(potentialPayout, payoutSettings || DEFAULT_PAYOUT_SETTINGS);
+    const lsbaFee = (amount * ((payoutSettings || DEFAULT_PAYOUT_SETTINGS).lsbaFeePercentage)) / 100;
+    const bettorPayout = potentialPayout - lsbaFee;
     toast.success(
-      `Bet placed for ${bettorName}! Potential bettor payout: $${breakdown.bettorCut.toLocaleString()}`
+      `Bet placed for ${bettorName}! Potential bettor payout: $${bettorPayout.toLocaleString()}`
     );
     setBetAmount('');
     setSelectedFighter('');
@@ -252,15 +253,8 @@ export function BettingManager({
   const handleUpdatePayoutSettings = () => {
     if (!payoutSettings) return;
 
-    const total =
-      payoutSettings.bettorPercentage +
-      payoutSettings.bookerPercentage +
-      payoutSettings.lsbaPercentage +
-      payoutSettings.sponsorPercentage +
-      payoutSettings.boxerPercentage;
-
-    if (Math.abs(total - 100) > 0.01) {
-      toast.error('Percentages must add up to 100%');
+    if (payoutSettings.lsbaFeePercentage < 0 || payoutSettings.lsbaFeePercentage > 100) {
+      toast.error('LSBA fee must be between 0% and 100%');
       return;
     }
 
@@ -276,20 +270,12 @@ export function BettingManager({
   const totalWonByBettors = allBets.filter(b => b.status === 'won').reduce((sum, b) => sum + (b.actualPayout || 0), 0);
   
   const totalBookerRevenue = allBets
-    .filter(b => b.status === 'won' && b.payoutBreakdown)
-    .reduce((sum, b) => sum + (b.payoutBreakdown?.bookerCut || 0), 0);
+    .filter(b => b.payoutBreakdown)
+    .reduce((sum, b) => sum + (b.payoutBreakdown?.bookerProfit || 0), 0);
 
   const totalLsbaRevenue = allBets
-    .filter(b => b.status === 'won' && b.payoutBreakdown)
-    .reduce((sum, b) => sum + (b.payoutBreakdown?.lsbaCut || 0), 0);
-
-  const totalSponsorRevenue = allBets
-    .filter(b => b.status === 'won' && b.payoutBreakdown)
-    .reduce((sum, b) => sum + (b.payoutBreakdown?.sponsorCut || 0), 0);
-
-  const totalBoxerRevenue = allBets
-    .filter(b => b.status === 'won' && b.payoutBreakdown)
-    .reduce((sum, b) => sum + (b.payoutBreakdown?.boxerCut || 0), 0);
+    .filter(b => b.payoutBreakdown)
+    .reduce((sum, b) => sum + (b.payoutBreakdown?.lsbaFee || 0), 0);
 
   const currentSettings = payoutSettings || DEFAULT_PAYOUT_SETTINGS;
 
@@ -312,142 +298,67 @@ export function BettingManager({
               Payout Settings
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-xl">
             <DialogHeader>
-              <DialogTitle>Configure Payout Distribution</DialogTitle>
+              <DialogTitle>Configure LSBA Fee</DialogTitle>
               <DialogDescription>
-                Set the percentage each party receives from winning bets. Total must equal 100%.
+                Set the percentage LSBA receives from every bet (win or lose). This is always calculated from the original bet amount.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Bettor Cut (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="100"
-                    value={currentSettings.bettorPercentage}
-                    onChange={(e) =>
-                      setPayoutSettings((current) => ({
-                        ...(current || DEFAULT_PAYOUT_SETTINGS),
-                        bettorPercentage: parseFloat(e.target.value) || 0,
-                      }))
-                    }
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    The person who placed the bet
-                  </p>
-                </div>
+              <div className="space-y-2">
+                <Label>LSBA Fee (%)</Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="100"
+                  value={currentSettings.lsbaFeePercentage}
+                  onChange={(e) =>
+                    setPayoutSettings((current) => ({
+                      ...(current || DEFAULT_PAYOUT_SETTINGS),
+                      lsbaFeePercentage: parseFloat(e.target.value) || 0,
+                    }))
+                  }
+                />
+                <p className="text-xs text-muted-foreground">
+                  LSBA gets this percentage of every bet placed, regardless of outcome
+                </p>
+              </div>
 
-                <div className="space-y-2">
-                  <Label>Booker ({CASINO_NAME}) Cut (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="100"
-                    value={currentSettings.bookerPercentage}
-                    onChange={(e) =>
-                      setPayoutSettings((current) => ({
-                        ...(current || DEFAULT_PAYOUT_SETTINGS),
-                        bookerPercentage: parseFloat(e.target.value) || 0,
-                      }))
-                    }
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    The casino taking the bets
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>LSBA Cut (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="100"
-                    value={currentSettings.lsbaPercentage}
-                    onChange={(e) =>
-                      setPayoutSettings((current) => ({
-                        ...(current || DEFAULT_PAYOUT_SETTINGS),
-                        lsbaPercentage: parseFloat(e.target.value) || 0,
-                      }))
-                    }
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    The boxing association
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Sponsor Cut (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="100"
-                    value={currentSettings.sponsorPercentage}
-                    onChange={(e) =>
-                      setPayoutSettings((current) => ({
-                        ...(current || DEFAULT_PAYOUT_SETTINGS),
-                        sponsorPercentage: parseFloat(e.target.value) || 0,
-                      }))
-                    }
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    The fighter's sponsor
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Boxer Cut (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="100"
-                    value={currentSettings.boxerPercentage}
-                    onChange={(e) =>
-                      setPayoutSettings((current) => ({
-                        ...(current || DEFAULT_PAYOUT_SETTINGS),
-                        boxerPercentage: parseFloat(e.target.value) || 0,
-                      }))
-                    }
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    The winning boxer
-                  </p>
+              <div className="bg-muted p-4 rounded-lg space-y-2">
+                <div className="font-semibold text-lg mb-2">How Payouts Work:</div>
+                <div className="text-sm space-y-1">
+                  <div className="flex items-start gap-2">
+                    <span className="text-secondary">•</span>
+                    <span><strong>LSBA Fee:</strong> Always {currentSettings.lsbaFeePercentage}% of the original bet</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-secondary">•</span>
+                    <span><strong>Winning Bet:</strong> Bettor gets total winnings minus LSBA fee</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-secondary">•</span>
+                    <span><strong>Losing Bet:</strong> {CASINO_NAME} keeps bet amount minus LSBA fee</span>
+                  </div>
                 </div>
               </div>
 
-              <div className="bg-muted p-4 rounded-lg">
-                <div className="flex justify-between items-center">
-                  <span className="font-semibold">Total:</span>
-                  <span
-                    className={`text-xl font-bold ${
-                      Math.abs(
-                        currentSettings.bettorPercentage +
-                          currentSettings.bookerPercentage +
-                          currentSettings.lsbaPercentage +
-                          currentSettings.sponsorPercentage +
-                          currentSettings.boxerPercentage -
-                          100
-                      ) < 0.01
-                        ? 'text-secondary'
-                        : 'text-destructive'
-                    }`}
-                  >
-                    {(
-                      currentSettings.bettorPercentage +
-                      currentSettings.bookerPercentage +
-                      currentSettings.lsbaPercentage +
-                      currentSettings.sponsorPercentage +
-                      currentSettings.boxerPercentage
-                    ).toFixed(1)}
-                    %
-                  </span>
+              <div className="bg-accent/10 border border-accent/30 rounded-lg p-4">
+                <div className="text-sm font-semibold mb-2">Example ($2,000 bet):</div>
+                <div className="text-sm space-y-1">
+                  <div className="flex justify-between">
+                    <span>LSBA Fee:</span>
+                    <span className="font-semibold">${(2000 * currentSettings.lsbaFeePercentage / 100).toFixed(0)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>If Win (at 2:1 odds):</span>
+                    <span className="font-semibold text-secondary">${(4000 - (2000 * currentSettings.lsbaFeePercentage / 100)).toFixed(0)} to bettor</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>If Lose:</span>
+                    <span className="font-semibold">${(2000 - (2000 * currentSettings.lsbaFeePercentage / 100)).toFixed(0)} to {CASINO_NAME}</span>
+                  </div>
                 </div>
               </div>
 
@@ -715,86 +626,42 @@ export function BettingManager({
                         <Separator />
 
                         <div className="text-sm space-y-1">
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Bettor receives:</span>
-                            <span className="font-semibold">
-                              $
-                              {calculatePayoutBreakdown(
-                                calculatePayout(
-                                  parseFloat(betAmount),
-                                  selectedFighter === currentFightOdds.fighter1Id
-                                    ? currentFightOdds.fighter1Odds
-                                    : currentFightOdds.fighter2Odds,
-                                  oddsFormat
-                                ),
-                                currentSettings
-                              ).bettorCut.toLocaleString()}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">{CASINO_NAME}:</span>
-                            <span className="font-semibold">
-                              $
-                              {calculatePayoutBreakdown(
-                                calculatePayout(
-                                  parseFloat(betAmount),
-                                  selectedFighter === currentFightOdds.fighter1Id
-                                    ? currentFightOdds.fighter1Odds
-                                    : currentFightOdds.fighter2Odds,
-                                  oddsFormat
-                                ),
-                                currentSettings
-                              ).bookerCut.toLocaleString()}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">LSBA:</span>
-                            <span className="font-semibold">
-                              $
-                              {calculatePayoutBreakdown(
-                                calculatePayout(
-                                  parseFloat(betAmount),
-                                  selectedFighter === currentFightOdds.fighter1Id
-                                    ? currentFightOdds.fighter1Odds
-                                    : currentFightOdds.fighter2Odds,
-                                  oddsFormat
-                                ),
-                                currentSettings
-                              ).lsbaCut.toLocaleString()}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Sponsor:</span>
-                            <span className="font-semibold">
-                              $
-                              {calculatePayoutBreakdown(
-                                calculatePayout(
-                                  parseFloat(betAmount),
-                                  selectedFighter === currentFightOdds.fighter1Id
-                                    ? currentFightOdds.fighter1Odds
-                                    : currentFightOdds.fighter2Odds,
-                                  oddsFormat
-                                ),
-                                currentSettings
-                              ).sponsorCut.toLocaleString()}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Boxer:</span>
-                            <span className="font-semibold">
-                              $
-                              {calculatePayoutBreakdown(
-                                calculatePayout(
-                                  parseFloat(betAmount),
-                                  selectedFighter === currentFightOdds.fighter1Id
-                                    ? currentFightOdds.fighter1Odds
-                                    : currentFightOdds.fighter2Odds,
-                                  oddsFormat
-                                ),
-                                currentSettings
-                              ).boxerCut.toLocaleString()}
-                            </span>
-                          </div>
+                          {(() => {
+                            const betAmountNum = parseFloat(betAmount);
+                            const totalPayout = calculatePayout(
+                              betAmountNum,
+                              selectedFighter === currentFightOdds.fighter1Id
+                                ? currentFightOdds.fighter1Odds
+                                : currentFightOdds.fighter2Odds,
+                              oddsFormat
+                            );
+                            const lsbaFee = (betAmountNum * currentSettings.lsbaFeePercentage) / 100;
+                            const bettorPayout = totalPayout - lsbaFee;
+                            const bookerProfit = betAmountNum - totalPayout;
+                            
+                            return (
+                              <>
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Bettor receives:</span>
+                                  <span className="font-semibold text-secondary">
+                                    ${bettorPayout.toLocaleString()}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">LSBA Fee:</span>
+                                  <span className="font-semibold">
+                                    ${lsbaFee.toLocaleString()}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">{CASINO_NAME} Profit:</span>
+                                  <span className="font-semibold">
+                                    ${bookerProfit.toLocaleString()}
+                                  </span>
+                                </div>
+                              </>
+                            );
+                          })()}
                         </div>
                       </div>
                     )}
@@ -921,33 +788,25 @@ export function BettingManager({
                               <DialogContent>
                                 <DialogHeader>
                                   <DialogTitle>Payout Breakdown</DialogTitle>
-                                  <DialogDescription>Distribution of winnings for this bet</DialogDescription>
+                                  <DialogDescription>Distribution for this bet</DialogDescription>
                                 </DialogHeader>
                                 <div className="space-y-2 py-4">
                                   <div className="flex justify-between">
-                                    <span>Total Payout:</span>
-                                    <span className="font-bold">${bet.payoutBreakdown.totalPayout.toLocaleString()}</span>
+                                    <span>Original Bet:</span>
+                                    <span className="font-bold">${bet.payoutBreakdown.originalBet.toLocaleString()}</span>
                                   </div>
                                   <Separator />
                                   <div className="flex justify-between">
-                                    <span>Bettor:</span>
-                                    <span className="font-semibold">${bet.payoutBreakdown.bettorCut.toLocaleString()}</span>
+                                    <span>Bettor Payout:</span>
+                                    <span className="font-semibold text-secondary">${bet.payoutBreakdown.bettorPayout.toLocaleString()}</span>
                                   </div>
                                   <div className="flex justify-between">
-                                    <span>{CASINO_NAME}:</span>
-                                    <span className="font-semibold">${bet.payoutBreakdown.bookerCut.toLocaleString()}</span>
+                                    <span>LSBA Fee:</span>
+                                    <span className="font-semibold">${bet.payoutBreakdown.lsbaFee.toLocaleString()}</span>
                                   </div>
                                   <div className="flex justify-between">
-                                    <span>LSBA:</span>
-                                    <span className="font-semibold">${bet.payoutBreakdown.lsbaCut.toLocaleString()}</span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span>Sponsor:</span>
-                                    <span className="font-semibold">${bet.payoutBreakdown.sponsorCut.toLocaleString()}</span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span>Boxer:</span>
-                                    <span className="font-semibold">${bet.payoutBreakdown.boxerCut.toLocaleString()}</span>
+                                    <span>{CASINO_NAME} Profit:</span>
+                                    <span className="font-semibold">${bet.payoutBreakdown.bookerProfit.toLocaleString()}</span>
                                   </div>
                                 </div>
                               </DialogContent>
