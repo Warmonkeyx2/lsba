@@ -16,10 +16,18 @@ import {
   ArrowsClockwise,
   Trophy,
   CurrencyDollar,
-  IdentificationCard
+  IdentificationCard,
+  CaretDown
 } from "@phosphor-icons/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 import { FightCardEditor } from "@/components/FightCardEditor";
 import { FightCardDisplay } from "@/components/FightCardDisplay";
@@ -508,60 +516,102 @@ function App() {
               </div>
 
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-5 md:grid-cols-13 h-auto gap-1">
-                <TabsTrigger value="dashboard" className="flex items-center gap-2 py-3">
-                  <SquaresFour className="w-4 h-4" />
-                  <span className="hidden sm:inline">Dashboard</span>
-                </TabsTrigger>
-                <TabsTrigger value="licenses" className="flex items-center gap-2 py-3">
-                  <IdentificationCard className="w-4 h-4" />
-                  <span className="hidden sm:inline">Licenses</span>
-                </TabsTrigger>
-                <TabsTrigger value="betting" className="flex items-center gap-2 py-3">
-                  <CurrencyDollar className="w-4 h-4" />
-                  <span className="hidden sm:inline">Betting</span>
-                </TabsTrigger>
-                <TabsTrigger value="upcoming-fights" className="flex items-center gap-2 py-3">
-                  <Calendar className="w-4 h-4" />
-                  <span className="hidden sm:inline">Upcoming</span>
-                </TabsTrigger>
-                <TabsTrigger value="tournament" className="flex items-center gap-2 py-3">
-                  <Trophy className="w-4 h-4" />
-                  <span className="hidden sm:inline">Tournament</span>
-                </TabsTrigger>
-                <TabsTrigger value="directory" className="flex items-center gap-2 py-3">
-                  <AddressBook className="w-4 h-4" />
-                  <span className="hidden sm:inline">Directory</span>
-                </TabsTrigger>
-                <TabsTrigger value="register" className="flex items-center gap-2 py-3">
-                  <UserPlus className="w-4 h-4" />
-                  <span className="hidden sm:inline">Register</span>
-                </TabsTrigger>
-                <TabsTrigger value="generator" className="flex items-center gap-2 py-3">
-                  <Sparkle className="w-4 h-4" />
-                  <span className="hidden sm:inline">Generator</span>
-                </TabsTrigger>
-                <TabsTrigger value="sponsors" className="flex items-center gap-2 py-3">
-                  <Briefcase className="w-4 h-4" />
-                  <span className="hidden sm:inline">Sponsors</span>
-                </TabsTrigger>
-                <TabsTrigger value="fight-card" className="flex items-center gap-2 py-3">
-                  <PencilSimple className="w-4 h-4" />
-                  <span className="hidden sm:inline">Fight Card</span>
-                </TabsTrigger>
-                <TabsTrigger value="faq" className="flex items-center gap-2 py-3">
-                  <Info className="w-4 h-4" />
-                  <span className="hidden sm:inline">FAQ</span>
-                </TabsTrigger>
-                <TabsTrigger value="settings" className="flex items-center gap-2 py-3">
-                  <Sliders className="w-4 h-4" />
-                  <span className="hidden sm:inline">Settings</span>
-                </TabsTrigger>
-                <TabsTrigger value="season" className="flex items-center gap-2 py-3">
-                  <ArrowsClockwise className="w-4 h-4" />
-                  <span className="hidden sm:inline">Season</span>
-                </TabsTrigger>
-              </TabsList>
+              <div className="flex items-center gap-2 bg-card border border-border rounded-lg p-2">
+                <TabsList className="flex-1 bg-transparent h-auto">
+                  <TabsTrigger value="dashboard" className="flex items-center gap-2 data-[state=active]:bg-accent">
+                    <SquaresFour className="w-4 h-4" />
+                    <span className="hidden md:inline">Dashboard</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="upcoming-fights" className="flex items-center gap-2 data-[state=active]:bg-accent">
+                    <Calendar className="w-4 h-4" />
+                    <span className="hidden md:inline">Upcoming</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="licenses" className="flex items-center gap-2 data-[state=active]:bg-accent">
+                    <IdentificationCard className="w-4 h-4" />
+                    <span className="hidden md:inline">Licenses</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="betting" className="flex items-center gap-2 data-[state=active]:bg-accent">
+                    <CurrencyDollar className="w-4 h-4" />
+                    <span className="hidden md:inline">Betting</span>
+                  </TabsTrigger>
+                </TabsList>
+
+                <div className="flex items-center gap-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="gap-2">
+                        <AddressBook className="w-4 h-4" />
+                        <span className="hidden sm:inline">Fighters</span>
+                        <CaretDown className="w-3 h-3" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem onClick={() => setActiveTab('directory')}>
+                        <AddressBook className="w-4 h-4 mr-2" />
+                        Directory
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setActiveTab('register')}>
+                        <UserPlus className="w-4 h-4 mr-2" />
+                        Register Fighter
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setActiveTab('sponsors')}>
+                        <Briefcase className="w-4 h-4 mr-2" />
+                        Sponsors
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="gap-2">
+                        <Sparkle className="w-4 h-4" />
+                        <span className="hidden sm:inline">Events</span>
+                        <CaretDown className="w-3 h-3" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem onClick={() => setActiveTab('generator')}>
+                        <Sparkle className="w-4 h-4 mr-2" />
+                        Card Generator
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setActiveTab('fight-card')}>
+                        <PencilSimple className="w-4 h-4 mr-2" />
+                        Fight Card Editor
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setActiveTab('tournament')}>
+                        <Trophy className="w-4 h-4 mr-2" />
+                        Tournament
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="gap-2">
+                        <Sliders className="w-4 h-4" />
+                        <span className="hidden sm:inline">Admin</span>
+                        <CaretDown className="w-3 h-3" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem onClick={() => setActiveTab('settings')}>
+                        <Sliders className="w-4 h-4 mr-2" />
+                        Settings
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setActiveTab('faq')}>
+                        <Info className="w-4 h-4 mr-2" />
+                        FAQ
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setActiveTab('season')}>
+                        <ArrowsClockwise className="w-4 h-4 mr-2" />
+                        Season Reset
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
 
               <TabsContent value="dashboard" className="mt-6">
                 <div className="flex flex-col gap-6">
