@@ -18,7 +18,8 @@ import {
   CurrencyDollar,
   IdentificationCard,
   CaretDown,
-  UserCircleGear
+  UserCircleGear,
+  Book
 } from "@phosphor-icons/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -50,6 +51,7 @@ import { BettingManager } from "@/components/BettingManager";
 import { FighterOddsDisplay } from "@/components/FighterOddsDisplay";
 import { LicenseManager } from "@/components/LicenseManager";
 import { RoleManager } from "@/components/RoleManager";
+import { HelpGuide } from "@/components/HelpGuide";
 import { toast, Toaster } from "sonner";
 import type { FightCard } from "@/types/fightCard";
 import type { Boxer, Sponsor, RankingSettings } from "@/types/boxer";
@@ -617,6 +619,10 @@ function App() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem onClick={() => setActiveTab('help')}>
+                        <Book className="w-4 h-4 mr-2" />
+                        Help Guide
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setActiveTab('roles')}>
                         <UserCircleGear className="w-4 h-4 mr-2" />
                         Roles & Permissions
@@ -846,6 +852,10 @@ function App() {
                     </TabsContent>
                   </Tabs>
                 </div>
+              </TabsContent>
+
+              <TabsContent value="help" className="mt-6">
+                <HelpGuide />
               </TabsContent>
 
               <TabsContent value="faq" className="mt-6">
