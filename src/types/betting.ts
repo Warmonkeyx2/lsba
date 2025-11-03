@@ -11,12 +11,13 @@ export interface FightOdds {
   fighter2Bets: number;
   lastUpdated: string;
   oddsFormat: 'american' | 'decimal' | 'fractional';
+  maxBetLimit?: number;
 }
 
 export interface Bet {
   id: string;
-  userId: string;
-  userName: string;
+  bettorStateId: string;
+  bettorName: string;
   fightId: string;
   fightCardId: string;
   eventName: string;
@@ -31,6 +32,16 @@ export interface Bet {
   status: 'pending' | 'won' | 'lost' | 'cancelled' | 'refunded';
   settledDate?: string;
   actualPayout?: number;
+  payoutBreakdown?: PayoutBreakdown;
+}
+
+export interface PayoutBreakdown {
+  totalPayout: number;
+  bettorCut: number;
+  bookerCut: number;
+  lsbaCut: number;
+  sponsorCut: number;
+  boxerCut: number;
 }
 
 export interface BettingPool {
@@ -45,6 +56,16 @@ export interface BettingPool {
   createdDate: string;
   lockedDate?: string;
   settledDate?: string;
+  casinoName: string;
+  payoutSettings: PayoutSettings;
+}
+
+export interface PayoutSettings {
+  bettorPercentage: number;
+  bookerPercentage: number;
+  lsbaPercentage: number;
+  sponsorPercentage: number;
+  boxerPercentage: number;
 }
 
 export interface UserBettingProfile {

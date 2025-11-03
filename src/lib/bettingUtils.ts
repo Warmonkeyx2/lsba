@@ -1,5 +1,5 @@
 import type { Boxer } from '@/types/boxer';
-import type { FightOdds, Bet, BettingPool, EventType } from '@/types/betting';
+import type { FightOdds, Bet, BettingPool, EventType, PayoutSettings, PayoutBreakdown } from '@/types/betting';
 import { getSortedBoxers } from './rankingUtils';
 
 export const BETTING_LIMITS = {
@@ -7,6 +7,16 @@ export const BETTING_LIMITS = {
   special: { minimum: 5000 },
   tournament: { entryPerBoxer: 5000 },
 };
+
+export const DEFAULT_PAYOUT_SETTINGS: PayoutSettings = {
+  bettorPercentage: 70,
+  bookerPercentage: 15,
+  lsbaPercentage: 5,
+  sponsorPercentage: 5,
+  boxerPercentage: 5,
+};
+
+export const CASINO_NAME = '1068 Casino';
 
 export function calculateFighterStrength(boxer: Boxer, allBoxers: Boxer[]): number {
   const sortedBoxers = getSortedBoxers(allBoxers);
@@ -259,7 +269,8 @@ export function createBettingPool(
   fights: Array<{ fighter1: Boxer; fighter2: Boxer; fightId: string }>,
   allBoxers: Boxer[],
   eventType: EventType = 'regular',
-  existingBets?: Bet[]
+  existingBets?: Bet[],
+  payoutSettings: PayoutSettings = DEFAULT_PAYOUT_SETTINGS
 ): BettingPool {
   const fightOdds = fights.map(({ fighter1, fighter2, fightId }) =>
     generateFightOdds(fightId, fighter1, fighter2, allBoxers, existingBets)
@@ -277,13 +288,36 @@ export function createBettingPool(
       .reduce((sum, b) => sum + b.amount, 0) || 0,
     status: 'open',
     createdDate: new Date().toISOString(),
+    casinoName: CASINO_NAME,
+    payoutSettings,
+  };
+}
+
+export function calculatePayoutBreakdown(
+  totalWinnings: number,
+  payoutSettings: PayoutSettings
+): PayoutBreakdown {
+  const bettorCut = (totalWinnings * payoutSettings.bettorPercentage) / 100;
+  const bookerCut = (totalWinnings * payoutSettings.bookerPercentage) / 100;
+  const lsbaCut = (totalWinnings * payoutSettings.lsbaPercentage) / 100;
+  const sponsorCut = (totalWinnings * payoutSettings.sponsorPercentage) / 100;
+  const boxerCut = (totalWinnings * payoutSettings.boxerPercentage) / 100;
+
+  return {
+    totalPayout: totalWinnings,
+    bettorCut,
+    bookerCut,
+    lsbaCut,
+    sponsorCut,
+    boxerCut,
   };
 }
 
 export function settleBets(
   bets: Bet[],
   fightId: string,
-  winnerId: string
+  winnerId: string,
+  payoutSettings: PayoutSettings = DEFAULT_PAYOUT_SETTINGS
 ): Bet[] {
   return bets.map(bet => {
     if (bet.fightId !== fightId || bet.status !== 'pending') {
@@ -291,10 +325,13 @@ export function settleBets(
     }
     
     if (bet.fighterId === winnerId) {
+      const payoutBreakdown = calculatePayoutBreakdown(bet.potentialPayout, payoutSettings);
+      
       return {
         ...bet,
         status: 'won',
-        actualPayout: bet.potentialPayout,
+        actualPayout: payoutBreakdown.bettorCut,
+        payoutBreakdown,
         settledDate: new Date().toISOString(),
       };
     } else {

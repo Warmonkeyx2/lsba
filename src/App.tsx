@@ -42,9 +42,9 @@ import { toast, Toaster } from "sonner";
 import type { FightCard } from "@/types/fightCard";
 import type { Boxer, Sponsor, RankingSettings } from "@/types/boxer";
 import type { Tournament } from "@/types/tournament";
-import type { Bet, BettingPool } from "@/types/betting";
+import type { Bet, BettingPool, PayoutSettings } from "@/types/betting";
 import { DEFAULT_RANKING_SETTINGS, calculatePointsForFight, getSortedBoxers } from "@/lib/rankingUtils";
-import { settleBets } from "@/lib/bettingUtils";
+import { settleBets, DEFAULT_PAYOUT_SETTINGS } from "@/lib/bettingUtils";
 
 const defaultFightCard: FightCard = {
   eventDate: '',
@@ -70,6 +70,7 @@ function App() {
   const [tournaments, setTournaments] = useKV<Tournament[]>('lsba-tournaments', []);
   const [bets, setBets] = useKV<Bet[]>('lsba-bets', []);
   const [bettingPools, setBettingPools] = useKV<BettingPool[]>('lsba-betting-pools', []);
+  const [payoutSettings] = useKV<PayoutSettings>('lsba-payout-settings', DEFAULT_PAYOUT_SETTINGS);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [selectedBoxer, setSelectedBoxer] = useState<Boxer | null>(null);
   const [selectedSponsor, setSelectedSponsor] = useState<Sponsor | null>(null);
@@ -357,7 +358,7 @@ function App() {
       allBouts.forEach((bout) => {
         if (bout.winner && bout.fighter1Id && bout.fighter2Id) {
           const winnerId = bout.winner === 'fighter1' ? bout.fighter1Id : bout.fighter2Id;
-          updatedBets = settleBets(updatedBets, bout.id, winnerId);
+          updatedBets = settleBets(updatedBets, bout.id, winnerId, payoutSettings || DEFAULT_PAYOUT_SETTINGS);
         }
       });
       return updatedBets;

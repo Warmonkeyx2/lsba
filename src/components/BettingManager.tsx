@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useKV } from '@github/spark/hooks';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,11 +22,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { CurrencyDollar, TrendUp, TrendDown, ChartLine, Lock, LockOpen } from '@phosphor-icons/react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { CurrencyDollar, TrendUp, TrendDown, ChartLine, Lock, LockOpen, Sliders, Receipt } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import type { Boxer } from '@/types/boxer';
-import type { FightCard, Bout } from '@/types/fightCard';
-import type { Bet, BettingPool, FightOdds, EventType } from '@/types/betting';
+import type { FightCard } from '@/types/fightCard';
+import type { Bet, BettingPool, FightOdds, EventType, PayoutSettings } from '@/types/betting';
 import {
   createBettingPool,
   generateFightOdds,
@@ -33,6 +42,9 @@ import {
   calculatePayout,
   validateBet,
   BETTING_LIMITS,
+  DEFAULT_PAYOUT_SETTINGS,
+  CASINO_NAME,
+  calculatePayoutBreakdown,
 } from '@/lib/bettingUtils';
 
 interface BettingManagerProps {
@@ -52,12 +64,17 @@ export function BettingManager({
   onPlaceBet,
   onUpdatePool,
 }: BettingManagerProps) {
+  const [payoutSettings, setPayoutSettings] = useKV<PayoutSettings>('lsba-payout-settings', DEFAULT_PAYOUT_SETTINGS);
   const [selectedFightCard, setSelectedFightCard] = useState<string>('');
   const [selectedFight, setSelectedFight] = useState<string>('');
   const [selectedFighter, setSelectedFighter] = useState<string>('');
   const [betAmount, setBetAmount] = useState<string>('');
+  const [bettorStateId, setBettorStateId] = useState<string>('');
+  const [bettorName, setBettorName] = useState<string>('');
   const [oddsFormat, setOddsFormat] = useState<'american' | 'decimal' | 'fractional'>('american');
   const [eventType, setEventType] = useState<EventType>('regular');
+  const [maxBetLimit, setMaxBetLimit] = useState<string>('');
+  const [editingFightId, setEditingFightId] = useState<string>('');
 
   const upcomingFightCards = fightCards.filter(fc => fc.status === 'upcoming');
 
@@ -110,16 +127,17 @@ export function BettingManager({
         fights,
         boxers,
         eventType,
-        bets
+        bets,
+        payoutSettings || DEFAULT_PAYOUT_SETTINGS
       );
 
       onUpdatePool(newPool);
     }
-  }, [selectedFightCard, currentPool, upcomingFightCards, boxers, bets, eventType, onUpdatePool]);
+  }, [selectedFightCard, currentPool, upcomingFightCards, boxers, bets, eventType, onUpdatePool, payoutSettings]);
 
   const handlePlaceBet = () => {
-    if (!selectedFightCard || !selectedFight || !selectedFighter || !betAmount) {
-      toast.error('Please fill in all fields');
+    if (!selectedFightCard || !selectedFight || !selectedFighter || !betAmount || !bettorStateId || !bettorName) {
+      toast.error('Please fill in all fields including bettor State ID and name');
       return;
     }
 
@@ -137,6 +155,11 @@ export function BettingManager({
 
     if (!currentFightOdds || !selectedBout) {
       toast.error('Fight odds not available');
+      return;
+    }
+
+    if (currentFightOdds.maxBetLimit && amount > currentFightOdds.maxBetLimit) {
+      toast.error(`Maximum bet limit for this fight is $${currentFightOdds.maxBetLimit.toLocaleString()}`);
       return;
     }
 
@@ -159,8 +182,8 @@ export function BettingManager({
 
     const bet: Bet = {
       id: `bet-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      userId: 'current-user',
-      userName: 'LSBA User',
+      bettorStateId: bettorStateId.trim(),
+      bettorName: bettorName.trim(),
       fightId: selectedFight,
       fightCardId: selectedFightCard,
       eventName: currentPool?.eventName || 'LSBA Event',
@@ -190,7 +213,7 @@ export function BettingManager({
       const updatedPool: BettingPool = {
         ...currentPool,
         fights: currentPool.fights.map(f =>
-          f.fightId === selectedFight ? updatedFightOdds : f
+          f.fightId === selectedFight ? { ...updatedFightOdds, maxBetLimit: f.maxBetLimit } : f
         ),
         totalBetsPlaced: currentPool.totalBetsPlaced + 1,
         totalPoolAmount: currentPool.totalPoolAmount + amount,
@@ -198,31 +221,245 @@ export function BettingManager({
       onUpdatePool(updatedPool);
     }
 
-    toast.success(`Bet placed! Potential payout: $${potentialPayout.toLocaleString()}`);
+    const breakdown = calculatePayoutBreakdown(potentialPayout, payoutSettings || DEFAULT_PAYOUT_SETTINGS);
+    toast.success(
+      `Bet placed for ${bettorName}! Potential bettor payout: $${breakdown.bettorCut.toLocaleString()}`
+    );
     setBetAmount('');
     setSelectedFighter('');
+    setBettorStateId('');
+    setBettorName('');
   };
 
-  const userBets = bets.filter(b => b.userId === 'current-user');
-  const activeBets = userBets.filter(b => b.status === 'pending');
-  const settledBets = userBets.filter(b => b.status === 'won' || b.status === 'lost');
+  const handleUpdateMaxBet = (fightId: string) => {
+    if (!currentPool) return;
 
-  const totalWagered = userBets.reduce((sum, b) => sum + b.amount, 0);
-  const totalWon = userBets.filter(b => b.status === 'won').reduce((sum, b) => sum + (b.actualPayout || 0), 0);
-  const profitLoss = totalWon - totalWagered;
+    const limit = maxBetLimit ? parseFloat(maxBetLimit) : undefined;
+    
+    const updatedPool: BettingPool = {
+      ...currentPool,
+      fights: currentPool.fights.map(f =>
+        f.fightId === fightId ? { ...f, maxBetLimit: limit } : f
+      ),
+    };
+
+    onUpdatePool(updatedPool);
+    toast.success(limit ? `Max bet set to $${limit.toLocaleString()}` : 'Max bet limit removed');
+    setMaxBetLimit('');
+    setEditingFightId('');
+  };
+
+  const handleUpdatePayoutSettings = () => {
+    if (!payoutSettings) return;
+
+    const total =
+      payoutSettings.bettorPercentage +
+      payoutSettings.bookerPercentage +
+      payoutSettings.lsbaPercentage +
+      payoutSettings.sponsorPercentage +
+      payoutSettings.boxerPercentage;
+
+    if (Math.abs(total - 100) > 0.01) {
+      toast.error('Percentages must add up to 100%');
+      return;
+    }
+
+    setPayoutSettings(payoutSettings);
+    toast.success('Payout settings updated!');
+  };
+
+  const allBets = bets;
+  const activeBets = allBets.filter(b => b.status === 'pending');
+  const settledBets = allBets.filter(b => b.status === 'won' || b.status === 'lost');
+
+  const totalWagered = allBets.reduce((sum, b) => sum + b.amount, 0);
+  const totalWonByBettors = allBets.filter(b => b.status === 'won').reduce((sum, b) => sum + (b.actualPayout || 0), 0);
+  
+  const totalBookerRevenue = allBets
+    .filter(b => b.status === 'won' && b.payoutBreakdown)
+    .reduce((sum, b) => sum + (b.payoutBreakdown?.bookerCut || 0), 0);
+
+  const totalLsbaRevenue = allBets
+    .filter(b => b.status === 'won' && b.payoutBreakdown)
+    .reduce((sum, b) => sum + (b.payoutBreakdown?.lsbaCut || 0), 0);
+
+  const totalSponsorRevenue = allBets
+    .filter(b => b.status === 'won' && b.payoutBreakdown)
+    .reduce((sum, b) => sum + (b.payoutBreakdown?.sponsorCut || 0), 0);
+
+  const totalBoxerRevenue = allBets
+    .filter(b => b.status === 'won' && b.payoutBreakdown)
+    .reduce((sum, b) => sum + (b.payoutBreakdown?.boxerCut || 0), 0);
+
+  const currentSettings = payoutSettings || DEFAULT_PAYOUT_SETTINGS;
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="font-display text-3xl uppercase text-secondary tracking-wide">
-          Betting System
-        </h2>
-        <p className="text-muted-foreground mt-1">
-          Place bets on upcoming fights with dynamic odds
-        </p>
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+        <div>
+          <h2 className="font-display text-3xl uppercase text-secondary tracking-wide">
+            {CASINO_NAME} Bookmaking
+          </h2>
+          <p className="text-muted-foreground mt-1">
+            Manage bets, odds, and payouts for LSBA fights
+          </p>
+        </div>
+
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline">
+              <Sliders className="w-4 h-4 mr-2" />
+              Payout Settings
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Configure Payout Distribution</DialogTitle>
+              <DialogDescription>
+                Set the percentage each party receives from winning bets. Total must equal 100%.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Bettor Cut (%)</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="100"
+                    value={currentSettings.bettorPercentage}
+                    onChange={(e) =>
+                      setPayoutSettings((current) => ({
+                        ...(current || DEFAULT_PAYOUT_SETTINGS),
+                        bettorPercentage: parseFloat(e.target.value) || 0,
+                      }))
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    The person who placed the bet
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Booker ({CASINO_NAME}) Cut (%)</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="100"
+                    value={currentSettings.bookerPercentage}
+                    onChange={(e) =>
+                      setPayoutSettings((current) => ({
+                        ...(current || DEFAULT_PAYOUT_SETTINGS),
+                        bookerPercentage: parseFloat(e.target.value) || 0,
+                      }))
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    The casino taking the bets
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>LSBA Cut (%)</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="100"
+                    value={currentSettings.lsbaPercentage}
+                    onChange={(e) =>
+                      setPayoutSettings((current) => ({
+                        ...(current || DEFAULT_PAYOUT_SETTINGS),
+                        lsbaPercentage: parseFloat(e.target.value) || 0,
+                      }))
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    The boxing association
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Sponsor Cut (%)</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="100"
+                    value={currentSettings.sponsorPercentage}
+                    onChange={(e) =>
+                      setPayoutSettings((current) => ({
+                        ...(current || DEFAULT_PAYOUT_SETTINGS),
+                        sponsorPercentage: parseFloat(e.target.value) || 0,
+                      }))
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    The fighter's sponsor
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Boxer Cut (%)</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="100"
+                    value={currentSettings.boxerPercentage}
+                    onChange={(e) =>
+                      setPayoutSettings((current) => ({
+                        ...(current || DEFAULT_PAYOUT_SETTINGS),
+                        boxerPercentage: parseFloat(e.target.value) || 0,
+                      }))
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    The winning boxer
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-muted p-4 rounded-lg">
+                <div className="flex justify-between items-center">
+                  <span className="font-semibold">Total:</span>
+                  <span
+                    className={`text-xl font-bold ${
+                      Math.abs(
+                        currentSettings.bettorPercentage +
+                          currentSettings.bookerPercentage +
+                          currentSettings.lsbaPercentage +
+                          currentSettings.sponsorPercentage +
+                          currentSettings.boxerPercentage -
+                          100
+                      ) < 0.01
+                        ? 'text-secondary'
+                        : 'text-destructive'
+                    }`}
+                  >
+                    {(
+                      currentSettings.bettorPercentage +
+                      currentSettings.bookerPercentage +
+                      currentSettings.lsbaPercentage +
+                      currentSettings.sponsorPercentage +
+                      currentSettings.boxerPercentage
+                    ).toFixed(1)}
+                    %
+                  </span>
+                </div>
+              </div>
+
+              <Button onClick={handleUpdatePayoutSettings} className="w-full">
+                Save Settings
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">Active Bets</CardTitle>
@@ -234,7 +471,7 @@ export function BettingManager({
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Wagered</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Pool</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-display font-bold">${totalWagered.toLocaleString()}</div>
@@ -243,39 +480,62 @@ export function BettingManager({
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Won</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{CASINO_NAME} Revenue</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-display font-bold text-secondary">${totalWon.toLocaleString()}</div>
+            <div className="text-3xl font-display font-bold text-secondary">${totalBookerRevenue.toLocaleString()}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Profit/Loss</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">LSBA Revenue</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className={`text-3xl font-display font-bold ${profitLoss >= 0 ? 'text-secondary' : 'text-destructive'}`}>
-              {profitLoss >= 0 ? '+' : ''}${profitLoss.toLocaleString()}
-            </div>
+            <div className="text-3xl font-display font-bold text-accent">${totalLsbaRevenue.toLocaleString()}</div>
           </CardContent>
         </Card>
       </div>
 
       <Tabs defaultValue="place-bet" className="w-full">
-        <TabsList className="grid w-full max-w-lg grid-cols-3">
+        <TabsList className="grid w-full max-w-2xl grid-cols-4">
           <TabsTrigger value="place-bet">Place Bet</TabsTrigger>
-          <TabsTrigger value="active-bets">Active Bets ({activeBets.length})</TabsTrigger>
+          <TabsTrigger value="active-bets">Active ({activeBets.length})</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
+          <TabsTrigger value="limits">Limits</TabsTrigger>
         </TabsList>
 
         <TabsContent value="place-bet" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>Place Your Bet</CardTitle>
-              <CardDescription>Select a fight and place your wager</CardDescription>
+              <CardTitle>Book a Bet</CardTitle>
+              <CardDescription>Collect State ID and place bet for a bettor</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              <div className="bg-accent/10 border border-accent/30 rounded-lg p-4">
+                <h4 className="font-semibold text-sm uppercase tracking-wide mb-2">Bettor Information</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>State ID *</Label>
+                    <Input
+                      placeholder="Enter bettor's State ID..."
+                      value={bettorStateId}
+                      onChange={(e) => setBettorStateId(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Bettor Name *</Label>
+                    <Input
+                      placeholder="Enter bettor's name..."
+                      value={bettorName}
+                      onChange={(e) => setBettorName(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Event Type</Label>
@@ -311,8 +571,6 @@ export function BettingManager({
                   </Select>
                 </div>
               </div>
-
-              <Separator />
 
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -354,7 +612,14 @@ export function BettingManager({
                 {selectedFight && currentFightOdds && selectedBout && (
                   <>
                     <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-                      <h4 className="font-semibold text-sm uppercase tracking-wide">Current Odds</h4>
+                      <div className="flex justify-between items-center">
+                        <h4 className="font-semibold text-sm uppercase tracking-wide">Current Odds</h4>
+                        {currentFightOdds.maxBetLimit && (
+                          <Badge variant="outline">
+                            Max: ${currentFightOdds.maxBetLimit.toLocaleString()}
+                          </Badge>
+                        )}
+                      </div>
                       <div className="grid grid-cols-2 gap-4">
                         <button
                           onClick={() => setSelectedFighter(currentFightOdds.fighter1Id)}
@@ -410,11 +675,13 @@ export function BettingManager({
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Bet Amount (Minimum: ${
-                        eventType === 'tournament' 
+                      <Label>
+                        Bet Amount (Minimum: $
+                        {eventType === 'tournament'
                           ? BETTING_LIMITS.tournament.entryPerBoxer.toLocaleString()
-                          : (BETTING_LIMITS[eventType] as { minimum: number }).minimum.toLocaleString()
-                      })</Label>
+                          : (BETTING_LIMITS[eventType] as { minimum: number }).minimum.toLocaleString()}
+                        )
+                      </Label>
                       <Input
                         type="number"
                         placeholder="Enter amount..."
@@ -430,11 +697,12 @@ export function BettingManager({
                     </div>
 
                     {betAmount && selectedFighter && (
-                      <div className="bg-accent/10 border border-accent/30 rounded-lg p-4">
+                      <div className="bg-accent/10 border border-accent/30 rounded-lg p-4 space-y-3">
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Potential Payout:</span>
+                          <span className="text-sm text-muted-foreground">Total Potential Payout:</span>
                           <span className="text-2xl font-display font-bold text-accent">
-                            ${calculatePayout(
+                            $
+                            {calculatePayout(
                               parseFloat(betAmount),
                               selectedFighter === currentFightOdds.fighter1Id
                                 ? currentFightOdds.fighter1Odds
@@ -443,31 +711,102 @@ export function BettingManager({
                             ).toLocaleString()}
                           </span>
                         </div>
-                        <div className="flex justify-between items-center mt-2">
-                          <span className="text-sm text-muted-foreground">Profit:</span>
-                          <span className="text-lg font-semibold text-secondary">
-                            ${(
-                              calculatePayout(
-                                parseFloat(betAmount),
-                                selectedFighter === currentFightOdds.fighter1Id
-                                  ? currentFightOdds.fighter1Odds
-                                  : currentFightOdds.fighter2Odds,
-                                oddsFormat
-                              ) - parseFloat(betAmount)
-                            ).toLocaleString()}
-                          </span>
+
+                        <Separator />
+
+                        <div className="text-sm space-y-1">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Bettor receives:</span>
+                            <span className="font-semibold">
+                              $
+                              {calculatePayoutBreakdown(
+                                calculatePayout(
+                                  parseFloat(betAmount),
+                                  selectedFighter === currentFightOdds.fighter1Id
+                                    ? currentFightOdds.fighter1Odds
+                                    : currentFightOdds.fighter2Odds,
+                                  oddsFormat
+                                ),
+                                currentSettings
+                              ).bettorCut.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">{CASINO_NAME}:</span>
+                            <span className="font-semibold">
+                              $
+                              {calculatePayoutBreakdown(
+                                calculatePayout(
+                                  parseFloat(betAmount),
+                                  selectedFighter === currentFightOdds.fighter1Id
+                                    ? currentFightOdds.fighter1Odds
+                                    : currentFightOdds.fighter2Odds,
+                                  oddsFormat
+                                ),
+                                currentSettings
+                              ).bookerCut.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">LSBA:</span>
+                            <span className="font-semibold">
+                              $
+                              {calculatePayoutBreakdown(
+                                calculatePayout(
+                                  parseFloat(betAmount),
+                                  selectedFighter === currentFightOdds.fighter1Id
+                                    ? currentFightOdds.fighter1Odds
+                                    : currentFightOdds.fighter2Odds,
+                                  oddsFormat
+                                ),
+                                currentSettings
+                              ).lsbaCut.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Sponsor:</span>
+                            <span className="font-semibold">
+                              $
+                              {calculatePayoutBreakdown(
+                                calculatePayout(
+                                  parseFloat(betAmount),
+                                  selectedFighter === currentFightOdds.fighter1Id
+                                    ? currentFightOdds.fighter1Odds
+                                    : currentFightOdds.fighter2Odds,
+                                  oddsFormat
+                                ),
+                                currentSettings
+                              ).sponsorCut.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Boxer:</span>
+                            <span className="font-semibold">
+                              $
+                              {calculatePayoutBreakdown(
+                                calculatePayout(
+                                  parseFloat(betAmount),
+                                  selectedFighter === currentFightOdds.fighter1Id
+                                    ? currentFightOdds.fighter1Odds
+                                    : currentFightOdds.fighter2Odds,
+                                  oddsFormat
+                                ),
+                                currentSettings
+                              ).boxerCut.toLocaleString()}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     )}
 
                     <Button
                       onClick={handlePlaceBet}
-                      disabled={!selectedFighter || !betAmount}
+                      disabled={!selectedFighter || !betAmount || !bettorStateId || !bettorName}
                       size="lg"
                       className="w-full"
                     >
                       <CurrencyDollar className="w-5 h-5 mr-2" weight="bold" />
-                      Place Bet
+                      Book Bet
                     </Button>
                   </>
                 )}
@@ -480,19 +819,20 @@ export function BettingManager({
           <Card>
             <CardHeader>
               <CardTitle>Active Bets</CardTitle>
-              <CardDescription>Your pending wagers</CardDescription>
+              <CardDescription>All pending wagers from bettors</CardDescription>
             </CardHeader>
             <CardContent>
               {activeBets.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  No active bets. Place a bet to get started!
+                  No active bets. Book a bet to get started!
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>Bettor</TableHead>
+                      <TableHead>State ID</TableHead>
                       <TableHead>Event</TableHead>
-                      <TableHead>Fight</TableHead>
                       <TableHead>Fighter</TableHead>
                       <TableHead>Amount</TableHead>
                       <TableHead>Odds</TableHead>
@@ -503,15 +843,12 @@ export function BettingManager({
                   <TableBody>
                     {activeBets.map((bet) => (
                       <TableRow key={bet.id}>
-                        <TableCell className="font-medium">{bet.eventName}</TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            <div className="font-semibold">{bet.fighterName}</div>
-                            <div className="text-muted-foreground">vs {bet.opponentName}</div>
-                          </div>
-                        </TableCell>
+                        <TableCell className="font-medium">{bet.bettorName}</TableCell>
+                        <TableCell className="font-mono text-xs">{bet.bettorStateId}</TableCell>
+                        <TableCell className="text-sm">{bet.eventName}</TableCell>
                         <TableCell>
                           <Badge variant="outline">{bet.fighterName}</Badge>
+                          <div className="text-xs text-muted-foreground">vs {bet.opponentName}</div>
                         </TableCell>
                         <TableCell className="font-semibold">${bet.amount.toLocaleString()}</TableCell>
                         <TableCell className="font-mono">{formatOdds(bet.odds, 'american')}</TableCell>
@@ -534,51 +871,88 @@ export function BettingManager({
           <Card>
             <CardHeader>
               <CardTitle>Betting History</CardTitle>
-              <CardDescription>Your settled bets</CardDescription>
+              <CardDescription>All settled bets with payout breakdown</CardDescription>
             </CardHeader>
             <CardContent>
               {settledBets.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No betting history yet.
-                </div>
+                <div className="text-center py-8 text-muted-foreground">No betting history yet.</div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Event</TableHead>
+                      <TableHead>Bettor</TableHead>
                       <TableHead>Fighter</TableHead>
                       <TableHead>Amount</TableHead>
-                      <TableHead>Odds</TableHead>
                       <TableHead>Result</TableHead>
-                      <TableHead>Payout</TableHead>
+                      <TableHead>Bettor Payout</TableHead>
+                      <TableHead>Breakdown</TableHead>
                       <TableHead>Date</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {settledBets.map((bet) => (
                       <TableRow key={bet.id}>
-                        <TableCell className="font-medium">{bet.eventName}</TableCell>
+                        <TableCell className="font-medium">
+                          {bet.bettorName}
+                          <div className="text-xs text-muted-foreground font-mono">{bet.bettorStateId}</div>
+                        </TableCell>
                         <TableCell>
                           <Badge variant="outline">{bet.fighterName}</Badge>
                         </TableCell>
                         <TableCell>${bet.amount.toLocaleString()}</TableCell>
-                        <TableCell className="font-mono">{formatOdds(bet.odds, 'american')}</TableCell>
                         <TableCell>
                           <Badge variant={bet.status === 'won' ? 'default' : 'destructive'}>
-                            {bet.status === 'won' ? (
-                              <TrendUp className="w-3 h-3 mr-1" />
-                            ) : (
-                              <TrendDown className="w-3 h-3 mr-1" />
-                            )}
+                            {bet.status === 'won' ? <TrendUp className="w-3 h-3 mr-1" /> : <TrendDown className="w-3 h-3 mr-1" />}
                             {bet.status}
                           </Badge>
                         </TableCell>
-                        <TableCell
-                          className={`font-semibold ${
-                            bet.status === 'won' ? 'text-secondary' : 'text-destructive'
-                          }`}
-                        >
-                          {bet.status === 'won' ? '+' : '-'}${(bet.actualPayout || bet.amount).toLocaleString()}
+                        <TableCell className={`font-semibold ${bet.status === 'won' ? 'text-secondary' : 'text-destructive'}`}>
+                          {bet.status === 'won' ? '$' : '-$'}
+                          {(bet.actualPayout || 0).toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          {bet.payoutBreakdown && (
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <Receipt className="w-4 h-4" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Payout Breakdown</DialogTitle>
+                                  <DialogDescription>Distribution of winnings for this bet</DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-2 py-4">
+                                  <div className="flex justify-between">
+                                    <span>Total Payout:</span>
+                                    <span className="font-bold">${bet.payoutBreakdown.totalPayout.toLocaleString()}</span>
+                                  </div>
+                                  <Separator />
+                                  <div className="flex justify-between">
+                                    <span>Bettor:</span>
+                                    <span className="font-semibold">${bet.payoutBreakdown.bettorCut.toLocaleString()}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>{CASINO_NAME}:</span>
+                                    <span className="font-semibold">${bet.payoutBreakdown.bookerCut.toLocaleString()}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>LSBA:</span>
+                                    <span className="font-semibold">${bet.payoutBreakdown.lsbaCut.toLocaleString()}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Sponsor:</span>
+                                    <span className="font-semibold">${bet.payoutBreakdown.sponsorCut.toLocaleString()}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Boxer:</span>
+                                    <span className="font-semibold">${bet.payoutBreakdown.boxerCut.toLocaleString()}</span>
+                                  </div>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          )}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {new Date(bet.settledDate || bet.placedDate).toLocaleDateString()}
@@ -588,6 +962,90 @@ export function BettingManager({
                   </TableBody>
                 </Table>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="limits" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Bet Limits Management</CardTitle>
+              <CardDescription>Set maximum bet amounts for individual fights</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Select Fight Card</Label>
+                  <Select value={selectedFightCard} onValueChange={setSelectedFightCard}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose an event..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {upcomingFightCards.map((fc) => (
+                        <SelectItem key={fc.id} value={fc.id!}>
+                          {fc.mainEvent.title || 'LSBA Event'} - {new Date(fc.eventDate).toLocaleDateString()}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {currentPool && (
+                  <div className="space-y-3">
+                    {currentPool.fights.map((fight) => {
+                      const bout = allBouts.find((b) => b.id === fight.fightId);
+                      if (!bout) return null;
+
+                      return (
+                        <div key={fight.fightId} className="bg-muted/50 rounded-lg p-4">
+                          <div className="flex justify-between items-start gap-4">
+                            <div className="flex-1">
+                              <div className="font-semibold">
+                                {bout.fighter1} vs {bout.fighter2}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                {fight.maxBetLimit
+                                  ? `Max Bet: $${fight.maxBetLimit.toLocaleString()}`
+                                  : 'No limit set'}
+                              </div>
+                            </div>
+                            {editingFightId === fight.fightId ? (
+                              <div className="flex gap-2 items-center">
+                                <Input
+                                  type="number"
+                                  placeholder="Max bet..."
+                                  value={maxBetLimit}
+                                  onChange={(e) => setMaxBetLimit(e.target.value)}
+                                  className="w-32"
+                                  step="1000"
+                                  min="0"
+                                />
+                                <Button size="sm" onClick={() => handleUpdateMaxBet(fight.fightId)}>
+                                  Save
+                                </Button>
+                                <Button size="sm" variant="ghost" onClick={() => setEditingFightId('')}>
+                                  Cancel
+                                </Button>
+                              </div>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setEditingFightId(fight.fightId);
+                                  setMaxBetLimit(fight.maxBetLimit?.toString() || '');
+                                }}
+                              >
+                                Set Limit
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
