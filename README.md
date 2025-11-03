@@ -1,23 +1,23 @@
-# ✨ Welcome to Your Spark Template!
-You've just launched your brand-new Spark Template Codespace — everything’s fired up and ready for you to explore, build, and create with Spark!
+🥊 LSBA Boxing Management System
 
-This template is your blank canvas. It comes with a minimal setup to help you get started quickly with Spark development.
+Welcome to the Los Santos Boxing Association (LSBA) application — a complete management and operations system for boxing events, fighters, sponsors, and betting coordination.
 
-🚀 What's Inside?
-- A clean, minimal Spark environment
-- Pre-configured for local development
-- Ready to scale with your ideas
-  
-🧠 What Can You Do?
+This project was developed to organize and streamline fight scheduling, fighter profiles, event promotions, sponsorship deals, and betting distribution across the LSBA network.
 
-Right now, this is just a starting point — the perfect place to begin building and testing your Spark applications.
+💡 Purpose
 
-🧹 Just Exploring?
-No problem! If you were just checking things out and don’t need to keep this code:
+The LSBA system is designed to serve as the digital backbone of boxing operations in the city — whether you’re running a gym, managing fighters, hosting matches, or coordinating with casinos and sponsors.
 
-- Simply delete your Spark.
-- Everything will be cleaned up — no traces left behind.
+Our mission: Keep boxing fair, profitable, and connected.
 
-📄 License For Spark Template Resources 
+⚙️ Features
 
-The Spark Template files and resources from GitHub are licensed under the terms of the MIT license, Copyright GitHub, Inc.
+Fighter Management: Create, edit, and track fighter stats and records.
+
+Event Scheduling: Organize fight cards, venues, and match details.
+
+Betting Oversight: Calculate splits between LSBA, sponsors, casinos, and fighters.
+
+Sponsor Integration: Assign sponsors per event and manage payouts.
+
+Analytics & Reports: View fight outcomes, earnings, and betting trends.
