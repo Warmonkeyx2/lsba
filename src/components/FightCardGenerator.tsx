@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Sparkle, ArrowRight, Trash, ArrowsDownUp, CalendarBlank } from '@phosphor-icons/react';
+import { Sparkle, ArrowRight, Trash, CalendarBlank } from '@phosphor-icons/react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -68,7 +68,18 @@ export function FightCardGenerator({ boxers, allBoxers, onGenerate }: FightCardG
     }
 
     setBouts(newBouts);
+    setSelectedBoxers([]);
     toast.success('Bouts created! Configure each bout type below.');
+  };
+
+  const updateFighter = (boutId: string, position: 'fighter1' | 'fighter2', fighterId: string) => {
+    setBouts((prev) =>
+      prev.map((bout) =>
+        bout.id === boutId
+          ? { ...bout, [position === 'fighter1' ? 'fighter1Id' : 'fighter2Id']: fighterId }
+          : bout
+      )
+    );
   };
 
   const updateBoutType = (boutId: string, type: 'main' | 'co-main' | 'undercard' | 'preliminary') => {
@@ -83,27 +94,13 @@ export function FightCardGenerator({ boxers, allBoxers, onGenerate }: FightCardG
     );
   };
 
-  const swapFighters = (boutId: string) => {
-    setBouts((prev) =>
-      prev.map((bout) =>
-        bout.id === boutId
-          ? { ...bout, fighter1Id: bout.fighter2Id, fighter2Id: bout.fighter1Id }
-          : bout
-      )
-    );
-  };
-
   const removeBout = (boutId: string) => {
     setBouts((prev) => prev.filter((bout) => bout.id !== boutId));
   };
 
   const addBout = () => {
-    const availableBoxers = selectedBoxers.filter(
-      (id) => !bouts.some((bout) => bout.fighter1Id === id || bout.fighter2Id === id)
-    );
-
-    if (availableBoxers.length < 2) {
-      toast.error('Not enough unmatched boxers. Select more boxers first.');
+    if (boxers.length < 2) {
+      toast.error('Not enough boxers registered.');
       return;
     }
 
@@ -111,8 +108,8 @@ export function FightCardGenerator({ boxers, allBoxers, onGenerate }: FightCardG
       ...prev,
       {
         id: `bout-${Date.now()}`,
-        fighter1Id: availableBoxers[0],
-        fighter2Id: availableBoxers[1],
+        fighter1Id: boxers[0].id,
+        fighter2Id: boxers[1]?.id || boxers[0].id,
         type: 'undercard',
       },
     ]);
@@ -261,9 +258,6 @@ export function FightCardGenerator({ boxers, allBoxers, onGenerate }: FightCardG
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto p-1">
               {boxers.map((boxer) => {
-                const isMatched = bouts.some(
-                  (bout) => bout.fighter1Id === boxer.id || bout.fighter2Id === boxer.id
-                );
                 return (
                   <div
                     key={boxer.id}
@@ -271,7 +265,7 @@ export function FightCardGenerator({ boxers, allBoxers, onGenerate }: FightCardG
                       selectedBoxers.includes(boxer.id)
                         ? 'border-primary bg-primary/5'
                         : 'border-border hover:bg-muted/50'
-                    } ${isMatched ? 'opacity-60' : ''}`}
+                    }`}
                     onClick={() => toggleBoxer(boxer.id)}
                   >
                     <Checkbox
@@ -291,11 +285,6 @@ export function FightCardGenerator({ boxers, allBoxers, onGenerate }: FightCardG
                         )}
                       </div>
                     </div>
-                    {isMatched && (
-                      <Badge variant="secondary" className="text-xs">
-                        Matched
-                      </Badge>
-                    )}
                   </div>
                 );
               })}
@@ -321,36 +310,47 @@ export function FightCardGenerator({ boxers, allBoxers, onGenerate }: FightCardG
                   <div key={bout.id} className="bg-muted/30 p-4 rounded-lg space-y-3">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 space-y-3">
-                        <div className="flex items-center gap-3">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="font-fighter text-lg uppercase font-bold">
-                                {fighter1.firstName} {fighter1.lastName}
-                              </span>
-                              <Badge variant="outline" className="text-xs">
-                                {fighter1.wins}-{fighter1.losses}-{fighter1.knockouts}
-                              </Badge>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-muted-foreground text-sm">vs</span>
-                            </div>
-                            <div className="flex items-center gap-2 mt-2">
-                              <span className="font-fighter text-lg uppercase font-bold">
-                                {fighter2.firstName} {fighter2.lastName}
-                              </span>
-                              <Badge variant="outline" className="text-xs">
-                                {fighter2.wins}-{fighter2.losses}-{fighter2.knockouts}
-                              </Badge>
-                            </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <Label htmlFor={`fighter1-${bout.id}`} className="text-xs">
+                              Fighter 1
+                            </Label>
+                            <Select
+                              value={bout.fighter1Id}
+                              onValueChange={(value) => updateFighter(bout.id, 'fighter1', value)}
+                            >
+                              <SelectTrigger id={`fighter1-${bout.id}`} className="mt-1">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {boxers.map((boxer) => (
+                                  <SelectItem key={boxer.id} value={boxer.id}>
+                                    {boxer.firstName} {boxer.lastName} ({boxer.wins}-{boxer.losses}-{boxer.knockouts})
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </div>
-                          <Button
-                            onClick={() => swapFighters(bout.id)}
-                            variant="ghost"
-                            size="sm"
-                            title="Swap fighters"
-                          >
-                            <ArrowsDownUp className="w-4 h-4" />
-                          </Button>
+                          <div>
+                            <Label htmlFor={`fighter2-${bout.id}`} className="text-xs">
+                              Fighter 2
+                            </Label>
+                            <Select
+                              value={bout.fighter2Id}
+                              onValueChange={(value) => updateFighter(bout.id, 'fighter2', value)}
+                            >
+                              <SelectTrigger id={`fighter2-${bout.id}`} className="mt-1">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {boxers.map((boxer) => (
+                                  <SelectItem key={boxer.id} value={boxer.id}>
+                                    {boxer.firstName} {boxer.lastName} ({boxer.wins}-{boxer.losses}-{boxer.knockouts})
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
