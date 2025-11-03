@@ -14,7 +14,8 @@ import {
   Sliders,
   Info,
   ArrowsClockwise,
-  Trophy
+  Trophy,
+  CurrencyDollar
 } from "@phosphor-icons/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -35,11 +36,15 @@ import { RankingFAQ } from "@/components/RankingFAQ";
 import { RankingSettingsComponent } from "@/components/RankingSettings";
 import { SeasonReset } from "@/components/SeasonReset";
 import { TournamentBracket } from "@/components/TournamentBracket";
+import { BettingManager } from "@/components/BettingManager";
+import { FighterOddsDisplay } from "@/components/FighterOddsDisplay";
 import { toast, Toaster } from "sonner";
 import type { FightCard } from "@/types/fightCard";
 import type { Boxer, Sponsor, RankingSettings } from "@/types/boxer";
 import type { Tournament } from "@/types/tournament";
+import type { Bet, BettingPool } from "@/types/betting";
 import { DEFAULT_RANKING_SETTINGS, calculatePointsForFight, getSortedBoxers } from "@/lib/rankingUtils";
+import { settleBets } from "@/lib/bettingUtils";
 
 const defaultFightCard: FightCard = {
   eventDate: '',
@@ -63,6 +68,8 @@ function App() {
   const [sponsors, setSponsors] = useKV<Sponsor[]>('lsba-sponsors', []);
   const [rankingSettings, setRankingSettings] = useKV<RankingSettings>('lsba-ranking-settings', DEFAULT_RANKING_SETTINGS);
   const [tournaments, setTournaments] = useKV<Tournament[]>('lsba-tournaments', []);
+  const [bets, setBets] = useKV<Bet[]>('lsba-bets', []);
+  const [bettingPools, setBettingPools] = useKV<BettingPool[]>('lsba-betting-pools', []);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [selectedBoxer, setSelectedBoxer] = useState<Boxer | null>(null);
   const [selectedSponsor, setSelectedSponsor] = useState<Sponsor | null>(null);
@@ -71,6 +78,8 @@ function App() {
   const sponsorsList = sponsors || [];
   const fightCardsList = fightCards || [];
   const tournamentsList = tournaments || [];
+  const betsList = bets || [];
+  const bettingPoolsList = bettingPools || [];
   const currentCard = savedCard || defaultFightCard;
   const currentSettings = rankingSettings || DEFAULT_RANKING_SETTINGS;
 
@@ -337,7 +346,32 @@ function App() {
       return updated;
     });
 
-    toast.success('Fight results declared! Rankings updated with new points.');
+    const allBouts = [
+      updatedCard.mainEvent,
+      ...(updatedCard.coMainEvent ? [updatedCard.coMainEvent] : []),
+      ...updatedCard.otherBouts,
+    ];
+
+    setBets((currentBets) => {
+      let updatedBets = [...(currentBets || [])];
+      allBouts.forEach((bout) => {
+        if (bout.winner && bout.fighter1Id && bout.fighter2Id) {
+          const winnerId = bout.winner === 'fighter1' ? bout.fighter1Id : bout.fighter2Id;
+          updatedBets = settleBets(updatedBets, bout.id, winnerId);
+        }
+      });
+      return updatedBets;
+    });
+
+    setBettingPools((currentPools) =>
+      (currentPools || []).map((pool) =>
+        pool.fightCardId === updatedCard.id
+          ? { ...pool, status: 'settled' as const, settledDate: new Date().toISOString() }
+          : pool
+      )
+    );
+
+    toast.success('Fight results declared! Rankings and bets updated.');
   };
 
   const handleResetSeason = () => {
@@ -381,6 +415,20 @@ function App() {
     );
   };
 
+  const handlePlaceBet = (bet: Bet) => {
+    setBets((current) => [...(current || []), bet]);
+  };
+
+  const handleUpdatePool = (pool: BettingPool) => {
+    setBettingPools((current) => {
+      const existing = (current || []).find(p => p.fightCardId === pool.fightCardId);
+      if (existing) {
+        return (current || []).map(p => p.fightCardId === pool.fightCardId ? pool : p);
+      }
+      return [...(current || []), pool];
+    });
+  };
+
   const hasChanges = JSON.stringify(currentCard) !== JSON.stringify(editingCard);
 
   if (selectedSponsor) {
@@ -409,12 +457,17 @@ function App() {
         <Toaster position="top-center" richColors />
         <div className="min-h-screen bg-background">
           <div className="container mx-auto px-4 py-8">
-            <div className="max-w-6xl mx-auto">
+            <div className="max-w-6xl mx-auto space-y-6">
               <BoxerProfile
                 boxer={selectedBoxer}
                 allBoxers={boxersList}
                 onBack={() => setSelectedBoxer(null)}
                 onUpdateBoxer={handleUpdateBoxer}
+              />
+              <FighterOddsDisplay
+                boxer={selectedBoxer}
+                bettingPools={bettingPoolsList}
+                fightCards={fightCardsList}
               />
             </div>
           </div>
@@ -443,10 +496,14 @@ function App() {
               </div>
 
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-5 md:grid-cols-11 h-auto gap-1">
+              <TabsList className="grid w-full grid-cols-5 md:grid-cols-12 h-auto gap-1">
                 <TabsTrigger value="dashboard" className="flex items-center gap-2 py-3">
                   <SquaresFour className="w-4 h-4" />
                   <span className="hidden sm:inline">Dashboard</span>
+                </TabsTrigger>
+                <TabsTrigger value="betting" className="flex items-center gap-2 py-3">
+                  <CurrencyDollar className="w-4 h-4" />
+                  <span className="hidden sm:inline">Betting</span>
                 </TabsTrigger>
                 <TabsTrigger value="upcoming-fights" className="flex items-center gap-2 py-3">
                   <Calendar className="w-4 h-4" />
@@ -534,6 +591,17 @@ function App() {
 
                   <BoxerLeaderboard boxers={boxersList} onSelectBoxer={setSelectedBoxer} />
                 </div>
+              </TabsContent>
+
+              <TabsContent value="betting" className="mt-6">
+                <BettingManager
+                  fightCards={fightCardsList}
+                  boxers={boxersList}
+                  bets={betsList}
+                  bettingPools={bettingPoolsList}
+                  onPlaceBet={handlePlaceBet}
+                  onUpdatePool={handleUpdatePool}
+                />
               </TabsContent>
 
               <TabsContent value="upcoming-fights" className="mt-6">

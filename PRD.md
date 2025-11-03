@@ -68,6 +68,27 @@ This is a full-featured management system with multiple interconnected modules: 
 - Progression: Load data → Display stats → Show leaderboard → Navigate to desired module
 - Success criteria: Stats update in real-time; leaderboard immediately visible; quick navigation to all modules
 
+**Comprehensive Betting System**
+- Functionality: Full sports betting platform with dynamic odds calculation based on fighter records, rankings, and betting pool activity
+- Purpose: Enable wagering on fights with real-time odds that adjust based on fighter statistics and betting activity
+- Trigger: User navigates to Betting tab and selects fight card and specific bout
+- Progression: Select event type (regular/special/tournament) → Choose odds format (American/Decimal/Fractional) → Select fight → View live odds for both fighters → Place bet → Track active bets → View betting history
+- Success criteria: Odds calculate accurately using fighter strength algorithm (30% rank, 25% win rate, 20% ranking points, 10% KO rate, 10% experience, 5% recent form); minimum bet enforcement ($2k regular, $5k special, $5k tournament); pool adjusts odds dynamically; bets auto-settle when results declared; profit/loss tracking accurate
+
+**Fighter Odds Display**
+- Functionality: Shows current betting odds for each fighter on their profile page with auto-updates when odds change
+- Purpose: Provide transparency on betting markets and fighter value perception
+- Trigger: View any fighter profile with upcoming fights
+- Progression: Open profile → Odds card displays if fighter has upcoming bouts → Shows event, opponent, current odds, win probability, favorite/underdog status
+- Success criteria: Odds update automatically when betting pool changes; displays for all upcoming fights; shows probability percentages; indicates favorite vs underdog; updates immediately after new bets placed
+
+**Dynamic Odds Calculation**
+- Functionality: Sophisticated algorithm combining fighter statistics, rankings, head-to-head factors, and betting pool activity
+- Purpose: Create fair, accurate odds that reflect true fight probabilities while incorporating betting market forces
+- Trigger: When fight card betting pool is created or new bet is placed
+- Progression: Calculate base fighter strength → Determine implied probability → Adjust for betting pool activity → Apply 5% vig → Display in selected format
+- Success criteria: Favorites show negative American odds or odds below 2.0 decimal; underdogs show positive odds; probabilities sum to ~105% (with vig); odds shift toward heavily bet fighter; maintains mathematical accuracy
+
 **Boxer Directory & Search**
 - Functionality: Searchable phonebook-style directory with real-time filtering, full profile editing, and deletion with confirmation
 - Purpose: Provide quick access to all registered fighters with powerful search and management capabilities
@@ -92,6 +113,14 @@ This is a full-featured management system with multiple interconnected modules: 
 - **Sponsor selection in edit** - Only allow registered sponsors from dropdown; prevent manual text entry
 - **Knockouts exceeding wins** - Validate that KO count cannot exceed total wins
 - **Profile deletion confirmation** - Require explicit "Are you sure?" dialog before permanent deletion
+- **No upcoming fights for betting** - Show empty state in betting tab with prompt to generate fight cards
+- **Bet below minimum** - Validate and display error with specific minimum for event type
+- **Equal fighter strength** - Handle edge case where both fighters have identical stats (50/50 odds)
+- **Zero betting pool** - Display base odds calculated from fighter statistics only
+- **Heavy one-sided betting** - Allow odds to shift but cap maximum adjustment to prevent unrealistic lines
+- **Fighter with no ranking** - Use default strength score based on record and experience only
+- **Bet settlement with cancelled fight** - Provide mechanism to refund bets for cancelled bouts
+- **Multiple active bets on same fight** - Track and display all bets separately with individual potential payouts
 
 ## Design Direction
 
@@ -177,6 +206,10 @@ Animations should be purposeful and enhance data comprehension—smooth transiti
   - Phone (contact info)
   - IdentificationCard (State ID)
   - Briefcase (sponsor)
+  - CurrencyDollar (betting)
+  - TrendUp/TrendDown (odds movement, favorites/underdogs)
+  - Lock/LockOpen (betting pool status)
+  - Lightning (ranking points, bet bonuses)
 
 - **Spacing**: 
   - Consistent gap-4 between form elements
