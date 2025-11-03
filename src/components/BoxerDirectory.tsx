@@ -312,43 +312,6 @@ export function BoxerDirectory({ boxers, sponsors, onUpdateBoxer, onDeleteBoxer,
                             </span>
                           </div>
                         </div>
-
-                        {boxer.fightHistory.length > 0 && (
-                          <div className="pt-2 border-t border-border">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Trophy className="w-4 h-4 text-muted-foreground" />
-                              <span className="text-sm font-semibold text-muted-foreground">
-                                Recent Fights ({boxer.fightHistory.length})
-                              </span>
-                            </div>
-                            <div className="space-y-1">
-                              {boxer.fightHistory.slice(0, 3).map((fight) => (
-                                <div key={fight.id} className="text-sm flex items-center gap-2">
-                                  {fight.result === 'pending' ? (
-                                    <Badge variant="outline" className="bg-muted text-muted-foreground">
-                                      UPCOMING
-                                    </Badge>
-                                  ) : (
-                                    <Badge 
-                                      variant={fight.result === 'win' || fight.result === 'knockout' ? 'default' : 'secondary'}
-                                      className={
-                                        fight.result === 'win' || fight.result === 'knockout' 
-                                          ? 'bg-accent text-accent-foreground' 
-                                          : ''
-                                      }
-                                    >
-                                      {fight.result === 'knockout' ? 'KO' : fight.result.toUpperCase()}
-                                    </Badge>
-                                  )}
-                                  <span className="text-muted-foreground">vs {fight.opponent}</span>
-                                  <span className="text-muted-foreground text-xs">
-                                    {new Date(fight.date).toLocaleDateString()}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
                       </div>
                     </div>
                   </Card>
