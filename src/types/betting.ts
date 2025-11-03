@@ -31,6 +31,7 @@ export interface Bet {
   placedDate: string;
   status: 'pending' | 'won' | 'lost' | 'cancelled' | 'refunded';
   settledDate?: string;
+  settlementNote?: string;
   actualPayout?: number;
   payoutBreakdown?: PayoutBreakdown;
 }

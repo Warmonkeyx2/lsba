@@ -47,6 +47,7 @@ import {
   calculatePayoutBreakdown,
   convertOddsForDisplay,
 } from '@/lib/bettingUtils';
+import { BetSettlementManager } from '@/components/BetSettlementManager';
 
 interface BettingManagerProps {
   fightCards: FightCard[];
@@ -55,6 +56,7 @@ interface BettingManagerProps {
   bettingPools: BettingPool[];
   onPlaceBet: (bet: Bet) => void;
   onUpdatePool: (pool: BettingPool) => void;
+  onSettleBets: (settledBets: Array<{ bet: Bet; winnerId: string; note: string }>) => void;
 }
 
 export function BettingManager({
@@ -64,6 +66,7 @@ export function BettingManager({
   bettingPools = [],
   onPlaceBet,
   onUpdatePool,
+  onSettleBets,
 }: BettingManagerProps) {
   const [payoutSettings, setPayoutSettings] = useKV<PayoutSettings>('lsba-payout-settings', DEFAULT_PAYOUT_SETTINGS);
   const [selectedFight, setSelectedFight] = useState<string>('');
@@ -466,12 +469,22 @@ export function BettingManager({
       </div>
 
       <Tabs defaultValue="place-bet" className="w-full">
-        <TabsList className="grid w-full max-w-2xl grid-cols-4">
+        <TabsList className="grid w-full max-w-2xl grid-cols-5">
           <TabsTrigger value="place-bet">Place Bet</TabsTrigger>
+          <TabsTrigger value="settle">Settle</TabsTrigger>
           <TabsTrigger value="active-bets">Active ({activeBets.length})</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
           <TabsTrigger value="limits">Limits</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="settle" className="mt-6">
+          <BetSettlementManager
+            fightCards={fightCards}
+            bets={bets}
+            boxers={boxers}
+            onSettleBets={onSettleBets}
+          />
+        </TabsContent>
 
         <TabsContent value="place-bet" className="mt-6">
           <Card>
@@ -885,6 +898,17 @@ export function BettingManager({
                                       {Math.abs(bet.payoutBreakdown.bookerProfit || 0).toLocaleString()}
                                     </span>
                                   </div>
+                                  {bet.settlementNote && (
+                                    <>
+                                      <Separator />
+                                      <div className="bg-muted p-3 rounded-lg">
+                                        <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                                          Settlement Note
+                                        </div>
+                                        <div className="text-sm">{bet.settlementNote}</div>
+                                      </div>
+                                    </>
+                                  )}
                                 </div>
                               </DialogContent>
                             </Dialog>

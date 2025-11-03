@@ -54,7 +54,7 @@ import type { Boxer, Sponsor, RankingSettings } from "@/types/boxer";
 import type { Tournament } from "@/types/tournament";
 import type { Bet, BettingPool, PayoutSettings } from "@/types/betting";
 import { DEFAULT_RANKING_SETTINGS, calculatePointsForFight, getSortedBoxers } from "@/lib/rankingUtils";
-import { settleBets, DEFAULT_PAYOUT_SETTINGS } from "@/lib/bettingUtils";
+import { settleBet, DEFAULT_PAYOUT_SETTINGS } from "@/lib/bettingUtils";
 import { LICENSE_FEE } from "@/lib/licenseUtils";
 
 const defaultFightCard: FightCard = {
@@ -378,32 +378,7 @@ function App() {
       return updated;
     });
 
-    const allBouts = [
-      updatedCard.mainEvent,
-      ...(updatedCard.coMainEvent ? [updatedCard.coMainEvent] : []),
-      ...updatedCard.otherBouts,
-    ];
-
-    setBets((currentBets) => {
-      let updatedBets = [...(currentBets || [])];
-      allBouts.forEach((bout) => {
-        if (bout.winner && bout.fighter1Id && bout.fighter2Id) {
-          const winnerId = bout.winner === 'fighter1' ? bout.fighter1Id : bout.fighter2Id;
-          updatedBets = settleBets(updatedBets, bout.id, winnerId, payoutSettings || DEFAULT_PAYOUT_SETTINGS);
-        }
-      });
-      return updatedBets;
-    });
-
-    setBettingPools((currentPools) =>
-      (currentPools || []).map((pool) =>
-        pool.fightCardId === updatedCard.id
-          ? { ...pool, status: 'settled' as const, settledDate: new Date().toISOString() }
-          : pool
-      )
-    );
-
-    toast.success('Fight results declared! Rankings and bets updated.');
+    toast.success('Fight results declared! Rankings updated. Bets remain pending for manual settlement.');
   };
 
   const handleResetSeason = () => {
@@ -458,6 +433,21 @@ function App() {
         return (current || []).map(p => p.fightCardId === pool.fightCardId ? pool : p);
       }
       return [...(current || []), pool];
+    });
+  };
+
+  const handleSettleBets = (settledBets: Array<{ bet: Bet; winnerId: string; note: string }>) => {
+    setBets((currentBets) => {
+      const updatedBets = [...(currentBets || [])];
+      
+      settledBets.forEach(({ bet, winnerId, note }) => {
+        const index = updatedBets.findIndex(b => b.id === bet.id);
+        if (index !== -1) {
+          updatedBets[index] = settleBet(bet, winnerId, note, payoutSettings || DEFAULT_PAYOUT_SETTINGS);
+        }
+      });
+      
+      return updatedBets;
     });
   };
 
@@ -686,6 +676,7 @@ function App() {
                   bettingPools={bettingPoolsList}
                   onPlaceBet={handlePlaceBet}
                   onUpdatePool={handleUpdatePool}
+                  onSettleBets={handleSettleBets}
                 />
               </TabsContent>
 

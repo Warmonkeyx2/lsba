@@ -321,58 +321,54 @@ export function calculatePayoutBreakdown(
   };
 }
 
-export function settleBets(
-  bets: Bet[],
-  fightId: string,
+export function settleBet(
+  bet: Bet,
   winnerId: string,
+  settlementNote: string,
   payoutSettings: PayoutSettings = DEFAULT_PAYOUT_SETTINGS
-): Bet[] {
-  return bets.map(bet => {
-    if (bet.fightId !== fightId || bet.status !== 'pending') {
-      return bet;
-    }
+): Bet {
+  const lsbaFee = (bet.amount * payoutSettings.lsbaFeePercentage) / 100;
+  
+  if (bet.fighterId === winnerId) {
+    const bettorPayout = bet.potentialPayout - lsbaFee;
+    const bookerLoss = bet.potentialPayout - bet.amount;
     
-    const lsbaFee = (bet.amount * payoutSettings.lsbaFeePercentage) / 100;
+    const payoutBreakdown: PayoutBreakdown = {
+      originalBet: bet.amount,
+      totalWinnings: bet.potentialPayout,
+      bettorPayout,
+      lsbaFee,
+      bookerProfit: -bookerLoss,
+    };
     
-    if (bet.fighterId === winnerId) {
-      const bettorPayout = bet.potentialPayout - lsbaFee;
-      const bookerLoss = bet.potentialPayout - bet.amount;
-      
-      const payoutBreakdown: PayoutBreakdown = {
-        originalBet: bet.amount,
-        totalWinnings: bet.potentialPayout,
-        bettorPayout,
-        lsbaFee,
-        bookerProfit: -bookerLoss,
-      };
-      
-      return {
-        ...bet,
-        status: 'won',
-        actualPayout: bettorPayout,
-        payoutBreakdown,
-        settledDate: new Date().toISOString(),
-      };
-    } else {
-      const bookerProfit = bet.amount - lsbaFee;
-      
-      const payoutBreakdown: PayoutBreakdown = {
-        originalBet: bet.amount,
-        totalWinnings: 0,
-        bettorPayout: 0,
-        lsbaFee,
-        bookerProfit,
-      };
-      
-      return {
-        ...bet,
-        status: 'lost',
-        actualPayout: 0,
-        payoutBreakdown,
-        settledDate: new Date().toISOString(),
-      };
-    }
-  });
+    return {
+      ...bet,
+      status: 'won',
+      actualPayout: bettorPayout,
+      payoutBreakdown,
+      settlementNote,
+      settledDate: new Date().toISOString(),
+    };
+  } else {
+    const bookerProfit = bet.amount - lsbaFee;
+    
+    const payoutBreakdown: PayoutBreakdown = {
+      originalBet: bet.amount,
+      totalWinnings: 0,
+      bettorPayout: 0,
+      lsbaFee,
+      bookerProfit,
+    };
+    
+    return {
+      ...bet,
+      status: 'lost',
+      actualPayout: 0,
+      payoutBreakdown,
+      settlementNote,
+      settledDate: new Date().toISOString(),
+    };
+  }
 }
 
 export function getFighterCurrentOdds(
