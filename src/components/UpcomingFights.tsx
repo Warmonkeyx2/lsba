@@ -1,7 +1,11 @@
-import { Calendar, Trophy } from "@phosphor-icons/react";
+import { useState } from "react";
+import { Calendar, Trophy, Eye } from "@phosphor-icons/react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { FightCardDisplay } from "@/components/FightCardDisplay";
 import type { FightCard, Bout } from "@/types/fightCard";
 import type { Boxer } from "@/types/boxer";
 
@@ -11,6 +15,7 @@ interface UpcomingFightsProps {
 }
 
 export function UpcomingFights({ fightCards = [], boxers = [] }: UpcomingFightsProps) {
+  const [selectedCard, setSelectedCard] = useState<FightCard | null>(null);
   const upcomingCards = (fightCards ?? []).filter(card => card.status === 'upcoming');
 
   const getBoxerById = (id?: string) => {
@@ -101,46 +106,74 @@ export function UpcomingFights({ fightCards = [], boxers = [] }: UpcomingFightsP
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      {upcomingCards.map((card) => {
-        const allBouts = [
-          card.mainEvent,
-          ...(card.coMainEvent ? [card.coMainEvent] : []),
-          ...card.otherBouts
-        ].filter(bout => bout.fighter1 && bout.fighter2);
+    <>
+      <div className="flex flex-col gap-6">
+        {upcomingCards.map((card) => {
+          const allBouts = [
+            card.mainEvent,
+            ...(card.coMainEvent ? [card.coMainEvent] : []),
+            ...card.otherBouts
+          ].filter(bout => bout.fighter1 && bout.fighter2);
 
-        return (
-          <Card key={card.id} className="p-6">
-            <div className="flex flex-col gap-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Trophy className="w-5 h-5 text-secondary" weight="fill" />
-                    <h3 className="font-display text-2xl uppercase text-secondary tracking-wide">
-                      {card.mainEvent.title || 'LSBA Event'}
-                    </h3>
-                  </div>
-                  <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      <span>{card.eventDate}</span>
+          return (
+            <Card key={card.id} className="p-6">
+              <div className="flex flex-col gap-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Trophy className="w-5 h-5 text-secondary" weight="fill" />
+                      <h3 className="font-display text-2xl uppercase text-secondary tracking-wide">
+                        {card.mainEvent.title || 'LSBA Event'}
+                      </h3>
                     </div>
-                    <span>•</span>
-                    <span>{card.location}</span>
+                    <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        <span>{card.eventDate}</span>
+                      </div>
+                      <span>•</span>
+                      <span>{card.location}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-accent text-accent-foreground">
+                      Upcoming
+                    </Badge>
+                    <Button
+                      onClick={() => setSelectedCard(card)}
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                    >
+                      <Eye className="w-4 h-4" />
+                      View Card
+                    </Button>
                   </div>
                 </div>
-                <Badge className="bg-accent text-accent-foreground">
-                  Upcoming
-                </Badge>
-              </div>
 
-              <div className="flex flex-col gap-3">
-                {allBouts.map((bout) => renderBout(bout, card.id || ''))}
+                <div className="flex flex-col gap-3">
+                  {allBouts.map((bout) => renderBout(bout, card.id || ''))}
+                </div>
               </div>
+            </Card>
+          );
+        })}
+      </div>
+
+      <Dialog open={!!selectedCard} onOpenChange={(open) => !open && setSelectedCard(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display text-3xl uppercase text-secondary tracking-wide">
+              Official Fight Card
+            </DialogTitle>
+          </DialogHeader>
+          {selectedCard && (
+            <div className="mt-4">
+              <FightCardDisplay fightCard={selectedCard} />
             </div>
-          </Card>
-        );
-      })}
-    </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
