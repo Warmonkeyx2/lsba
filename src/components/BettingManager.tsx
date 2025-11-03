@@ -66,7 +66,6 @@ export function BettingManager({
   onUpdatePool,
 }: BettingManagerProps) {
   const [payoutSettings, setPayoutSettings] = useKV<PayoutSettings>('lsba-payout-settings', DEFAULT_PAYOUT_SETTINGS);
-  const [selectedFightCard, setSelectedFightCard] = useState<string>('');
   const [selectedFight, setSelectedFight] = useState<string>('');
   const [selectedFighter, setSelectedFighter] = useState<string>('');
   const [betAmount, setBetAmount] = useState<string>('');
@@ -79,30 +78,63 @@ export function BettingManager({
 
   const upcomingFightCards = fightCards?.filter(fc => fc.status === 'upcoming') ?? [];
 
+  const allFightsWithCards = useMemo(() => {
+    const fights: Array<{
+      fightId: string;
+      fightCardId: string;
+      fighter1: string;
+      fighter2: string;
+      fighter1Id?: string;
+      fighter2Id?: string;
+      type: string;
+      eventName: string;
+      eventDate: string;
+    }> = [];
+
+    upcomingFightCards.forEach((fc) => {
+      const bouts = [
+        fc.mainEvent,
+        ...(fc.coMainEvent ? [fc.coMainEvent] : []),
+        ...fc.otherBouts,
+      ];
+
+      bouts.forEach((bout) => {
+        fights.push({
+          fightId: bout.id,
+          fightCardId: fc.id!,
+          fighter1: bout.fighter1,
+          fighter2: bout.fighter2,
+          fighter1Id: bout.fighter1Id,
+          fighter2Id: bout.fighter2Id,
+          type: bout.type,
+          eventName: fc.mainEvent.title || 'LSBA Event',
+          eventDate: fc.eventDate,
+        });
+      });
+    });
+
+    return fights;
+  }, [upcomingFightCards]);
+
+  const selectedFightData = useMemo(() => {
+    return allFightsWithCards.find(f => f.fightId === selectedFight);
+  }, [allFightsWithCards, selectedFight]);
+
   const currentPool = useMemo(() => {
-    if (!selectedFightCard || !bettingPools) return null;
-    return bettingPools.find(p => p.fightCardId === selectedFightCard);
-  }, [selectedFightCard, bettingPools]);
+    if (!selectedFightData || !bettingPools) return null;
+    return bettingPools.find(p => p.fightCardId === selectedFightData.fightCardId);
+  }, [selectedFightData, bettingPools]);
 
   const currentFightOdds = useMemo(() => {
     if (!currentPool || !selectedFight) return null;
     return currentPool.fights.find(f => f.fightId === selectedFight);
   }, [currentPool, selectedFight]);
 
-  const selectedFightCard_data = upcomingFightCards.find(fc => fc.id === selectedFightCard);
-  const allBouts = selectedFightCard_data
-    ? [
-        selectedFightCard_data.mainEvent,
-        ...(selectedFightCard_data.coMainEvent ? [selectedFightCard_data.coMainEvent] : []),
-        ...selectedFightCard_data.otherBouts,
-      ]
-    : [];
-
-  const selectedBout = allBouts.find(b => b.id === selectedFight);
+  const selectedBout = selectedFightData;
 
   useEffect(() => {
-    if (selectedFightCard && !currentPool && upcomingFightCards.length > 0 && boxers && boxers.length > 0) {
-      const fightCardData = upcomingFightCards.find(fc => fc.id === selectedFightCard);
+    if (selectedFightData && !currentPool && upcomingFightCards.length > 0 && boxers && boxers.length > 0) {
+      const fightCardData = upcomingFightCards.find(fc => fc.id === selectedFightData.fightCardId);
       if (!fightCardData) return;
 
       const bouts = [
@@ -124,7 +156,7 @@ export function BettingManager({
       if (fights.length === 0) return;
 
       const newPool = createBettingPool(
-        selectedFightCard,
+        selectedFightData.fightCardId,
         fightCardData.mainEvent.title || `LSBA Event - ${fightCardData.eventDate}`,
         fightCardData.eventDate,
         fights,
@@ -136,10 +168,10 @@ export function BettingManager({
 
       onUpdatePool(newPool);
     }
-  }, [selectedFightCard, currentPool, upcomingFightCards, boxers, bets, eventType, onUpdatePool, payoutSettings]);
+  }, [selectedFightData, currentPool, upcomingFightCards, boxers, bets, eventType, onUpdatePool, payoutSettings]);
 
   const handlePlaceBet = () => {
-    if (!selectedFightCard || !selectedFight || !selectedFighter || !betAmount || !bettorStateId || !bettorName) {
+    if (!selectedFight || !selectedFighter || !betAmount || !bettorStateId || !bettorName) {
       toast.error('Please fill in all fields including bettor State ID and name');
       return;
     }
@@ -156,7 +188,7 @@ export function BettingManager({
       return;
     }
 
-    if (!currentFightOdds || !selectedBout) {
+    if (!currentFightOdds || !selectedBout || !selectedFightData) {
       toast.error('Fight odds not available');
       return;
     }
@@ -189,9 +221,9 @@ export function BettingManager({
       bettorStateId: bettorStateId.trim(),
       bettorName: bettorName.trim(),
       fightId: selectedFight,
-      fightCardId: selectedFightCard,
-      eventName: currentPool?.eventName || 'LSBA Event',
-      eventDate: currentPool?.eventDate || '',
+      fightCardId: selectedFightData.fightCardId,
+      eventName: currentPool?.eventName || selectedFightData.eventName,
+      eventDate: currentPool?.eventDate || selectedFightData.eventDate,
       fighterId: selectedFighter,
       fighterName: `${fighter.firstName} ${fighter.lastName}`,
       opponentName: `${opponent.firstName} ${opponent.lastName}`,
@@ -237,13 +269,17 @@ export function BettingManager({
   };
 
   const handleUpdateMaxBet = (fightId: string) => {
-    if (!currentPool) return;
+    const fightData = allFightsWithCards.find(f => f.fightId === fightId);
+    if (!fightData) return;
+
+    const poolToUpdate = bettingPools.find(p => p.fightCardId === fightData.fightCardId);
+    if (!poolToUpdate) return;
 
     const limit = maxBetLimit ? parseFloat(maxBetLimit) : undefined;
     
     const updatedPool: BettingPool = {
-      ...currentPool,
-      fights: currentPool.fights.map(f =>
+      ...poolToUpdate,
+      fights: poolToUpdate.fights.map(f =>
         f.fightId === fightId ? { ...f, maxBetLimit: limit } : f
       ),
     };
@@ -506,40 +542,29 @@ export function BettingManager({
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Select Fight Card</Label>
-                  <Select value={selectedFightCard} onValueChange={setSelectedFightCard}>
+                  <Label>Select Fight</Label>
+                  <Select value={selectedFight} onValueChange={setSelectedFight}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Choose an event..." />
+                      <SelectValue placeholder="Choose a fight..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {upcomingFightCards.map((fc) => (
-                        <SelectItem key={fc.id} value={fc.id!}>
-                          {fc.mainEvent.title || 'LSBA Event'} - {new Date(fc.eventDate).toLocaleDateString()}
+                      {allFightsWithCards.map((fight) => (
+                        <SelectItem key={fight.fightId} value={fight.fightId}>
+                          <div className="flex flex-col">
+                            <span className="font-semibold">
+                              {fight.fighter1} vs {fight.fighter2}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {fight.eventName} - {new Date(fight.eventDate).toLocaleDateString()}
+                              {fight.type === 'main' && ' (Main Event)'}
+                              {fight.type === 'co-main' && ' (Co-Main)'}
+                            </span>
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-
-                {selectedFightCard && (
-                  <div className="space-y-2">
-                    <Label>Select Fight</Label>
-                    <Select value={selectedFight} onValueChange={setSelectedFight}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choose a fight..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {allBouts.map((bout) => (
-                          <SelectItem key={bout.id} value={bout.id}>
-                            {bout.fighter1} vs {bout.fighter2}
-                            {bout.type === 'main' && ' (Main Event)'}
-                            {bout.type === 'co-main' && ' (Co-Main)'}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
 
                 {selectedFight && currentFightOdds && selectedBout && (
                   <>
@@ -884,76 +909,73 @@ export function BettingManager({
               <CardDescription>Set maximum bet amounts for individual fights</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Select Fight Card</Label>
-                  <Select value={selectedFightCard} onValueChange={setSelectedFightCard}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose an event..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {upcomingFightCards.map((fc) => (
-                        <SelectItem key={fc.id} value={fc.id!}>
-                          {fc.mainEvent.title || 'LSBA Event'} - {new Date(fc.eventDate).toLocaleDateString()}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-3">
+                {bettingPools.map((pool) => {
+                  const eventInfo = upcomingFightCards.find(fc => fc.id === pool.fightCardId);
+                  if (!eventInfo) return null;
 
-                {currentPool && (
-                  <div className="space-y-3">
-                    {currentPool.fights.map((fight) => {
-                      const bout = allBouts.find((b) => b.id === fight.fightId);
-                      if (!bout) return null;
+                  return (
+                    <div key={pool.fightCardId} className="space-y-3">
+                      <h4 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+                        {pool.eventName} - {new Date(pool.eventDate).toLocaleDateString()}
+                      </h4>
+                      {pool.fights.map((fight) => {
+                        const fightData = allFightsWithCards.find(f => f.fightId === fight.fightId);
+                        if (!fightData) return null;
 
-                      return (
-                        <div key={fight.fightId} className="bg-muted/50 rounded-lg p-4">
-                          <div className="flex justify-between items-start gap-4">
-                            <div className="flex-1">
-                              <div className="font-semibold">
-                                {bout.fighter1} vs {bout.fighter2}
+                        return (
+                          <div key={fight.fightId} className="bg-muted/50 rounded-lg p-4">
+                            <div className="flex justify-between items-start gap-4">
+                              <div className="flex-1">
+                                <div className="font-semibold">
+                                  {fightData.fighter1} vs {fightData.fighter2}
+                                </div>
+                                <div className="text-sm text-muted-foreground">
+                                  {fight.maxBetLimit
+                                    ? `Max Bet: $${fight.maxBetLimit.toLocaleString()}`
+                                    : 'No limit set'}
+                                </div>
                               </div>
-                              <div className="text-sm text-muted-foreground">
-                                {fight.maxBetLimit
-                                  ? `Max Bet: $${fight.maxBetLimit.toLocaleString()}`
-                                  : 'No limit set'}
-                              </div>
+                              {editingFightId === fight.fightId ? (
+                                <div className="flex gap-2 items-center">
+                                  <Input
+                                    type="number"
+                                    placeholder="Max bet..."
+                                    value={maxBetLimit}
+                                    onChange={(e) => setMaxBetLimit(e.target.value)}
+                                    className="w-32"
+                                    step="1000"
+                                    min="0"
+                                  />
+                                  <Button size="sm" onClick={() => handleUpdateMaxBet(fight.fightId)}>
+                                    Save
+                                  </Button>
+                                  <Button size="sm" variant="ghost" onClick={() => setEditingFightId('')}>
+                                    Cancel
+                                  </Button>
+                                </div>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setEditingFightId(fight.fightId);
+                                    setMaxBetLimit(fight.maxBetLimit?.toString() || '');
+                                  }}
+                                >
+                                  Set Limit
+                                </Button>
+                              )}
                             </div>
-                            {editingFightId === fight.fightId ? (
-                              <div className="flex gap-2 items-center">
-                                <Input
-                                  type="number"
-                                  placeholder="Max bet..."
-                                  value={maxBetLimit}
-                                  onChange={(e) => setMaxBetLimit(e.target.value)}
-                                  className="w-32"
-                                  step="1000"
-                                  min="0"
-                                />
-                                <Button size="sm" onClick={() => handleUpdateMaxBet(fight.fightId)}>
-                                  Save
-                                </Button>
-                                <Button size="sm" variant="ghost" onClick={() => setEditingFightId('')}>
-                                  Cancel
-                                </Button>
-                              </div>
-                            ) : (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setEditingFightId(fight.fightId);
-                                  setMaxBetLimit(fight.maxBetLimit?.toString() || '');
-                                }}
-                              >
-                                Set Limit
-                              </Button>
-                            )}
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+                {bettingPools.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No betting pools available. Place a bet to create one.
                   </div>
                 )}
               </div>
