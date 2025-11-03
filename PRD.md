@@ -20,11 +20,11 @@ This is a full-featured management system with multiple interconnected modules: 
 - Success criteria: Titlebar displays app name and icon; minimize/maximize/close buttons work; fullscreen toggle functional; frame persists across all views
 
 **Boxer Registration Module**
-- Functionality: Form-based interface to register new boxers with State ID, name, phone, sponsor, and optional profile photo
-- Purpose: Onboard new fighters into the LSBA system with all required licensing information
+- Functionality: Form-based interface to register new boxers with State ID, name, phone, sponsor, and optional profile photo; automatic $10,000 monthly license fee assignment
+- Purpose: Onboard new fighters into the LSBA system with all required licensing information and payment tracking
 - Trigger: User navigates to Register tab and fills out registration form
-- Progression: Enter boxer details → Submit form → Boxer added to system → Appears on leaderboard → Profile created
-- Success criteria: All required fields validated; unique ID generated; boxer immediately appears in leaderboard; confirmation toast shown
+- Progression: Enter boxer details → Submit form → $10,000 license fee assigned → Boxer added to system → Appears on leaderboard → Profile created
+- Success criteria: All required fields validated; unique ID generated; boxer immediately appears in leaderboard; confirmation toast shown; license status set to active with current date as first payment date
 
 **Dynamic Leaderboard**
 - Functionality: Auto-sorted list of all registered boxers ranked by win rate and total wins, displaying W-L-K records and stats
@@ -34,11 +34,11 @@ This is a full-featured management system with multiple interconnected modules: 
 - Success criteria: Rankings update automatically when stats change; top 3 get special visual treatment; win rate and record display accurately
 
 **Boxer Profile & Stats Management**
-- Functionality: Detailed profile page for each boxer with editable W/L/K stats, fight history, and visual stat tracking
-- Purpose: Manage individual fighter records and maintain comprehensive fight histories
+- Functionality: Detailed profile page for each boxer with editable W/L/K stats, fight history, license status with payment tracking, and visual stat tracking
+- Purpose: Manage individual fighter records, maintain comprehensive fight histories, and track license payments
 - Trigger: User clicks on a boxer from leaderboard
-- Progression: Select boxer → View profile → Adjust stats with +/- buttons → Add fight results → Stats update → Rank recalculates
-- Success criteria: Stats persist correctly; rank updates reflect new stats; fight history logs all results; quick add buttons for Win/Loss/KO work correctly
+- Progression: Select boxer → View profile with license status → Adjust stats with +/- buttons → Process license payment if needed → Add fight results → Stats update → Rank recalculates
+- Success criteria: Stats persist correctly; rank updates reflect new stats; fight history logs all results; quick add buttons for Win/Loss/KO work correctly; license status displays with days until due; payment processing updates license validity
 
 **Fight History Tracking**
 - Functionality: Chronological log of all fights for each boxer with results, dates, and opponent names
@@ -48,11 +48,11 @@ This is a full-featured management system with multiple interconnected modules: 
 - Success criteria: All fights logged with timestamps; results categorized properly; history displays in reverse chronological order
 
 **Auto-Generate Fight Card**
-- Functionality: Select multiple boxers from roster and automatically generate fight card with matchups
-- Purpose: Streamline event creation by intelligently pairing fighters based on selection order
-- Trigger: User navigates to Generator tab, selects boxers, enters event details, clicks generate
-- Progression: Select boxers → Set date/location → Preview matchups → Generate → Fight card created with all boxer data → Navigates to editor
-- Success criteria: Pairs fighters sequentially; first pair becomes main event; includes fighter photos and records automatically; preview shows bout structure
+- Functionality: Select multiple boxers from roster and automatically generate fight card with matchups; only fighters with valid licenses (paid within last 30 days) can be selected
+- Purpose: Streamline event creation by intelligently pairing fighters based on selection order while enforcing license requirements
+- Trigger: User navigates to Generator tab, selects boxers with valid licenses, enters event details, clicks generate
+- Progression: Select boxers → System validates licenses → Set date/location → Preview matchups → Generate → Fight card created with all boxer data → Navigates to editor
+- Success criteria: Pairs fighters sequentially; first pair becomes main event; includes fighter photos and records automatically; preview shows bout structure; expired license boxers are visually disabled and cannot be selected; toast notification explains why boxer cannot be added
 
 **Integrated Fight Card Editor**
 - Functionality: Full fight card editing system (existing feature) now integrated with boxer database
@@ -96,6 +96,13 @@ This is a full-featured management system with multiple interconnected modules: 
 - Progression: View all boxers → Type search query → Results filter instantly → Select edit or delete → Make changes → Confirm action
 - Success criteria: Search updates on every keystroke; filters by name, ID, phone, sponsor; edit dialog validates sponsor against registered list; deletion requires confirmation; all changes persist correctly
 
+**License Management System**
+- Functionality: Comprehensive license tracking dashboard showing all fighters' payment status with filters for active, due soon (7 days), and expired licenses; one-click payment processing
+- Purpose: Ensure all fighters maintain valid licenses to compete; track monthly $10,000 fees; prevent expired fighters from being added to fight cards
+- Trigger: User navigates to Licenses tab or needs to process monthly payments
+- Progression: View dashboard with status stats → Filter by license status → Select fighter → Process payment → License renewed for 30 days → Fighter becomes eligible for fight cards
+- Success criteria: Dashboard displays accurate counts of active/due/expired licenses; filters work correctly; payment processing updates last payment date and extends validity by 30 days; expired fighters cannot be selected in fight card generator; visual indicators (badges, colors) clearly show license status throughout app
+
 ## Edge Case Handling
 
 - **No boxers registered** - Show empty state with prompt to register first boxer
@@ -122,6 +129,10 @@ This is a full-featured management system with multiple interconnected modules: 
 - **Bet settlement with cancelled fight** - Provide mechanism to refund bets for cancelled bouts
 - **Multiple active bets on same fight** - Track and display all bets separately with individual potential payouts
 - **Negative booker profit** - When total payouts exceed bet amounts, booker takes loss while LSBA still receives fixed 10% fee
+- **Expired fighter license** - Fighters with licenses past 30 days cannot be added to fight cards; visual warning shows in generator and profiles
+- **License payment on exact 30-day boundary** - Payment extends for full 30 days from payment date, not from expiry
+- **Multiple payments in same month** - System allows but only extends from latest payment date
+- **License status during active fight** - Fighter can complete scheduled fight even if license expires between scheduling and fight date (grace period)
 
 ## Design Direction
 
@@ -205,12 +216,16 @@ Animations should be purposeful and enhance data comprehension—smooth transiti
   - PencilSimple (edit)
   - Trash (delete)
   - Phone (contact info)
-  - IdentificationCard (State ID)
+  - IdentificationCard (State ID, license management)
   - Briefcase (sponsor)
-  - CurrencyDollar (betting)
+  - CurrencyDollar (betting, payments)
   - TrendUp/TrendDown (odds movement, favorites/underdogs)
   - Lock/LockOpen (betting pool status)
   - Lightning (ranking points, bet bonuses)
+  - CheckCircle (active license)
+  - WarningCircle (license due soon)
+  - XCircle (expired license)
+  - Warning (general warnings)
 
 - **Spacing**: 
   - Consistent gap-4 between form elements

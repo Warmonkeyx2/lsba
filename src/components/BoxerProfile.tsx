@@ -1,4 +1,4 @@
-import { ArrowLeft, Plus, Minus, User, Trophy, Target, Lightning } from '@phosphor-icons/react';
+import { ArrowLeft, Plus, Minus, User, Trophy, Target, Lightning, IdentificationCard, CheckCircle, WarningCircle, CurrencyDollar } from '@phosphor-icons/react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import type { Boxer, FightHistory } from '@/types/boxer';
 import { getRanking, getSortedBoxers } from '@/lib/rankingUtils';
+import { isLicenseValid, getDaysUntilDue, processPayment, LICENSE_FEE } from '@/lib/licenseUtils';
 
 interface BoxerProfileProps {
   boxer: Boxer;
@@ -19,6 +20,14 @@ export function BoxerProfile({ boxer, allBoxers, onBack, onUpdateBoxer }: BoxerP
   const rank = getRanking(boxer, allBoxers);
   const totalFights = boxer.wins + boxer.losses;
   const winRate = totalFights > 0 ? (boxer.wins / totalFights) * 100 : 0;
+  const hasValidLicense = isLicenseValid(boxer);
+  const daysUntilDue = getDaysUntilDue(boxer);
+
+  const handleProcessPayment = () => {
+    const updatedBoxer = processPayment(boxer);
+    onUpdateBoxer(updatedBoxer);
+    toast.success(`License renewed! Payment of $${LICENSE_FEE.toLocaleString()} processed.`);
+  };
 
   const updateStat = (stat: 'wins' | 'losses' | 'knockouts', increment: boolean) => {
     const newValue = Math.max(0, boxer[stat] + (increment ? 1 : -1));
@@ -76,9 +85,17 @@ export function BoxerProfile({ boxer, allBoxers, onBack, onUpdateBoxer }: BoxerP
                   {rank !== null ? `#${rank}` : 'Unranked'}
                 </span>
               </div>
-              <Badge className="bg-primary text-primary-foreground text-sm px-4 py-1">
-                Licensed Boxer
-              </Badge>
+              {hasValidLicense ? (
+                <Badge className="bg-green-500/20 text-green-700 border-green-500/30 text-sm px-4 py-1 flex items-center gap-1">
+                  <CheckCircle className="w-4 h-4" />
+                  Licensed - Active
+                </Badge>
+              ) : (
+                <Badge variant="destructive" className="text-sm px-4 py-1 flex items-center gap-1">
+                  <WarningCircle className="w-4 h-4" />
+                  License Expired
+                </Badge>
+              )}
             </div>
           </div>
 
@@ -106,6 +123,48 @@ export function BoxerProfile({ boxer, allBoxers, onBack, onUpdateBoxer }: BoxerP
                 )}
               </div>
             </div>
+
+            <Separator />
+
+            <Card className={`p-4 ${!hasValidLicense ? 'border-destructive/50 bg-destructive/5' : 'border-green-500/30 bg-green-500/5'}`}>
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <IdentificationCard className="w-5 h-5" />
+                    <h3 className="font-semibold">License Status</h3>
+                  </div>
+                  <div className="text-sm text-muted-foreground space-y-1">
+                    <div>
+                      <span className="font-medium">Last Payment:</span>{' '}
+                      {new Date(boxer.lastPaymentDate).toLocaleDateString()}
+                    </div>
+                    <div>
+                      <span className="font-medium">Monthly Fee:</span> ${LICENSE_FEE.toLocaleString()}
+                    </div>
+                    {!hasValidLicense ? (
+                      <div className="text-destructive font-medium">
+                        ⚠ Overdue by {Math.abs(daysUntilDue)} day{Math.abs(daysUntilDue) !== 1 ? 's' : ''}
+                      </div>
+                    ) : daysUntilDue <= 7 ? (
+                      <div className="text-yellow-600 font-medium">
+                        ⚠ Due in {daysUntilDue} day{daysUntilDue !== 1 ? 's' : ''}
+                      </div>
+                    ) : (
+                      <div className="text-green-600 font-medium">
+                        ✓ Active - Next payment due in {daysUntilDue} days
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <Button
+                  onClick={handleProcessPayment}
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  <CurrencyDollar className="w-4 h-4 mr-2" />
+                  Process Payment
+                </Button>
+              </div>
+            </Card>
 
             <Separator />
 

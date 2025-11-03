@@ -15,7 +15,8 @@ import {
   Info,
   ArrowsClockwise,
   Trophy,
-  CurrencyDollar
+  CurrencyDollar,
+  IdentificationCard
 } from "@phosphor-icons/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ import { SeasonReset } from "@/components/SeasonReset";
 import { TournamentBracket } from "@/components/TournamentBracket";
 import { BettingManager } from "@/components/BettingManager";
 import { FighterOddsDisplay } from "@/components/FighterOddsDisplay";
+import { LicenseManager } from "@/components/LicenseManager";
 import { toast, Toaster } from "sonner";
 import type { FightCard } from "@/types/fightCard";
 import type { Boxer, Sponsor, RankingSettings } from "@/types/boxer";
@@ -45,6 +47,7 @@ import type { Tournament } from "@/types/tournament";
 import type { Bet, BettingPool, PayoutSettings } from "@/types/betting";
 import { DEFAULT_RANKING_SETTINGS, calculatePointsForFight, getSortedBoxers } from "@/lib/rankingUtils";
 import { settleBets, DEFAULT_PAYOUT_SETTINGS } from "@/lib/bettingUtils";
+import { LICENSE_FEE } from "@/lib/licenseUtils";
 
 const defaultFightCard: FightCard = {
   eventDate: '',
@@ -104,11 +107,19 @@ function App() {
   useEffect(() => {
     if (boxers && boxers.length > 0) {
       const needsTimezoneMigration = boxers.some(boxer => !boxer.timezone);
+      const needsLicenseMigration = boxers.some(boxer => 
+        boxer.licenseStatus === undefined || 
+        boxer.lastPaymentDate === undefined || 
+        boxer.licenseFee === undefined
+      );
       
-      if (needsTimezoneMigration) {
+      if (needsTimezoneMigration || needsLicenseMigration) {
         const migratedBoxers = boxers.map(boxer => ({
           ...boxer,
           timezone: boxer.timezone || 'NA',
+          licenseStatus: boxer.licenseStatus || 'active',
+          lastPaymentDate: boxer.lastPaymentDate || boxer.registeredDate || new Date().toISOString(),
+          licenseFee: boxer.licenseFee || LICENSE_FEE,
         }));
         setBoxers(migratedBoxers);
       }
@@ -497,10 +508,14 @@ function App() {
               </div>
 
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-5 md:grid-cols-12 h-auto gap-1">
+              <TabsList className="grid w-full grid-cols-5 md:grid-cols-13 h-auto gap-1">
                 <TabsTrigger value="dashboard" className="flex items-center gap-2 py-3">
                   <SquaresFour className="w-4 h-4" />
                   <span className="hidden sm:inline">Dashboard</span>
+                </TabsTrigger>
+                <TabsTrigger value="licenses" className="flex items-center gap-2 py-3">
+                  <IdentificationCard className="w-4 h-4" />
+                  <span className="hidden sm:inline">Licenses</span>
                 </TabsTrigger>
                 <TabsTrigger value="betting" className="flex items-center gap-2 py-3">
                   <CurrencyDollar className="w-4 h-4" />
@@ -592,6 +607,13 @@ function App() {
 
                   <BoxerLeaderboard boxers={boxersList} onSelectBoxer={setSelectedBoxer} />
                 </div>
+              </TabsContent>
+
+              <TabsContent value="licenses" className="mt-6">
+                <LicenseManager
+                  boxers={boxersList}
+                  onUpdateBoxer={handleUpdateBoxer}
+                />
               </TabsContent>
 
               <TabsContent value="betting" className="mt-6">

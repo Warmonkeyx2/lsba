@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Sparkle, ArrowRight, Trash, CalendarBlank } from '@phosphor-icons/react';
+import { Sparkle, ArrowRight, Trash, CalendarBlank, Warning } from '@phosphor-icons/react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import type { Boxer } from '@/types/boxer';
 import type { FightCard, Bout } from '@/types/fightCard';
 import { getRanking } from '@/lib/rankingUtils';
+import { isLicenseValid, getDaysUntilDue } from '@/lib/licenseUtils';
 
 interface FightCardGeneratorProps {
   boxers: Boxer[];
@@ -44,6 +45,12 @@ export function FightCardGenerator({ boxers, allBoxers, onGenerate }: FightCardG
   };
 
   const toggleBoxer = (boxerId: string) => {
+    const boxer = boxers.find(b => b.id === boxerId);
+    if (boxer && !isLicenseValid(boxer)) {
+      toast.error(`${boxer.firstName} ${boxer.lastName} has an expired license and cannot be added to a fight card`);
+      return;
+    }
+    
     setSelectedBoxers((prev) =>
       prev.includes(boxerId) ? prev.filter((id) => id !== boxerId) : [...prev, boxerId]
     );
@@ -258,23 +265,37 @@ export function FightCardGenerator({ boxers, allBoxers, onGenerate }: FightCardG
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto p-1">
               {boxers.map((boxer) => {
+                const hasValidLicense = isLicenseValid(boxer);
+                const daysUntilDue = getDaysUntilDue(boxer);
+                
                 return (
                   <div
                     key={boxer.id}
-                    className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
-                      selectedBoxers.includes(boxer.id)
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:bg-muted/50'
+                    className={`flex items-center gap-3 p-3 border rounded-lg transition-colors ${
+                      !hasValidLicense
+                        ? 'border-destructive/50 bg-destructive/5 opacity-60 cursor-not-allowed'
+                        : selectedBoxers.includes(boxer.id)
+                        ? 'border-primary bg-primary/5 cursor-pointer'
+                        : 'border-border hover:bg-muted/50 cursor-pointer'
                     }`}
                     onClick={() => toggleBoxer(boxer.id)}
                   >
                     <Checkbox
                       checked={selectedBoxers.includes(boxer.id)}
                       onCheckedChange={() => toggleBoxer(boxer.id)}
+                      disabled={!hasValidLicense}
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="font-fighter text-lg uppercase font-bold truncate">
-                        {boxer.firstName} {boxer.lastName}
+                      <div className="flex items-center gap-2">
+                        <div className="font-fighter text-lg uppercase font-bold truncate">
+                          {boxer.firstName} {boxer.lastName}
+                        </div>
+                        {!hasValidLicense && (
+                          <Badge variant="destructive" className="text-xs flex items-center gap-1">
+                            <Warning className="w-3 h-3" />
+                            Expired
+                          </Badge>
+                        )}
                       </div>
                       <div className="flex items-center gap-2 text-sm">
                         <Badge variant="outline" className="text-xs">
@@ -284,6 +305,11 @@ export function FightCardGenerator({ boxers, allBoxers, onGenerate }: FightCardG
                           <span className="text-xs text-muted-foreground truncate">{boxer.sponsor}</span>
                         )}
                       </div>
+                      {!hasValidLicense && (
+                        <div className="text-xs text-destructive mt-1">
+                          License expired - payment required
+                        </div>
+                      )}
                     </div>
                   </div>
                 );

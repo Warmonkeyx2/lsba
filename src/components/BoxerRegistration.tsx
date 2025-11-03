@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import type { Boxer, Sponsor } from '@/types/boxer';
+import { LICENSE_FEE } from '@/lib/licenseUtils';
 
 interface BoxerRegistrationProps {
   onRegister: (boxer: Boxer) => void;
@@ -42,6 +43,8 @@ export function BoxerRegistration({ onRegister, existingBoxers, existingSponsors
       return;
     }
 
+    const now = new Date().toISOString();
+    
     const newBoxer: Boxer = {
       id: `boxer-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       stateId: formData.stateId,
@@ -53,14 +56,17 @@ export function BoxerRegistration({ onRegister, existingBoxers, existingSponsors
       losses: 0,
       knockouts: 0,
       rankingPoints: 0,
-      registeredDate: new Date().toISOString(),
+      registeredDate: now,
       profileImage: formData.profileImage || undefined,
       fightHistory: [],
       timezone: formData.timezone,
+      licenseStatus: 'active',
+      lastPaymentDate: now,
+      licenseFee: LICENSE_FEE,
     };
 
     onRegister(newBoxer);
-    toast.success(`${formData.firstName} ${formData.lastName} registered successfully!`);
+    toast.success(`${formData.firstName} ${formData.lastName} registered successfully! License fee: $${LICENSE_FEE.toLocaleString()}`);
     
     setFormData({
       stateId: '',
@@ -75,7 +81,17 @@ export function BoxerRegistration({ onRegister, existingBoxers, existingSponsors
 
   return (
     <Card className="p-6">
-      <h2 className="text-2xl font-display uppercase text-secondary mb-6">Register New Boxer</h2>
+      <div className="mb-6">
+        <h2 className="text-2xl font-display uppercase text-secondary">Register New Boxer</h2>
+        <div className="mt-3 p-4 bg-accent/10 border border-accent/30 rounded-lg">
+          <p className="text-sm font-medium text-accent-foreground">
+            Registration Fee: ${LICENSE_FEE.toLocaleString()} (due monthly)
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Boxers must maintain an active license to be eligible for fight cards
+          </p>
+        </div>
+      </div>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
