@@ -333,33 +333,50 @@ export function BettingManager({
                 <div className="text-sm space-y-1">
                   <div className="flex items-start gap-2">
                     <span className="text-secondary">•</span>
-                    <span><strong>LSBA Fee:</strong> Always {currentSettings.lsbaFeePercentage}% of the original bet</span>
+                    <span><strong>LSBA Fee:</strong> Always {currentSettings.lsbaFeePercentage}% of the original bet (taken regardless of outcome)</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <span className="text-secondary">•</span>
-                    <span><strong>Winning Bet:</strong> Bettor gets total winnings minus LSBA fee</span>
+                    <span><strong>Winning Bet:</strong> Bettor gets total winnings minus LSBA fee, {CASINO_NAME} pays out the winnings (net loss for casino)</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <span className="text-secondary">•</span>
-                    <span><strong>Losing Bet:</strong> {CASINO_NAME} keeps bet amount minus LSBA fee</span>
+                    <span><strong>Losing Bet:</strong> {CASINO_NAME} keeps bet amount minus LSBA fee (net profit for casino)</span>
                   </div>
                 </div>
               </div>
 
               <div className="bg-accent/10 border border-accent/30 rounded-lg p-4">
-                <div className="text-sm font-semibold mb-2">Example ($2,000 bet):</div>
-                <div className="text-sm space-y-1">
+                <div className="text-sm font-semibold mb-3">Example: $2,000 bet at +100 odds (2:1 payout)</div>
+                <div className="text-sm space-y-2">
+                  <div className="font-semibold text-xs uppercase tracking-wide">If Bettor Wins:</div>
                   <div className="flex justify-between">
-                    <span>LSBA Fee:</span>
-                    <span className="font-semibold">${(2000 * currentSettings.lsbaFeePercentage / 100).toFixed(0)}</span>
+                    <span>Total Payout:</span>
+                    <span className="font-semibold">$4,000</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>If Win (at 2:1 odds):</span>
-                    <span className="font-semibold text-secondary">${(4000 - (2000 * currentSettings.lsbaFeePercentage / 100)).toFixed(0)} to bettor</span>
+                    <span>LSBA Fee ({currentSettings.lsbaFeePercentage}%):</span>
+                    <span className="font-semibold text-accent">-${(2000 * currentSettings.lsbaFeePercentage / 100).toFixed(0)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>If Lose:</span>
-                    <span className="font-semibold">${(2000 - (2000 * currentSettings.lsbaFeePercentage / 100)).toFixed(0)} to {CASINO_NAME}</span>
+                    <span>Bettor Receives:</span>
+                    <span className="font-semibold text-secondary">${(4000 - (2000 * currentSettings.lsbaFeePercentage / 100)).toFixed(0)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>{CASINO_NAME} Net:</span>
+                    <span className="font-semibold text-destructive">-${(4000 - 2000).toFixed(0)} (loss)</span>
+                  </div>
+                  
+                  <div className="border-t border-border pt-2 mt-2">
+                    <div className="font-semibold text-xs uppercase tracking-wide mb-1">If Bettor Loses:</div>
+                    <div className="flex justify-between">
+                      <span>LSBA Fee ({currentSettings.lsbaFeePercentage}%):</span>
+                      <span className="font-semibold text-accent">${(2000 * currentSettings.lsbaFeePercentage / 100).toFixed(0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>{CASINO_NAME} Keeps:</span>
+                      <span className="font-semibold text-secondary">${(2000 - (2000 * currentSettings.lsbaFeePercentage / 100)).toFixed(0)} (profit)</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -629,7 +646,8 @@ export function BettingManager({
 
                         <Separator />
 
-                        <div className="text-sm space-y-1">
+                        <div className="text-sm space-y-2">
+                          <div className="font-semibold text-xs uppercase tracking-wide">If Bettor Wins:</div>
                           {(() => {
                             const betAmountNum = parseFloat(betAmount);
                             if (isNaN(betAmountNum) || betAmountNum <= 0) {
@@ -644,7 +662,7 @@ export function BettingManager({
                             const totalPayout = calculatePayout(betAmountNum, odds, storedOddsFormat);
                             const lsbaFee = (betAmountNum * currentSettings.lsbaFeePercentage) / 100;
                             const bettorPayout = totalPayout - lsbaFee;
-                            const bookerProfit = betAmountNum - totalPayout;
+                            const bookerLoss = totalPayout - betAmountNum;
                             
                             return (
                               <>
@@ -656,14 +674,34 @@ export function BettingManager({
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-muted-foreground">LSBA Fee:</span>
-                                  <span className="font-semibold">
+                                  <span className="font-semibold text-accent">
                                     ${(isNaN(lsbaFee) ? 0 : lsbaFee).toLocaleString()}
                                   </span>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span className="text-muted-foreground">{CASINO_NAME} Profit:</span>
-                                  <span className="font-semibold">
-                                    ${(isNaN(bookerProfit) ? 0 : bookerProfit).toLocaleString()}
+                                  <span className="text-muted-foreground">{CASINO_NAME} pays out:</span>
+                                  <span className="font-semibold text-destructive">
+                                    -${(isNaN(bookerLoss) ? 0 : bookerLoss).toLocaleString()}
+                                  </span>
+                                </div>
+                                
+                                <Separator className="my-2" />
+                                
+                                <div className="font-semibold text-xs uppercase tracking-wide">If Bettor Loses:</div>
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Bettor receives:</span>
+                                  <span className="font-semibold">$0</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">LSBA Fee:</span>
+                                  <span className="font-semibold text-accent">
+                                    ${(isNaN(lsbaFee) ? 0 : lsbaFee).toLocaleString()}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">{CASINO_NAME} keeps:</span>
+                                  <span className="font-semibold text-secondary">
+                                    ${(betAmountNum - lsbaFee).toLocaleString()}
                                   </span>
                                 </div>
                               </>
@@ -805,15 +843,20 @@ export function BettingManager({
                                   <Separator />
                                   <div className="flex justify-between">
                                     <span>Bettor Payout:</span>
-                                    <span className="font-semibold text-secondary">${(bet.payoutBreakdown.bettorPayout || 0).toLocaleString()}</span>
+                                    <span className={`font-semibold ${bet.status === 'won' ? 'text-secondary' : ''}`}>
+                                      ${(bet.payoutBreakdown.bettorPayout || 0).toLocaleString()}
+                                    </span>
                                   </div>
                                   <div className="flex justify-between">
                                     <span>LSBA Fee:</span>
-                                    <span className="font-semibold">${(bet.payoutBreakdown.lsbaFee || 0).toLocaleString()}</span>
+                                    <span className="font-semibold text-accent">${(bet.payoutBreakdown.lsbaFee || 0).toLocaleString()}</span>
                                   </div>
                                   <div className="flex justify-between">
-                                    <span>{CASINO_NAME} Profit:</span>
-                                    <span className="font-semibold">${(bet.payoutBreakdown.bookerProfit || 0).toLocaleString()}</span>
+                                    <span>{CASINO_NAME} {bet.payoutBreakdown.bookerProfit >= 0 ? 'Profit' : 'Loss'}:</span>
+                                    <span className={`font-semibold ${bet.payoutBreakdown.bookerProfit >= 0 ? 'text-secondary' : 'text-destructive'}`}>
+                                      {bet.payoutBreakdown.bookerProfit >= 0 ? '$' : '-$'}
+                                      {Math.abs(bet.payoutBreakdown.bookerProfit || 0).toLocaleString()}
+                                    </span>
                                   </div>
                                 </div>
                               </DialogContent>

@@ -336,14 +336,14 @@ export function settleBets(
     
     if (bet.fighterId === winnerId) {
       const bettorPayout = bet.potentialPayout - lsbaFee;
-      const bookerProfit = bet.amount - bet.potentialPayout;
+      const bookerLoss = bet.potentialPayout - bet.amount;
       
       const payoutBreakdown: PayoutBreakdown = {
         originalBet: bet.amount,
         totalWinnings: bet.potentialPayout,
         bettorPayout,
         lsbaFee,
-        bookerProfit,
+        bookerProfit: -bookerLoss,
       };
       
       return {
