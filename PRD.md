@@ -1,9 +1,9 @@
 # Planning Guide
 
-A comprehensive boxing association management system for LSBA (Los Santos Boxing Association) that handles boxer registration, leaderboard rankings, fighter profiles, stat tracking, and automated fight card generation—all integrated into one cohesive application.
+A comprehensive boxing association management system for LSBA (Los Santos Boxing Association) that handles boxer registration, leaderboard rankings, fighter profiles, stat tracking, and automated fight card generation—presented as a desktop application with native window controls and full-screen application experience.
 
 **Experience Qualities**:
-1. **Professional** - The interface should feel like a legitimate sports organization management platform with polished displays and data-driven insights
+1. **Professional** - The interface should feel like a legitimate desktop sports management application with native window chrome, polished displays and data-driven insights
 2. **Comprehensive** - All aspects of boxing management in one place: from registering new fighters to generating event posters
 3. **Dynamic** - Auto-calculated rankings, real-time stat updates, and intelligent fight card generation that responds to the current roster
 
@@ -11,6 +11,13 @@ A comprehensive boxing association management system for LSBA (Los Santos Boxing
 This is a full-featured management system with multiple interconnected modules: boxer registry, profile management, leaderboard calculations, fight history tracking, and automated fight card creation with persistent state across all features.
 
 ## Essential Features
+
+**Desktop Application Frame**
+- Functionality: Native-style window frame with titlebar, app icon, window controls (minimize, maximize, close)
+- Purpose: Provide authentic desktop application experience with familiar window management
+- Trigger: Application loads with desktop chrome immediately visible
+- Progression: Launch app → Desktop frame renders → Window controls functional → Content scrollable within frame
+- Success criteria: Titlebar displays app name and icon; minimize/maximize/close buttons work; fullscreen toggle functional; frame persists across all views
 
 **Boxer Registration Module**
 - Functionality: Form-based interface to register new boxers with State ID, name, phone, sponsor, and optional profile photo
@@ -88,7 +95,7 @@ This is a full-featured management system with multiple interconnected modules: 
 
 ## Design Direction
 
-The design should evoke the professional, data-driven aesthetic of modern sports management platforms (think ESPN stats pages, UFC rankings) while maintaining the bold, high-energy boxing promotion feel. A rich interface with clear information hierarchy serves the core purpose of managing a complete boxing organization.
+The design should evoke the professional, data-driven aesthetic of modern desktop sports management applications (think ESPN stats pages, UFC rankings software) while maintaining the bold, high-energy boxing promotion feel. A rich desktop interface with native window chrome and clear information hierarchy serves the core purpose of managing a complete boxing organization.
 
 ## Color Selection
 
@@ -127,9 +134,10 @@ Animations should be purposeful and enhance data comprehension—smooth transiti
 ## Component Selection
 
 - **Components**: 
+  - Custom DesktopFrame (window titlebar with controls)
   - Card (profiles, registration forms, leaderboard containers)
   - Input (all form fields with consistent styling)
-  - Button (primary actions, stat adjustments, navigation)
+  - Button (primary actions, stat adjustments, navigation, window controls)
   - Tabs (main navigation between modules)
   - Avatar (boxer profile images with fallback)
   - Badge (bout types, rankings, status indicators)
@@ -139,6 +147,7 @@ Animations should be purposeful and enhance data comprehension—smooth transiti
   - Label (form labels throughout)
 
 - **Customizations**: 
+  - Desktop window frame with native-style titlebar and controls
   - Custom leaderboard card with rank indicators and trophy icons for top 3
   - Stat adjustment interface with +/- buttons
   - Fight card generator with selection preview
@@ -152,6 +161,7 @@ Animations should be purposeful and enhance data comprehension—smooth transiti
   - Stats: Brief highlight animation when updated
 
 - **Icon Selection**: 
+  - X/Minus/Square (window controls)
   - UserPlus (register)
   - ChartLine (leaderboard/stats)
   - Sparkle (auto-generate)
@@ -175,8 +185,8 @@ Animations should be purposeful and enhance data comprehension—smooth transiti
   - Generous spacing in stat displays for readability
 
 - **Mobile**: 
-  - Stack all form fields vertically
-  - Collapse leaderboard to single column
+  - Desktop application is designed for larger screens (minimum 1024px recommended)
+  - Window frame remains fixed at top
   - Tab labels hide text on smallest screens, show icons only
-  - Profile stats grid adjusts to 2 columns
-  - Stat adjustment buttons remain touch-friendly (44px minimum)
+  - Content area scrolls independently within desktop frame
+  - All interactive elements maintain touch-friendly sizes for touchscreen displays

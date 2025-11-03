@@ -18,6 +18,7 @@ import {
 } from "@phosphor-icons/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { DesktopFrame } from "@/components/DesktopFrame";
 import { FightCardEditor } from "@/components/FightCardEditor";
 import { FightCardDisplay } from "@/components/FightCardDisplay";
 import { BoxerRegistration } from "@/components/BoxerRegistration";
@@ -384,59 +385,64 @@ function App() {
 
   if (selectedSponsor) {
     return (
-      <div className="min-h-screen bg-background text-foreground">
+      <DesktopFrame>
         <Toaster position="top-center" richColors />
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-6xl mx-auto">
-            <SponsorProfile
-              sponsor={selectedSponsor}
-              boxers={boxersList}
-              onBack={() => setSelectedSponsor(null)}
-              onUpdateSponsor={handleUpdateSponsor}
-            />
+        <div className="h-full overflow-auto">
+          <div className="container mx-auto px-4 py-8">
+            <div className="max-w-6xl mx-auto">
+              <SponsorProfile
+                sponsor={selectedSponsor}
+                boxers={boxersList}
+                onBack={() => setSelectedSponsor(null)}
+                onUpdateSponsor={handleUpdateSponsor}
+              />
+            </div>
           </div>
         </div>
-      </div>
+      </DesktopFrame>
     );
   }
 
   if (selectedBoxer) {
     return (
-      <div className="min-h-screen bg-background text-foreground">
+      <DesktopFrame>
         <Toaster position="top-center" richColors />
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-6xl mx-auto">
-            <BoxerProfile
-              boxer={selectedBoxer}
-              allBoxers={boxersList}
-              onBack={() => setSelectedBoxer(null)}
-              onUpdateBoxer={handleUpdateBoxer}
-            />
+        <div className="h-full overflow-auto">
+          <div className="container mx-auto px-4 py-8">
+            <div className="max-w-6xl mx-auto">
+              <BoxerProfile
+                boxer={selectedBoxer}
+                allBoxers={boxersList}
+                onBack={() => setSelectedBoxer(null)}
+                onUpdateBoxer={handleUpdateBoxer}
+              />
+            </div>
           </div>
         </div>
-      </div>
+      </DesktopFrame>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <DesktopFrame>
       <Toaster position="top-center" richColors />
       
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-4">
-              <div>
-                <h1 className="font-display text-5xl md:text-6xl uppercase text-transparent bg-clip-text bg-gradient-to-r from-secondary via-accent to-secondary tracking-wide">
-                  LSBA Manager
-                </h1>
-                <p className="text-muted-foreground mt-2 text-lg">
-                  Los Santos Boxing Association - Complete Management System
-                </p>
+      <div className="h-full overflow-auto">
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-4">
+                <div>
+                  <h1 className="font-display text-5xl md:text-6xl uppercase text-transparent bg-clip-text bg-gradient-to-r from-secondary via-accent to-secondary tracking-wide">
+                    LSBA Manager
+                  </h1>
+                  <p className="text-muted-foreground mt-2 text-lg">
+                    Los Santos Boxing Association - Complete Management System
+                  </p>
+                </div>
               </div>
-            </div>
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-5 md:grid-cols-11 h-auto gap-1">
                 <TabsTrigger value="dashboard" className="flex items-center gap-2 py-3">
                   <SquaresFour className="w-4 h-4" />
@@ -690,10 +696,11 @@ function App() {
                 />
               </TabsContent>
             </Tabs>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </DesktopFrame>
   );
 }
 
