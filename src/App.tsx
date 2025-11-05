@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useKV } from "@github/spark/hooks";
 import { 
   Eye, 
   PencilSimple, 
@@ -143,16 +142,18 @@ function fromDbBoxer(row: any) {
 
 /* ---------- App component (main) ---------- */
 function App() {
-  const [savedCard, setSavedCard] = useKV<FightCard>('lsba-fight-card', defaultFightCard);
-  const [fightCards, setFightCards] = useKV<FightCard[]>('lsba-fight-cards', []);
-  const [boxers, setBoxers] = useKV<Boxer[]>('lsba-boxers', []);
-  const [sponsors, setSponsors] = useKV<Sponsor[]>('lsba-sponsors', []);
-  const [rankingSettings, setRankingSettings] = useKV<RankingSettings>('lsba-ranking-settings', DEFAULT_RANKING_SETTINGS);
-  const [tournaments, setTournaments] = useKV<Tournament[]>('lsba-tournaments', []);
-  const [bets, setBets] = useKV<Bet[]>('lsba-bets', []);
-  const [bettingPools, setBettingPools] = useKV<BettingPool[]>('lsba-betting-pools', []);
-  const [payoutSettings] = useKV<PayoutSettings>('lsba-payout-settings', DEFAULT_PAYOUT_SETTINGS);
-  const [roles, setRoles] = useKV<Role[]>('lsba-roles', DEFAULT_ROLES);
+  // --- THIS IS THE FIXED CODE ---
+  const [savedCard, setSavedCard] = useState<FightCard>(defaultFightCard);
+  const [fightCards, setFightCards] = useState<FightCard[]>([]);
+  const [boxers, setBoxers] = useState<Boxer[]>([]);
+  const [sponsors, setSponsors] = useState<Sponsor[]>([]);
+  const [rankingSettings, setRankingSettings] = useState<RankingSettings>(DEFAULT_RANKING_SETTINGS);
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [bets, setBets] = useState<Bet[]>([]);
+  const [bettingPools, setBettingPools] = useState<BettingPool[]>([]);
+  const [payoutSettings, setPayoutSettings] = useState<PayoutSettings>(DEFAULT_PAYOUT_SETTINGS); // Added setPayoutSettings for consistency
+  const [roles, setRoles] = useState<Role[]>(DEFAULT_ROLES);
+  // --- END OF FIXED CODE ---
   
   const [editingCard, setEditingCard] = useState<FightCard>(defaultFightCard);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
