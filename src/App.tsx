@@ -1,3 +1,5 @@
+import { db } from './firebase'; // Import the db you set up
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { useState, useEffect } from "react";
 import { useKV } from "@github/spark/hooks";
 import { 
