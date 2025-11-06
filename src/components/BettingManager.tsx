@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useKV } from '@github/spark/hooks';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -59,6 +58,12 @@ interface BettingManagerProps {
   onPlaceBet: (bet: Bet) => void;
   onUpdatePool: (pool: BettingPool) => void;
   onSettleBets: (settledBets: Array<{ bet: Bet; winnerId: string; note: string }>) => void;
+  
+  // --- ADD THESE FOUR LINES ---
+  payoutSettings: PayoutSettings;
+  setPayoutSettings: (settings: PayoutSettings) => void;
+  bettingConfig: BettingConfig;
+  setBettingConfig: (config: BettingConfig) => void;
 }
 
 export function BettingManager({
@@ -69,9 +74,12 @@ export function BettingManager({
   onPlaceBet,
   onUpdatePool,
   onSettleBets,
+  payoutSettings,
+  setPayoutSettings,
+  bettingConfig,
+  setBettingConfig,
 }: BettingManagerProps) {
-  const [payoutSettings, setPayoutSettings] = useKV<PayoutSettings>('lsba-payout-settings', DEFAULT_PAYOUT_SETTINGS);
-  const [bettingConfig, setBettingConfig] = useKV<BettingConfig>('lsba-betting-config', {
+  const [bettingConfigState, setBettingConfigState] = useState<BettingConfig>({
     id: 'default',
     eventPricing: {
       regular: 500,
