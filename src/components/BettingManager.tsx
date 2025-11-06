@@ -61,7 +61,7 @@ interface BettingManagerProps {
   
   // --- ADD THESE FOUR LINES ---
   payoutSettings: PayoutSettings;
-  setPayoutSettings: (settings: PayoutSettings) => void;
+  setPayoutSettings: React.Dispatch<React.SetStateAction<PayoutSettings>>;
   bettingConfig: BettingConfig;
   setBettingConfig: (config: BettingConfig) => void;
 }
@@ -79,22 +79,6 @@ export function BettingManager({
   bettingConfig,
   setBettingConfig,
 }: BettingManagerProps) {
- const [bettingConfig, setBettingConfig] = useState<BettingConfig>({
-    id: 'default',
-    eventPricing: {
-      regular: 500,
-      special: 1000,
-      tournament: 1500,
-    },
-    wageLimits: {
-      minimum: 50,
-      maximum: 10000,
-      perFight: 50000,
-      perEvent: 200000,
-    },
-    enabled: true,
-    lastUpdated: new Date().toISOString(),
-});
   const [selectedFight, setSelectedFight] = useState<string>('');
   const [selectedFighter, setSelectedFighter] = useState<string>('');
   const [betAmount, setBetAmount] = useState<string>('');

@@ -61,9 +61,16 @@ import { DEFAULT_ROLES } from "@/types/permissions";
 import { DEFAULT_RANKING_SETTINGS, calculatePointsForFight, getSortedBoxers } from "@/lib/rankingUtils";
 import { settleBet, DEFAULT_PAYOUT_SETTINGS } from "@/lib/bettingUtils";
 import { LICENSE_FEE } from "@/lib/licenseUtils";
+import type { BettingConfig } from "@/types/betting";
 
 // Supabase client (you should have src/lib/supabaseClient.ts exporting `supabase`)
 import { supabase } from "./lib/supabaseClient";
+
+const DEFAULT_BETTING_CONFIG: BettingConfig = {
+  enabled: true,
+  maxBet: 1000,
+  houseFee: 0.05,
+};
 
 /**
  * Note:
@@ -136,6 +143,8 @@ function fromDbBoxer(row: any) {
     suspensionReason: row.suspension_reason,
     suspensionDate: row.suspension_date,
     registeredDate: row.registered_date,
+    rankingPoints: row.ranking_points ?? 0,
+    licenseFee: row.license_fee ?? LICENSE_FEE,
     // map other fields as needed
   };
 }
@@ -146,14 +155,14 @@ function App() {
   const [savedCard, setSavedCard] = useState<FightCard>(defaultFightCard);
   const [fightCards, setFightCards] = useState<FightCard[]>([]);
   const [boxers, setBoxers] = useState<Boxer[]>([]);
-  const [sponsors, setSponsors] = useState<Sponsor[]>([]);
+  const [sponsors, setSponsors] = useState<Sponsor[]>([]); // Added missing sponsors state
+  const [bettingConfig, setBettingConfig] = useState<BettingConfig>(DEFAULT_BETTING_CONFIG);
   const [rankingSettings, setRankingSettings] = useState<RankingSettings>(DEFAULT_RANKING_SETTINGS);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [bets, setBets] = useState<Bet[]>([]);
   const [bettingPools, setBettingPools] = useState<BettingPool[]>([]);
   const [payoutSettings, setPayoutSettings] = useState<PayoutSettings>(DEFAULT_PAYOUT_SETTINGS); // Added setPayoutSettings for consistency
   const [roles, setRoles] = useState<Role[]>(DEFAULT_ROLES);
-  const [bettingConfig, setBettingConfig] = useState<BettingConfig>({ /* Place the default config object here */ });
   // --- END OF FIXED CODE ---
   
   const [editingCard, setEditingCard] = useState<FightCard>(defaultFightCard);
@@ -187,7 +196,10 @@ function App() {
       if (boxersError) {
         console.warn('Supabase boxers fetch error:', boxersError);
       } else if (boxersData) {
-        setBoxers((boxersData as any[]).map(fromDbBoxer));
+        const validBoxers = (boxersData as any[])
+          .map(fromDbBoxer)
+          .filter((boxer): boxer is NonNullable<typeof boxer> => boxer !== null);
+        setBoxers(validBoxers);
       }
 
       // Fetch sponsors
@@ -261,7 +273,7 @@ function App() {
     try {
       const payload = toDbBoxer({
         ...boxer,
-        lastPaymentDate: boxer.lastPaymentDate instanceof Date ? boxer.lastPaymentDate.toISOString() : boxer.lastPaymentDate,
+        lastPaymentDate: boxer.lastPaymentDate && typeof boxer.lastPaymentDate === 'object' && boxer.lastPaymentDate !== null && boxer.lastPaymentDate instanceof Date ? boxer.lastPaymentDate.toISOString() : boxer.lastPaymentDate,
       });
       const { data, error } = await supabase.from('boxers').upsert(payload, { onConflict: 'id' }).select();
       if (error) throw error;
@@ -966,7 +978,7 @@ function App() {
                   onPlaceBet={handlePlaceBet}
                   onUpdatePool={handleUpdatePool}
                   onSettleBets={handleSettleBets}
-                  payoutSettings={currentSettings}
+                  payoutSettings={payoutSettings}  {/* Fixed: pass payoutSettings state */}
                   setPayoutSettings={setPayoutSettings}
                   bettingConfig={bettingConfig}
                   setBettingConfig={setBettingConfig}
