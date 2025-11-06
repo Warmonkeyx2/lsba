@@ -79,7 +79,7 @@ export function BettingManager({
   bettingConfig,
   setBettingConfig,
 }: BettingManagerProps) {
-  const [bettingConfigState, setBettingConfigState] = useState<BettingConfig>({
+ const [bettingConfig, setBettingConfig] = useState<BettingConfig>({
     id: 'default',
     eventPricing: {
       regular: 500,
@@ -94,7 +94,7 @@ export function BettingManager({
     },
     enabled: true,
     lastUpdated: new Date().toISOString(),
-  });
+});
   const [selectedFight, setSelectedFight] = useState<string>('');
   const [selectedFighter, setSelectedFighter] = useState<string>('');
   const [betAmount, setBetAmount] = useState<string>('');
@@ -432,7 +432,7 @@ export function BettingManager({
                 <Label>LSBA Fee (%)</Label>
                 <Input
                   type="number"
-                  step="0.1"
+                  step="0.1" 
                   min="0"
                   max="100"
                   value={currentSettings.lsbaFeePercentage}

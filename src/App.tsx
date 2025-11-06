@@ -153,6 +153,7 @@ function App() {
   const [bettingPools, setBettingPools] = useState<BettingPool[]>([]);
   const [payoutSettings, setPayoutSettings] = useState<PayoutSettings>(DEFAULT_PAYOUT_SETTINGS); // Added setPayoutSettings for consistency
   const [roles, setRoles] = useState<Role[]>(DEFAULT_ROLES);
+  const [bettingConfig, setBettingConfig] = useState<BettingConfig>({ /* Place the default config object here */ });
   // --- END OF FIXED CODE ---
   
   const [editingCard, setEditingCard] = useState<FightCard>(defaultFightCard);
