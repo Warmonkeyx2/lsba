@@ -273,7 +273,7 @@ function App() {
     try {
       const payload = toDbBoxer({
         ...boxer,
-        lastPaymentDate: boxer.lastPaymentDate && typeof boxer.lastPaymentDate === 'object' && boxer.lastPaymentDate !== null && boxer.lastPaymentDate instanceof Date ? boxer.lastPaymentDate.toISOString() : boxer.lastPaymentDate,
+        lastPaymentDate: boxer.lastPaymentDate && typeof boxer.lastPaymentDate === 'object' && boxer.lastPaymentDate instanceof Date ? boxer.lastPaymentDate.toISOString() : boxer.lastPaymentDate,
       });
       const { data, error } = await supabase.from('boxers').upsert(payload, { onConflict: 'id' }).select();
       if (error) throw error;
@@ -978,7 +978,7 @@ function App() {
                   onPlaceBet={handlePlaceBet}
                   onUpdatePool={handleUpdatePool}
                   onSettleBets={handleSettleBets}
-                  payoutSettings={payoutSettings}  {/* Fixed: pass payoutSettings state */}
+                  payoutSettings={payoutSettings}
                   setPayoutSettings={setPayoutSettings}
                   bettingConfig={bettingConfig}
                   setBettingConfig={setBettingConfig}
