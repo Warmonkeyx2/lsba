@@ -965,6 +965,10 @@ function App() {
                   onPlaceBet={handlePlaceBet}
                   onUpdatePool={handleUpdatePool}
                   onSettleBets={handleSettleBets}
+                  payoutSettings={currentSettings}
+                  setPayoutSettings={setPayoutSettings}
+                  bettingConfig={bettingConfig}
+                  setBettingConfig={setBettingConfig}
                 />
               </TabsContent>
 
