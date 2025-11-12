@@ -26,7 +26,6 @@ export function CountdownTimer({ targetDate, className = '' }: CountdownTimerPro
 
   const calculateTimeRemaining = (target: string): TimeRemaining => {
     // Improved date parsing to handle various formats
-    console.log('CountdownTimer: Parsing target date:', target);
     let targetTime: number;
     
     try {
@@ -34,17 +33,17 @@ export function CountdownTimer({ targetDate, className = '' }: CountdownTimerPro
       if (target.includes(' ') && !target.includes('T')) {
         const [datePart, timePart] = target.split(' ');
         targetTime = new Date(`${datePart}T${timePart}`).getTime();
-        console.log('CountdownTimer: Converted space format to ISO:', `${datePart}T${timePart}`);
-      } else {
+      } else if (target.includes('T')) {
+        // Already in ISO format
         targetTime = new Date(target).getTime();
-        console.log('CountdownTimer: Direct parsing of:', target);
+      } else {
+        // Assume it's just a date, add default time
+        targetTime = new Date(`${target}T20:00:00`).getTime();
       }
-      
-      console.log('CountdownTimer: Parsed time:', new Date(targetTime).toISOString());
       
       // Check if date parsing failed
       if (isNaN(targetTime)) {
-        console.warn('CountdownTimer: Invalid target date:', target);
+        console.warn('Invalid target date:', target);
         return {
           days: 0,
           hours: 0,
@@ -54,7 +53,7 @@ export function CountdownTimer({ targetDate, className = '' }: CountdownTimerPro
         };
       }
     } catch (error) {
-      console.error('CountdownTimer: Error parsing target date:', target, error);
+      console.error('Error parsing target date:', target, error);
       return {
         days: 0,
         hours: 0,
@@ -66,13 +65,8 @@ export function CountdownTimer({ targetDate, className = '' }: CountdownTimerPro
 
     const currentTime = new Date().getTime();
     const timeDiff = targetTime - currentTime;
-    
-    console.log('CountdownTimer: Current time:', new Date(currentTime).toISOString());
-    console.log('CountdownTimer: Time difference (ms):', timeDiff);
-    console.log('CountdownTimer: Time difference (hours):', timeDiff / (1000 * 60 * 60));
 
     if (timeDiff <= 0) {
-      console.log('CountdownTimer: Event is expired');
       return {
         days: 0,
         hours: 0,
@@ -87,16 +81,13 @@ export function CountdownTimer({ targetDate, className = '' }: CountdownTimerPro
     const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
 
-    const result = {
+    return {
       days: Math.max(0, days),
       hours: Math.max(0, hours),
       minutes: Math.max(0, minutes),
       seconds: Math.max(0, seconds),
       isExpired: false,
     };
-    
-    console.log('CountdownTimer: Result:', result);
-    return result;
   };
 
   useEffect(() => {
