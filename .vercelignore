@@ -1,0 +1,33 @@
+# Vercel-specific ignore file
+node_modules/
+.env
+.env.local
+.env.*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Dependency directories
+server/
+
+# Build outputs
+.next/
+.vercel/
+
+# Cache directories
+.cache/
+.vite/
