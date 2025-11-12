@@ -17,7 +17,7 @@
 4. **In Railway dashboard**:
    - Click "New Project" → "Deploy from GitHub repo"
    - Select your repository
-   - Choose `/server` as root directory
+   - Set Root Directory to: `server` (important!)
    - Add environment variables:
      ```
      COSMOSDB_ENDPOINT=your_cosmos_endpoint
@@ -26,7 +26,7 @@
      PORT=3001
      ALLOWED_ORIGINS=https://your-app.vercel.app
      ```
-5. **Get your Railway URL**: `https://your-api.railway.app`
+5. **Get your Railway URL**: Railway will give you a real URL like `https://web-production-abc123.railway.app`
 
 #### Deploy Frontend to Vercel:
 1. **Create Vercel account**: https://vercel.com
