@@ -21,13 +21,13 @@ export function UpcomingFights({ fightCards = [], boxers = [] }: UpcomingFightsP
   
   // Sort cards by event date to show the most imminent first
   const sortedUpcomingCards = upcomingCards.sort((a, b) => {
-    const dateA = new Date(`${a.eventDate} 20:00:00`).getTime();
-    const dateB = new Date(`${b.eventDate} 20:00:00`).getTime();
+    const dateA = new Date(`${a.eventDate}T20:00:00`).getTime();
+    const dateB = new Date(`${b.eventDate}T20:00:00`).getTime();
     return dateA - dateB;
   });
   
   const getCardPriority = (eventDate: string): 'next' | 'soon' | 'upcoming' => {
-    const eventTime = new Date(`${eventDate} 20:00:00`).getTime();
+    const eventTime = new Date(`${eventDate}T20:00:00`).getTime();
     const currentTime = new Date().getTime();
     const timeDiff = eventTime - currentTime;
     const hoursUntil = timeDiff / (1000 * 60 * 60);
@@ -84,7 +84,7 @@ export function UpcomingFights({ fightCards = [], boxers = [] }: UpcomingFightsP
           )}
           <div className="mt-1">
             <CompactCountdownTimer 
-              targetDate={`${eventDate} 20:00:00`}
+              targetDate={`${eventDate}T20:00:00`}
               className="text-xs"
             />
           </div>
@@ -169,7 +169,7 @@ export function UpcomingFights({ fightCards = [], boxers = [] }: UpcomingFightsP
                     {/* Live Countdown Timer */}
                     <div className="mt-4 p-3 bg-muted/50 rounded-lg border">
                       <CountdownTimer 
-                        targetDate={`${card.eventDate} 20:00:00`}
+                        targetDate={`${card.eventDate}T20:00:00`}
                         className="justify-center"
                       />
                     </div>

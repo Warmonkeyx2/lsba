@@ -223,6 +223,62 @@ function App() {
       try {
         const fightCardsData = await cosmosDB.list<FightCard>('fights');
         setFightCards(fightCardsData);
+        
+        // Add sample upcoming fight cards if none exist (for testing countdown)
+        if (fightCardsData.length === 0) {
+          const tomorrow = new Date();
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          const nextWeek = new Date();
+          nextWeek.setDate(nextWeek.getDate() + 7);
+          
+          const sampleFightCards: FightCard[] = [
+            {
+              id: 'sample-1',
+              eventDate: tomorrow.toISOString().split('T')[0], // YYYY-MM-DD format
+              location: 'Las Vegas, NV',
+              mainEvent: {
+                id: 'main-sample-1',
+                fighter1: 'John "Thunder" Smith',
+                fighter2: 'Mike "Lightning" Johnson',
+                fighter1Rank: 1,
+                fighter2Rank: 2,
+                type: 'main',
+                title: 'LSBA Championship Fight',
+              },
+              coMainEvent: {
+                id: 'co-main-sample-1',
+                fighter1: 'Carlos "El Toro" Rodriguez',
+                fighter2: 'Danny "Iron Fist" Williams',
+                fighter1Rank: 3,
+                fighter2Rank: 4,
+                type: 'co-main',
+              },
+              otherBouts: [],
+              sponsors: 'LSBA Official',
+              status: 'upcoming',
+            },
+            {
+              id: 'sample-2',
+              eventDate: nextWeek.toISOString().split('T')[0], // YYYY-MM-DD format
+              location: 'New York, NY',
+              mainEvent: {
+                id: 'main-sample-2',
+                fighter1: 'Alex "The Hammer" Brown',
+                fighter2: 'Steve "Crusher" Davis',
+                fighter1Rank: 5,
+                fighter2Rank: 6,
+                type: 'main',
+                title: 'LSBA Contender Series',
+              },
+              otherBouts: [],
+              sponsors: 'LSBA Official',
+              status: 'upcoming',
+            },
+          ];
+          
+          setFightCards(sampleFightCards);
+          console.log('Added sample fight cards for countdown testing:', sampleFightCards);
+        }
       } catch (fightCardsError) {
         console.warn('CosmosDB fight_cards fetch error:', fightCardsError);
       }

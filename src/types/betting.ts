@@ -61,7 +61,26 @@ export interface BettingPool {
 }
 
 export interface PayoutSettings {
-  lsbaFeePercentage: number;
+  // LSBA Fee Percentages for Betting
+  lsbaFeePercentage: number; // Overall LSBA fee from betting winnings
+  lsbaBettingCommission: number; // Commission on all betting activity
+  
+  // LSBA Percentage for Fight Wages/Purses
+  lsbaFightWagePercentage: number; // Percentage of fighter wages that goes to LSBA
+  lsbaEventFeePercentage: number; // Percentage fee for organizing events
+  
+  // Revenue Sharing
+  casinoCommissionPercentage: number; // Casino's share of betting revenue
+  sponsorCommissionPercentage: number; // Sponsor fee percentage
+  
+  // Administrative Settings
+  minimumLsbaFee: number; // Minimum LSBA fee per transaction
+  maximumLsbaFee?: number; // Optional maximum cap on LSBA fees
+  
+  // Fight-specific percentages
+  mainEventWagePercentage: number; // Higher percentage for main events
+  underCardWagePercentage: number; // Lower percentage for undercard fights
+  tournamentWagePercentage: number; // Tournament-specific percentage
 }
 
 export interface UserBettingProfile {

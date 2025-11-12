@@ -22,8 +22,7 @@ import {
 } from 'lucide-react';
 import { cosmosDB } from '@/lib/cosmosdb';
 import { toast } from 'sonner';
-import type { Boxer } from '@/types/boxer';
-import type { Sponsor } from '@/types/sponsor';
+import type { Boxer, Sponsor } from '@/types/boxer';
 import type { FightCard } from '@/types/fightCard';
 import type { Tournament } from '@/types/tournament';
 
@@ -31,10 +30,6 @@ interface BackupData {
   version: string;
   timestamp: string;
   data: {
-    boxers: Boxer[];
-    sponsors: Sponsor[];
-    fightCards: FightCard[];
-    tournaments: Tournament[];
     [key: string]: any[];
   };
   metadata: {
@@ -67,7 +62,8 @@ export function DataImportExport({ onDataUpdate }: DataImportExportProps) {
     'licenses',
     'roles',
     'permissions',
-    'app_settings'
+    'app_settings',
+    'payout_settings'
   ];
 
   const exportData = async (includeContainers: string[] = containerNames) => {

@@ -12,10 +12,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Check, CurrencyDollar, Warning } from '@phosphor-icons/react';
+import { Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Bet } from '@/types/betting';
 import type { FightCard } from '@/types/fightCard';
 import type { Boxer } from '@/types/boxer';
+import { StateIdVerificationDialog } from './StateIdVerificationDialog';
 
 interface BetSettlementManagerProps {
   fightCards: FightCard[];
@@ -30,6 +32,9 @@ export function BetSettlementManager({
   boxers = [],
   onSettleBets,
 }: BetSettlementManagerProps) {
+  const [showVerificationDialog, setShowVerificationDialog] = useState(false);
+  const [betsToSettle, setBetsToSettle] = useState<Array<{ bet: Bet; winnerId: string; note: string }>>([]);
+  
   const completedFightCards = fightCards.filter(fc => fc.status === 'completed');
 
   const pendingBetsForCompletedFights = useMemo(() => {
@@ -72,7 +77,7 @@ export function BetSettlementManager({
   };
 
   const handleSettleAllBets = () => {
-    const betsToSettle = pendingBetsForCompletedFights
+    const betsForSettlement = pendingBetsForCompletedFights
       .map(bet => {
         const result = getBetResult(bet);
         if (!result) return null;
@@ -84,13 +89,25 @@ export function BetSettlementManager({
       })
       .filter(Boolean) as Array<{ bet: Bet; winnerId: string; note: string }>;
 
-    if (betsToSettle.length === 0) {
+    if (betsForSettlement.length === 0) {
       toast.error('No valid bets to settle');
       return;
     }
 
+    setBetsToSettle(betsForSettlement);
+    setShowVerificationDialog(true);
+  };
+
+  const handleVerificationComplete = () => {
     onSettleBets(betsToSettle);
-    toast.success(`${betsToSettle.length} bet(s) settled successfully!`);
+    toast.success(`${betsToSettle.length} bet(s) settled successfully after State ID verification!`);
+    setShowVerificationDialog(false);
+    setBetsToSettle([]);
+  };
+
+  const handleVerificationCancel = () => {
+    setShowVerificationDialog(false);
+    setBetsToSettle([]);
   };
 
   if (pendingBetsForCompletedFights.length === 0) {
@@ -184,10 +201,19 @@ export function BetSettlementManager({
           size="lg"
           className="w-full"
         >
-          <CurrencyDollar className="w-5 h-5 mr-2" weight="bold" />
-          Settle All {pendingBetsForCompletedFights.length} Bet(s)
+          <Shield className="w-5 h-5 mr-2" />
+          Verify State IDs & Settle {pendingBetsForCompletedFights.length} Bet(s)
         </Button>
       </CardContent>
+
+      <StateIdVerificationDialog
+        isOpen={showVerificationDialog}
+        onClose={handleVerificationCancel}
+        onConfirm={handleVerificationComplete}
+        betsToSettle={betsToSettle}
+        title="State ID Verification Required"
+        description="Please verify all bettor State IDs before settling these bets for security compliance."
+      />
     </Card>
   );
 }

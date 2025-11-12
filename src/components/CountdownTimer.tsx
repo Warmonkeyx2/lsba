@@ -25,11 +25,54 @@ export function CountdownTimer({ targetDate, className = '' }: CountdownTimerPro
   });
 
   const calculateTimeRemaining = (target: string): TimeRemaining => {
-    const targetTime = new Date(target).getTime();
+    // Improved date parsing to handle various formats
+    console.log('CountdownTimer: Parsing target date:', target);
+    let targetTime: number;
+    
+    try {
+      // Handle "YYYY-MM-DD HH:MM:SS" format
+      if (target.includes(' ') && !target.includes('T')) {
+        const [datePart, timePart] = target.split(' ');
+        targetTime = new Date(`${datePart}T${timePart}`).getTime();
+        console.log('CountdownTimer: Converted space format to ISO:', `${datePart}T${timePart}`);
+      } else {
+        targetTime = new Date(target).getTime();
+        console.log('CountdownTimer: Direct parsing of:', target);
+      }
+      
+      console.log('CountdownTimer: Parsed time:', new Date(targetTime).toISOString());
+      
+      // Check if date parsing failed
+      if (isNaN(targetTime)) {
+        console.warn('CountdownTimer: Invalid target date:', target);
+        return {
+          days: 0,
+          hours: 0,
+          minutes: 0,
+          seconds: 0,
+          isExpired: true,
+        };
+      }
+    } catch (error) {
+      console.error('CountdownTimer: Error parsing target date:', target, error);
+      return {
+        days: 0,
+        hours: 0,
+        minutes: 0,
+        seconds: 0,
+        isExpired: true,
+      };
+    }
+
     const currentTime = new Date().getTime();
     const timeDiff = targetTime - currentTime;
+    
+    console.log('CountdownTimer: Current time:', new Date(currentTime).toISOString());
+    console.log('CountdownTimer: Time difference (ms):', timeDiff);
+    console.log('CountdownTimer: Time difference (hours):', timeDiff / (1000 * 60 * 60));
 
     if (timeDiff <= 0) {
+      console.log('CountdownTimer: Event is expired');
       return {
         days: 0,
         hours: 0,
@@ -44,13 +87,16 @@ export function CountdownTimer({ targetDate, className = '' }: CountdownTimerPro
     const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
 
-    return {
-      days,
-      hours,
-      minutes,
-      seconds,
+    const result = {
+      days: Math.max(0, days),
+      hours: Math.max(0, hours),
+      minutes: Math.max(0, minutes),
+      seconds: Math.max(0, seconds),
       isExpired: false,
     };
+    
+    console.log('CountdownTimer: Result:', result);
+    return result;
   };
 
   useEffect(() => {
@@ -173,7 +219,40 @@ export function CompactCountdownTimer({ targetDate, className = '' }: CountdownT
   });
 
   const calculateTimeRemaining = (target: string): TimeRemaining => {
-    const targetTime = new Date(target).getTime();
+    // Improved date parsing to handle various formats
+    let targetTime: number;
+    
+    try {
+      // Handle "YYYY-MM-DD HH:MM:SS" format
+      if (target.includes(' ') && !target.includes('T')) {
+        const [datePart, timePart] = target.split(' ');
+        targetTime = new Date(`${datePart}T${timePart}`).getTime();
+      } else {
+        targetTime = new Date(target).getTime();
+      }
+      
+      // Check if date parsing failed
+      if (isNaN(targetTime)) {
+        console.warn('Invalid target date:', target);
+        return {
+          days: 0,
+          hours: 0,
+          minutes: 0,
+          seconds: 0,
+          isExpired: true,
+        };
+      }
+    } catch (error) {
+      console.error('Error parsing target date:', target, error);
+      return {
+        days: 0,
+        hours: 0,
+        minutes: 0,
+        seconds: 0,
+        isExpired: true,
+      };
+    }
+
     const currentTime = new Date().getTime();
     const timeDiff = targetTime - currentTime;
 
@@ -193,10 +272,10 @@ export function CompactCountdownTimer({ targetDate, className = '' }: CountdownT
     const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
 
     return {
-      days,
-      hours,
-      minutes,
-      seconds,
+      days: Math.max(0, days),
+      hours: Math.max(0, hours),
+      minutes: Math.max(0, minutes),
+      seconds: Math.max(0, seconds),
       isExpired: false,
     };
   };

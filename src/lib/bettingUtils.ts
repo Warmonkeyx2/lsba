@@ -9,7 +9,26 @@ export const BETTING_LIMITS = {
 };
 
 export const DEFAULT_PAYOUT_SETTINGS: PayoutSettings = {
-  lsbaFeePercentage: 10,
+  // LSBA Fee Percentages for Betting
+  lsbaFeePercentage: 10, // 10% of betting winnings
+  lsbaBettingCommission: 5, // 5% commission on all betting
+  
+  // LSBA Percentage for Fight Wages/Purses  
+  lsbaFightWagePercentage: 15, // 15% of fighter wages
+  lsbaEventFeePercentage: 10, // 10% event organization fee
+  
+  // Revenue Sharing
+  casinoCommissionPercentage: 20, // 20% to casino
+  sponsorCommissionPercentage: 5, // 5% sponsor fee
+  
+  // Administrative Settings
+  minimumLsbaFee: 50, // $50 minimum fee
+  maximumLsbaFee: 5000, // $5000 maximum fee
+  
+  // Fight-specific percentages
+  mainEventWagePercentage: 20, // 20% for main events
+  underCardWagePercentage: 12, // 12% for undercard
+  tournamentWagePercentage: 18, // 18% for tournaments
 };
 
 export const CASINO_NAME = '1068 Casino';
