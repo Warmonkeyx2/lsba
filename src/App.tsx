@@ -63,22 +63,33 @@ import { settleBet, DEFAULT_PAYOUT_SETTINGS } from "@/lib/bettingUtils";
 import { LICENSE_FEE } from "@/lib/licenseUtils";
 import type { BettingConfig } from "@/types/betting";
 
-// Supabase client (you should have src/lib/supabaseClient.ts exporting `supabase`)
-import { supabase } from "./lib/supabaseClient";
+// CosmosDB client
+import { cosmosDB, initializeCosmosDB } from "./lib/cosmosdb";
 
 const DEFAULT_BETTING_CONFIG: BettingConfig = {
+  id: 'default',
   enabled: true,
-  maxBet: 1000,
-  houseFee: 0.05,
+  eventPricing: {
+    regular: 2000,
+    special: 5000,
+    tournament: 5000,
+  },
+  wageLimits: {
+    minimum: 2000,
+    maximum: 50000,
+    perFight: 10000,
+    perEvent: 50000,
+  },
+  lastUpdated: new Date().toISOString(),
 };
 
 /**
  * Note:
  * - This file keeps the same app structure and UI as your original App.tsx.
- * - I added Supabase syncing functions. The app still uses useKV for local persistence,
- *   but now the main CRUD handlers also attempt to persist changes to your Supabase DB.
+ * - I added CosmosDB syncing functions. The app still uses local state for persistence,
+ *   but now the main CRUD handlers also attempt to persist changes to your CosmosDB instance.
  * - This is intentionally minimally invasive so the UI/UX and local behaviour remain unchanged,
- *   but database writes now occur so changes persist to Supabase.
+ *   but database writes now occur so changes persist to CosmosDB.
  */
 
 /* ---------- default data ---------- */
@@ -97,28 +108,29 @@ const defaultFightCard: FightCard = {
 };
 
 /* ---------- small helpers to map boxer shape (app <-> db) ---------- */
-/* Adjust these mappings if your Supabase table columns differ (snake_case vs camelCase) */
+/* CosmosDB uses the same field names as our TypeScript interfaces, so no mapping needed */
 function toDbBoxer(boxer: any) {
   return {
     id: boxer.id,
-    state_id: boxer.stateId,
-    first_name: boxer.firstName,
-    last_name: boxer.lastName,
-    phone_number: boxer.phoneNumber,
+    stateId: boxer.stateId,
+    firstName: boxer.firstName,
+    lastName: boxer.lastName,
+    phoneNumber: boxer.phoneNumber,
     sponsor: boxer.sponsor,
-    profile_image: boxer.profileImage,
+    profileImage: boxer.profileImage,
     timezone: boxer.timezone,
-    fee_paid: boxer.feePaid ?? false,
-    last_payment_date: boxer.lastPaymentDate ?? null,
-    license_status: boxer.licenseStatus ?? 'active',
+    feePaid: boxer.feePaid ?? false,
+    lastPaymentDate: boxer.lastPaymentDate ?? null,
+    licenseStatus: boxer.licenseStatus ?? 'active',
     wins: boxer.wins ?? 0,
     losses: boxer.losses ?? 0,
     knockouts: boxer.knockouts ?? 0,
-    fight_history: boxer.fightHistory ?? [],
-    suspension_reason: boxer.suspensionReason ?? null,
-    suspension_date: boxer.suspensionDate ?? null,
-    registered_date: boxer.registeredDate ?? null,
-    // Add any other fields you store in DB here
+    fightHistory: boxer.fightHistory ?? [],
+    suspensionReason: boxer.suspensionReason ?? null,
+    suspensionDate: boxer.suspensionDate ?? null,
+    registeredDate: boxer.registeredDate ?? null,
+    rankingPoints: boxer.rankingPoints ?? 0,
+    licenseFee: boxer.licenseFee ?? LICENSE_FEE,
   };
 }
 
@@ -126,26 +138,25 @@ function fromDbBoxer(row: any) {
   if (!row) return null;
   return {
     id: row.id,
-    stateId: row.state_id,
-    firstName: row.first_name,
-    lastName: row.last_name,
-    phoneNumber: row.phone_number,
+    stateId: row.stateId,
+    firstName: row.firstName,
+    lastName: row.lastName,
+    phoneNumber: row.phoneNumber,
     sponsor: row.sponsor,
-    profileImage: row.profile_image,
+    profileImage: row.profileImage,
     timezone: row.timezone,
-    feePaid: row.fee_paid,
-    lastPaymentDate: row.last_payment_date,
-    licenseStatus: row.license_status,
+    feePaid: row.feePaid,
+    lastPaymentDate: row.lastPaymentDate,
+    licenseStatus: row.licenseStatus,
     wins: row.wins,
     losses: row.losses,
     knockouts: row.knockouts,
-    fightHistory: row.fight_history ?? [],
-    suspensionReason: row.suspension_reason,
-    suspensionDate: row.suspension_date,
-    registeredDate: row.registered_date,
-    rankingPoints: row.ranking_points ?? 0,
-    licenseFee: row.license_fee ?? LICENSE_FEE,
-    // map other fields as needed
+    fightHistory: row.fightHistory ?? [],
+    suspensionReason: row.suspensionReason,
+    suspensionDate: row.suspensionDate,
+    registeredDate: row.registeredDate,
+    rankingPoints: row.rankingPoints ?? 0,
+    licenseFee: row.licenseFee ?? LICENSE_FEE,
   };
 }
 
@@ -180,46 +191,49 @@ function App() {
   const currentSettings = rankingSettings ?? DEFAULT_RANKING_SETTINGS;
   const rolesList = roles ?? DEFAULT_ROLES;
 
-  /* ---------- On mount: try to fetch latest from Supabase and merge into local state ---------- */
+  /* ---------- On mount: try to fetch latest from CosmosDB and merge into local state ---------- */
   useEffect(() => {
-    // Only call fetch once on mount
-    fetchSupabaseInitialData();
+    // Initialize CosmosDB and fetch data once on mount
+    initializeAndFetchData();
     // ensure existing behavior for saved card
     if (savedCard) setEditingCard(savedCard);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function fetchSupabaseInitialData() {
+  async function initializeAndFetchData() {
     try {
+      // Initialize CosmosDB first
+      await initializeCosmosDB();
+      
       // Fetch boxers
-      const { data: boxersData, error: boxersError } = await supabase.from('boxers').select('*');
-      if (boxersError) {
-        console.warn('Supabase boxers fetch error:', boxersError);
-      } else if (boxersData) {
-        const validBoxers = (boxersData as any[])
+      try {
+        const boxersData = await cosmosDB.list<Boxer>('boxers');
+        const validBoxers = boxersData
           .map(fromDbBoxer)
           .filter((boxer): boxer is NonNullable<typeof boxer> => boxer !== null);
         setBoxers(validBoxers);
+      } catch (boxersError) {
+        console.warn('CosmosDB boxers fetch error:', boxersError);
       }
 
       // Fetch sponsors
-      const { data: sponsorsData, error: sponsorsError } = await supabase.from('sponsors').select('*');
-      if (sponsorsError) {
-        console.warn('Supabase sponsors fetch error:', sponsorsError);
-      } else if (sponsorsData) {
-        setSponsors(sponsorsData as Sponsor[]);
+      try {
+        const sponsorsData = await cosmosDB.list<Sponsor>('sponsors');
+        setSponsors(sponsorsData);
+      } catch (sponsorsError) {
+        console.warn('CosmosDB sponsors fetch error:', sponsorsError);
       }
 
-      // Fetch fight cards (optional)
-      const { data: fightCardsData, error: fightCardsError } = await supabase.from('fight_cards').select('*');
-      if (fightCardsError) {
-        console.warn('Supabase fight_cards fetch error:', fightCardsError);
-      } else if (fightCardsData) {
-        setFightCards(fightCardsData as FightCard[]);
+      // Fetch fight cards
+      try {
+        const fightCardsData = await cosmosDB.list<FightCard>('fights');
+        setFightCards(fightCardsData);
+      } catch (fightCardsError) {
+        console.warn('CosmosDB fight_cards fetch error:', fightCardsError);
       }
     } catch (err) {
-      console.error('fetchSupabaseInitialData error', err);
-      toast.error('Failed to fetch initial data from Supabase (check console)');
+      console.error('initializeAndFetchData error', err);
+      toast.error('Failed to fetch initial data from CosmosDB (check console)');
     }
   }
 
@@ -268,16 +282,24 @@ function App() {
     }
   }, [boxers, setBoxers]);
 
-  /* ---------- Helper: sync a boxer to Supabase (upsert) ---------- */
+  /* ---------- Helper: sync a boxer to CosmosDB (upsert) ---------- */
   async function syncBoxerToDb(boxer: Boxer) {
     try {
       const payload = toDbBoxer({
         ...boxer,
-        lastPaymentDate: boxer.lastPaymentDate && typeof boxer.lastPaymentDate === 'object' && boxer.lastPaymentDate instanceof Date ? boxer.lastPaymentDate.toISOString() : boxer.lastPaymentDate,
+        lastPaymentDate: typeof boxer.lastPaymentDate === 'string' ? boxer.lastPaymentDate : 
+                        boxer.lastPaymentDate ? new Date(boxer.lastPaymentDate).toISOString() : boxer.lastPaymentDate,
       });
-      const { data, error } = await supabase.from('boxers').upsert(payload, { onConflict: 'id' }).select();
-      if (error) throw error;
-      return data?.[0] ? fromDbBoxer(data[0]) : null;
+      
+      // Try to update first, if not found then create
+      const existingBoxer = await cosmosDB.read<Boxer>('boxers', boxer.id);
+      if (existingBoxer) {
+        const updated = await cosmosDB.update<Boxer>('boxers', boxer.id, payload);
+        return fromDbBoxer(updated);
+      } else {
+        const created = await cosmosDB.create<Boxer>('boxers', payload);
+        return fromDbBoxer(created);
+      }
     } catch (err) {
       console.error('syncBoxerToDb error', err);
       return null;
@@ -286,9 +308,8 @@ function App() {
 
   async function updateBoxerInDbPartial(id: string, partial: any) {
     try {
-      const { data, error } = await supabase.from('boxers').update(partial).eq('id', id).select();
-      if (error) throw error;
-      return data?.[0] ? fromDbBoxer(data[0]) : null;
+      const updated = await cosmosDB.update<Boxer>('boxers', id, partial);
+      return fromDbBoxer(updated);
     } catch (err) {
       console.error('updateBoxerInDbPartial error', err);
       return null;
@@ -298,9 +319,15 @@ function App() {
   /* ---------- Helper: sync sponsor to DB ---------- */
   async function syncSponsorToDb(sponsor: Sponsor) {
     try {
-      const { data, error } = await supabase.from('sponsors').upsert(sponsor, { onConflict: 'id' }).select();
-      if (error) throw error;
-      return data?.[0] ?? null;
+      // Try to update first, if not found then create
+      const existingSponsor = await cosmosDB.read<Sponsor>('sponsors', sponsor.id);
+      if (existingSponsor) {
+        const updated = await cosmosDB.update<Sponsor>('sponsors', sponsor.id, sponsor);
+        return updated;
+      } else {
+        const created = await cosmosDB.create<Sponsor>('sponsors', sponsor);
+        return created;
+      }
     } catch (err) {
       console.error('syncSponsorToDb error', err);
       return null;
@@ -314,7 +341,7 @@ function App() {
     toast.success('Fight card saved successfully!');
   };
 
-  // Register boxer locally and persist to Supabase
+  // Register boxer locally and persist to CosmosDB
   const handleRegisterBoxer = async (boxer: Boxer) => {
     // keep local behaviour
     setBoxers((current) => [...(current || []), boxer]);
@@ -336,7 +363,7 @@ function App() {
       });
     }
 
-    // persist to Supabase (non-blocking, but errors logged)
+    // persist to CosmosDB (non-blocking, but errors logged)
     try {
       const returned = await syncBoxerToDb(boxer);
       if (!returned) {
@@ -410,7 +437,7 @@ function App() {
       });
     }
 
-    // Persist to Supabase (attempt upsert so new or existing record is saved)
+    // Persist to CosmosDB (attempt upsert so new or existing record is saved)
     try {
       const returned = await syncBoxerToDb(updatedBoxer);
       if (returned) {
@@ -450,15 +477,10 @@ function App() {
     toast.success("Fighter profile deleted successfully");
 
     try {
-      const { error } = await supabase.from('boxers').delete().eq('id', boxerId);
-      if (error) {
-        console.warn('Supabase delete boxer error', error);
-        toast.error('Deleted locally but failed to delete from DB (see console)');
-      } else {
-        toast.success('Deleted from DB');
-      }
+      await cosmosDB.delete('boxers', boxerId);
+      toast.success('Deleted from DB');
     } catch (err) {
-      console.error('handleDeleteBoxer supabase error', err);
+      console.error('handleDeleteBoxer CosmosDB error', err);
       toast.error('Failed to delete boxer from DB (see console)');
     }
   };
@@ -522,22 +544,30 @@ function App() {
     setActiveTab('upcoming-fights');
     toast.success('Fight card generated! View upcoming fights.');
 
-    // Persist fight card to Supabase (best-effort)
+    // Persist fight card to CosmosDB (best-effort)
     try {
-      const { data, error } = await supabase.from('fight_cards').upsert(fightCard, { onConflict: 'id' }).select();
-      if (error) {
-        console.warn('Supabase upsert fight_card error', error);
-        toast.error('Fight card saved locally but failed to persist (see console)');
-      } else {
-        // replace local fightCards with DB version to keep consistent data
-        setFightCards((current = []) => {
-          const returned = data?.[0];
-          if (!returned) return current;
-          return [returned, ...current.filter(fc => fc.id !== returned.id)];
-        });
+      // Ensure fightCard has an ID
+      if (!fightCard.id) {
+        fightCard.id = crypto.randomUUID();
       }
+      
+      // Try to update first, if not found then create
+      const existingCard = await cosmosDB.read<FightCard>('fights', fightCard.id);
+      let persistedCard;
+      if (existingCard) {
+        persistedCard = await cosmosDB.update<FightCard>('fights', fightCard.id, fightCard);
+      } else {
+        persistedCard = await cosmosDB.create<FightCard>('fights', fightCard);
+      }
+      
+      // replace local fightCards with DB version to keep consistent data
+      setFightCards((current = []) => {
+        if (!persistedCard) return current;
+        return [persistedCard, ...current.filter(fc => fc.id !== persistedCard.id)];
+      });
     } catch (err) {
       console.error('persist fight card error', err);
+      toast.error('Fight card saved locally but failed to persist (see console)');
     }
   };
 
@@ -621,24 +651,22 @@ function App() {
       return updated;
     });
 
-    // Persist boxer updates to Supabase (in parallel)
+    // Persist boxer updates to CosmosDB (in parallel)
     try {
       const promises: Promise<any>[] = [];
       boxerUpdates.forEach((updates, boxerId) => {
-        promises.push(supabase.from('boxers').update(updates).eq('id', boxerId));
+        promises.push(cosmosDB.update('boxers', boxerId, updates));
       });
-      const results = await Promise.all(promises);
-      // check for errors in results
-      const anyError = (results as any[]).find(r => r.error);
-      if (anyError) console.warn('Some boxer updates failed during declare results', anyError);
+      await Promise.all(promises);
     } catch (err) {
       console.error('Failed to persist boxer updates after declaring results', err);
     }
 
     // persist fight card changes
     try {
-      const { error } = await supabase.from('fight_cards').update(updatedCard).eq('id', updatedCard.id);
-      if (error) console.warn('Failed to persist updated fight card', error);
+      if (updatedCard.id) {
+        await cosmosDB.update('fights', updatedCard.id, updatedCard);
+      }
     } catch (err) {
       console.error('persist updatedCard error', err);
     }

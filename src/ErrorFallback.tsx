@@ -9,18 +9,35 @@ interface ErrorFallbackProps {
 }
 
 export const ErrorFallback = ({ error, resetErrorBoundary }: ErrorFallbackProps) => {
-  // When encountering an error in the development mode, rethrow it and don't display the boundary.
-  // The parent UI will take care of showing a more helpful dialog.
-  if (import.meta.env.DEV) throw error;
+  // Log error for debugging
+  console.error('Application Error:', error);
+  
+  // Send error to monitoring service in production
+  if (import.meta.env.PROD) {
+    // You can integrate with error monitoring services like Sentry here
+    console.warn('Production error logged:', {
+      message: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+      url: window.location.href,
+    });
+  }
+
+  // In development, show detailed error but don't rethrow to allow user interaction
+  const isDev = import.meta.env.DEV;
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <Alert variant="destructive" className="mb-6">
           <AlertTriangleIcon />
-          <AlertTitle>This spark has encountered a runtime error</AlertTitle>
+          <AlertTitle>LSBA System Error</AlertTitle>
           <AlertDescription>
-            Something unexpected happened while running the application. The error details are shown below. Contact the spark author and let them know about this issue.
+            {isDev 
+              ? "A development error occurred. Check the console for more details."
+              : "An unexpected error occurred in the LSBA Management System. Please try refreshing the page or contact support if the issue persists."
+            }
           </AlertDescription>
         </Alert>
         

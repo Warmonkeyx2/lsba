@@ -22,4 +22,35 @@ export default defineConfig({
       '@': resolve(projectRoot, 'src')
     }
   },
+  build: {
+    target: 'es2020',
+    outDir: 'dist',
+    sourcemap: true,
+    minify: 'esbuild',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-tabs'],
+          cosmos: ['@azure/cosmos']
+        }
+      }
+    }
+  },
+  server: {
+    port: 5173,
+    host: true,
+    strictPort: true
+  },
+  preview: {
+    port: 4173,
+    host: true,
+    strictPort: true
+  },
+  define: {
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version || '1.0.0'),
+  },
+  optimizeDeps: {
+    include: ['@azure/cosmos', 'react', 'react-dom']
+  }
 });

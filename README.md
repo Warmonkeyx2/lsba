@@ -1,12 +1,57 @@
-🥊 LSBA Boxing Management System
+# LSBA Management System
 
-Welcome to the Los Santos Boxing Association (LSBA) application — a complete management and operations system for boxing events, fighters, sponsors, and betting coordination.
+A comprehensive web application for managing Local State Boxing Association operations, including boxer registration, fight cards, tournaments, betting, and sponsor management.
 
-This project was developed to organize and streamline fight scheduling, fighter profiles, event promotions, sponsorship deals, and betting distribution across the LSBA network.
+## 🚀 Features
 
-💡 Purpose
+- **Boxer Management**: Registration, profiles, rankings, and licensing
+- **Fight Card Management**: Create and manage fight events
+- **Tournament System**: Bracket-style tournament management
+- **Betting System**: Comprehensive betting pools and odds management
+- **Sponsor Management**: Track sponsorships and partnerships
+- **Role-Based Permissions**: Manage user roles and access control
+- **Real-time Data**: Integrated with Azure CosmosDB for persistent storage
 
-The LSBA system is designed to serve as the digital backbone of boxing operations in the city — whether you’re running a gym, managing fighters, hosting matches, or coordinating with casinos and sponsors.
+## 🛠️ Technology Stack
+
+- **Frontend**: React 19, TypeScript, Tailwind CSS
+- **Build Tool**: Vite
+- **Database**: Azure CosmosDB (migrated from Supabase)
+- **UI Components**: Radix UI primitives
+- **Icons**: Phosphor Icons, Lucide React
+- **Validation**: Zod
+- **Error Handling**: React Error Boundary
+
+## 📋 Prerequisites
+
+- Node.js (v18 or higher)
+- npm or yarn
+- Azure CosmosDB account
+
+## 🔧 Quick Start
+
+1. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+2. **Set up environment variables**
+   Copy `.env.example` to `.env` and update with your Azure CosmosDB credentials:
+   ```env
+   VITE_COSMOSDB_ENDPOINT=https://your-cosmosdb-account.documents.azure.com:443/
+   VITE_COSMOSDB_KEY=your-cosmosdb-primary-key
+   VITE_COSMOSDB_DATABASE_ID=lsba
+   ```
+
+3. **Start development server**
+   ```bash
+   npm run dev
+   ```
+
+4. **Build for production**
+   ```bash
+   npm run build
+   ```
 
 Our mission: Keep boxing fair, profitable, and connected.
 
