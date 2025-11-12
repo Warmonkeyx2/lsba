@@ -20,7 +20,7 @@ import {
   Trash2,
   RefreshCw
 } from 'lucide-react';
-import { cosmosDB } from '@/lib/cosmosdb';
+import { apiClient } from '@/lib/apiClient';
 import { toast } from 'sonner';
 import type { Boxer, Sponsor } from '@/types/boxer';
 import type { FightCard } from '@/types/fightCard';
@@ -109,7 +109,7 @@ export function DataImportExport({ onDataUpdate, currentData }: DataImportExport
         setProgress(((i + 1) / totalContainers) * 100);
 
         try {
-          let data = await cosmosDB.list(containerName);
+          let data = await apiClient.list(containerName);
           
           // If no data in database but we have current data, use that as fallback
           if (data.length === 0 && currentData) {

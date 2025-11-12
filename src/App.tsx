@@ -62,7 +62,7 @@ import { LICENSE_FEE } from "@/lib/licenseUtils";
 import type { BettingConfig } from "@/types/betting";
 
 // CosmosDB client
-import { cosmosDB, initializeCosmosDB } from "./lib/cosmosdb";
+import { apiClient } from '@/lib/apiClient';
 
 const DEFAULT_BETTING_CONFIG: BettingConfig = {
   id: 'default',
@@ -220,12 +220,12 @@ function App() {
 
   async function initializeAndFetchData() {
     try {
-      // Initialize CosmosDB first
-      await initializeCosmosDB();
+      // Check API server health
+      await apiClient.health();
       
       // Fetch boxers
       try {
-        const boxersData = await cosmosDB.list<Boxer>('boxers');
+        const boxersData = await apiClient.list<Boxer>('boxers');
         const validBoxers = boxersData
           .map(fromDbBoxer)
           .filter((boxer): boxer is NonNullable<typeof boxer> => boxer !== null);
@@ -236,7 +236,7 @@ function App() {
 
       // Fetch sponsors
       try {
-        const sponsorsData = await cosmosDB.list<Sponsor>('sponsors');
+        const sponsorsData = await apiClient.list<Sponsor>('sponsors');
         setSponsors(sponsorsData);
       } catch (sponsorsError) {
         console.warn('CosmosDB sponsors fetch error:', sponsorsError);
@@ -244,7 +244,7 @@ function App() {
 
       // Fetch fight cards
       try {
-        const fightCardsData = await cosmosDB.list<FightCard>('fights');
+        const fightCardsData = await apiClient.list<FightCard>('fights');
         
         // Always add sample upcoming fight cards for testing countdown (overwrite existing)
         const now = new Date();
@@ -314,7 +314,7 @@ function App() {
         // Also persist sample data to CosmosDB so it shows up in backups
         for (const sampleCard of sampleFightCards) {
           try {
-            await cosmosDB.create<FightCard>('fights', sampleCard);
+            await apiClient.create<FightCard>('fights', sampleCard);
             console.log('Persisted sample fight card to CosmosDB:', sampleCard.id);
           } catch (error) {
             // Ignore if already exists
@@ -390,10 +390,10 @@ function App() {
       // Try to update first, if not found then create
       const existingBoxer = await cosmosDB.read<Boxer>('boxers', boxer.id);
       if (existingBoxer) {
-        const updated = await cosmosDB.update<Boxer>('boxers', boxer.id, payload);
+        const updated = await apiClient.update<Boxer>('boxers', boxer.id, payload);
         return fromDbBoxer(updated);
       } else {
-        const created = await cosmosDB.create<Boxer>('boxers', payload);
+        const created = await apiClient.create<Boxer>('boxers', payload);
         return fromDbBoxer(created);
       }
     } catch (err) {
@@ -404,7 +404,7 @@ function App() {
 
   async function updateBoxerInDbPartial(id: string, partial: any) {
     try {
-      const updated = await cosmosDB.update<Boxer>('boxers', id, partial);
+      const updated = await apiClient.update<Boxer>('boxers', id, partial);
       return fromDbBoxer(updated);
     } catch (err) {
       console.error('updateBoxerInDbPartial error', err);
@@ -418,10 +418,10 @@ function App() {
       // Try to update first, if not found then create
       const existingSponsor = await cosmosDB.read<Sponsor>('sponsors', sponsor.id);
       if (existingSponsor) {
-        const updated = await cosmosDB.update<Sponsor>('sponsors', sponsor.id, sponsor);
+        const updated = await apiClient.update<Sponsor>('sponsors', sponsor.id, sponsor);
         return updated;
       } else {
-        const created = await cosmosDB.create<Sponsor>('sponsors', sponsor);
+        const created = await apiClient.create<Sponsor>('sponsors', sponsor);
         return created;
       }
     } catch (err) {
@@ -651,9 +651,9 @@ function App() {
       const existingCard = await cosmosDB.read<FightCard>('fights', fightCard.id);
       let persistedCard;
       if (existingCard) {
-        persistedCard = await cosmosDB.update<FightCard>('fights', fightCard.id, fightCard);
+        persistedCard = await apiClient.update<FightCard>('fights', fightCard.id, fightCard);
       } else {
-        persistedCard = await cosmosDB.create<FightCard>('fights', fightCard);
+        persistedCard = await apiClient.create<FightCard>('fights', fightCard);
       }
       
       // replace local fightCards with DB version to keep consistent data
@@ -751,7 +751,7 @@ function App() {
     try {
       const promises: Promise<any>[] = [];
       boxerUpdates.forEach((updates, boxerId) => {
-        promises.push(cosmosDB.update('boxers', boxerId, updates));
+        promises.push(apiClient.update('boxers', boxerId, updates));
       });
       await Promise.all(promises);
     } catch (err) {
@@ -761,7 +761,7 @@ function App() {
     // persist fight card changes
     try {
       if (updatedCard.id) {
-        await cosmosDB.update('fights', updatedCard.id, updatedCard);
+        await apiClient.update('fights', updatedCard.id, updatedCard);
       }
     } catch (err) {
       console.error('persist updatedCard error', err);

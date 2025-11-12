@@ -1,4 +1,4 @@
-import { cosmosDB } from './cosmosdb';
+import { apiClient } from './apiClient';
 
 /**
  * Persist local items that don't have CosmosDB metadata (createdAt) yet.
@@ -21,7 +21,7 @@ export async function persistNewItems(containerName: string, items: Array<any>) 
       // Ensure we don't accidentally create undefined items
       const toCreate = { ...item };
       // If no id provided, cosmosDB.create will generate one
-      await cosmosDB.create(containerName, toCreate);
+      await apiClient.create(containerName, toCreate);
       created++;
     } catch (err) {
       // Log and continue
@@ -40,7 +40,7 @@ export async function persistNewObject(containerName: string, obj?: any) {
   if (obj.createdAt) return { created: 0, skipped: 1 };
 
   try {
-    await cosmosDB.create(containerName, obj);
+    await apiClient.create(containerName, obj);
     return { created: 1, skipped: 0 };
   } catch (err) {
     console.warn(`persistNewObject: failed to create object in ${containerName}`, err);
