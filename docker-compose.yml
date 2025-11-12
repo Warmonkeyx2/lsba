@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  api-server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: lsba-api
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - COSMOSDB_ENDPOINT=${COSMOSDB_ENDPOINT}
+      - COSMOSDB_KEY=${COSMOSDB_KEY}
+      - COSMOSDB_DATABASE_ID=${COSMOSDB_DATABASE_ID}
+      - ALLOWED_ORIGINS=http://localhost:80,https://your-domain.com
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lsba-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      api-server:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  default:
+    name: lsba-network

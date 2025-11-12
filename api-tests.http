@@ -1,0 +1,64 @@
+# Health Check Endpoint
+GET {{baseUrl}}/health
+
+### Create a new boxer
+POST {{baseUrl}}/api/boxers
+Content-Type: application/json
+
+{
+  "name": "Test Boxer",
+  "weightClass": "Heavyweight",
+  "record": "10-0-0",
+  "ranking": 1,
+  "isActive": true
+}
+
+### Get all boxers
+GET {{baseUrl}}/api/boxers
+
+### Create a new sponsor
+POST {{baseUrl}}/api/sponsors
+Content-Type: application/json
+
+{
+  "name": "Test Sponsor",
+  "industry": "Sports Equipment",
+  "contactEmail": "sponsor@example.com",
+  "isActive": true
+}
+
+### Get all sponsors
+GET {{baseUrl}}/api/sponsors
+
+### Create a fight card
+POST {{baseUrl}}/api/fightcards
+Content-Type: application/json
+
+{
+  "title": "Championship Night",
+  "date": "2025-12-01T20:00:00Z",
+  "venue": "Madison Square Garden",
+  "fights": []
+}
+
+### Get all fight cards
+GET {{baseUrl}}/api/fightcards
+
+### Batch create items
+POST {{baseUrl}}/api/boxers/batch
+Content-Type: application/json
+
+{
+  "items": [
+    {
+      "name": "Boxer 1",
+      "weightClass": "Lightweight",
+      "record": "15-2-0"
+    },
+    {
+      "name": "Boxer 2", 
+      "weightClass": "Welterweight",
+      "record": "12-1-1"
+    }
+  ]
+}

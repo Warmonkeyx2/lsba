@@ -15,7 +15,11 @@
         "preview": "vite preview",
         "serve": "vite preview --port 4173",
         "kill": "fuser -k 5000/tcp || true",
-        "clean": "rm -rf dist && rm -rf node_modules/.tmp"
+        "clean": "rm -rf dist && rm -rf node_modules/.tmp",
+        "deploy:vercel": "npm run build && vercel --prod",
+        "deploy:netlify": "npm run build && netlify deploy --prod --dir=dist",
+        "docker:build": "docker build -t lsba-frontend .",
+        "docker:run": "docker run -p 80:80 lsba-frontend"
     },
     "dependencies": {
         "@azure/cosmos": "^4.7.0",
