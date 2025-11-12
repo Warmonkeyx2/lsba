@@ -287,6 +287,20 @@ function App() {
         const allFightCards = [...fightCardsData.filter(fc => !fc.id?.startsWith('sample-')), ...sampleFightCards];
         setFightCards(allFightCards);
         console.log('Set fight cards:', allFightCards);
+        
+        // Also persist sample data to CosmosDB so it shows up in backups
+        for (const sampleCard of sampleFightCards) {
+          try {
+            await cosmosDB.create<FightCard>('fights', sampleCard);
+            console.log('Persisted sample fight card to CosmosDB:', sampleCard.id);
+          } catch (error) {
+            // Ignore if already exists
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            if (!errorMessage.includes('already exists')) {
+              console.warn('Failed to persist sample card:', error);
+            }
+          }
+        }
       } catch (fightCardsError) {
         console.warn('CosmosDB fight_cards fetch error:', fightCardsError);
       }
@@ -1207,7 +1221,17 @@ function App() {
               </TabsContent>
 
               <TabsContent value="settings" className="mt-6">
-                <Settings />
+                <Settings 
+                  currentData={{
+                    boxers: boxersList,
+                    sponsors: sponsorsList,
+                    fightCards: fightCardsList,
+                    tournaments: tournamentsList,
+                    bets: betsList,
+                    bettingPools: bettingPoolsList,
+                    payoutSettings: payoutSettings
+                  }}
+                />
               </TabsContent>
 
               <TabsContent value="season" className="mt-6">

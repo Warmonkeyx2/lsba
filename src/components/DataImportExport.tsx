@@ -25,6 +25,7 @@ import { toast } from 'sonner';
 import type { Boxer, Sponsor } from '@/types/boxer';
 import type { FightCard } from '@/types/fightCard';
 import type { Tournament } from '@/types/tournament';
+import type { Bet, BettingPool, PayoutSettings } from '@/types/betting';
 
 interface BackupData {
   version: string;
@@ -36,14 +37,30 @@ interface BackupData {
     totalRecords: number;
     containers: string[];
     exportedBy: string;
+    dataSources?: {
+      database: string;
+      fallback: string;
+      note: string;
+    };
   };
+}
+
+interface CurrentData {
+  boxers: Boxer[];
+  sponsors: Sponsor[];
+  fightCards: FightCard[];
+  tournaments: Tournament[];
+  bets: Bet[];
+  bettingPools: BettingPool[];
+  payoutSettings: PayoutSettings;
 }
 
 interface DataImportExportProps {
   onDataUpdate?: () => void;
+  currentData?: CurrentData;
 }
 
-export function DataImportExport({ onDataUpdate }: DataImportExportProps) {
+export function DataImportExport({ onDataUpdate, currentData }: DataImportExportProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [operation, setOperation] = useState<string>('');
@@ -92,7 +109,41 @@ export function DataImportExport({ onDataUpdate }: DataImportExportProps) {
         setProgress(((i + 1) / totalContainers) * 100);
 
         try {
-          const data = await cosmosDB.list(containerName);
+          let data = await cosmosDB.list(containerName);
+          
+          // If no data in database but we have current data, use that as fallback
+          if (data.length === 0 && currentData) {
+            switch (containerName) {
+              case 'boxers':
+                data = currentData.boxers || [];
+                break;
+              case 'sponsors':
+                data = currentData.sponsors || [];
+                break;
+              case 'fights':
+                data = currentData.fightCards || [];
+                break;
+              case 'tournaments':
+                data = currentData.tournaments || [];
+                break;
+              case 'betting':
+                data = currentData.bets || [];
+                break;
+              case 'betting_pools':
+                data = currentData.bettingPools || [];
+                break;
+              case 'payout_settings':
+                data = currentData.payoutSettings ? [currentData.payoutSettings] : [];
+                break;
+              default:
+                data = [];
+            }
+            
+            if (data.length > 0) {
+              console.log(`Using current data for ${containerName}:`, data.length, 'records');
+            }
+          }
+          
           backupData.data[containerName] = data;
           totalRecords += data.length;
         } catch (error) {
@@ -102,6 +153,13 @@ export function DataImportExport({ onDataUpdate }: DataImportExportProps) {
       }
 
       backupData.metadata.totalRecords = totalRecords;
+      
+      // Add information about data sources
+      backupData.metadata.dataSources = {
+        database: 'CosmosDB',
+        fallback: currentData ? 'Local State' : 'None',
+        note: 'Some data may come from local state if not yet synced to database'
+      };
 
       // Create and download file
       const blob = new Blob([JSON.stringify(backupData, null, 2)], {

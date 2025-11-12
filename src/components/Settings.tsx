@@ -8,6 +8,10 @@ import { toast } from 'sonner';
 import type { AppSettings } from '@/types/permissions';
 import type { PayoutSettings } from '@/types/betting';
 import { DEFAULT_PAYOUT_SETTINGS } from '@/lib/bettingUtils';
+import type { Boxer, Sponsor } from '@/types/boxer';
+import type { FightCard } from '@/types/fightCard';
+import type { Tournament } from '@/types/tournament';
+import type { Bet, BettingPool } from '@/types/betting';
 
 const defaultSettings: AppSettings = {
   appTitle: 'LSBA Management System',
@@ -18,11 +22,22 @@ const defaultSettings: AppSettings = {
   accentColor: 'oklch(0.85 0.18 90)',
 };
 
-interface SettingsProps {
-  onDataUpdate?: () => void;
+interface CurrentData {
+  boxers: Boxer[];
+  sponsors: Sponsor[];
+  fightCards: FightCard[];
+  tournaments: Tournament[];
+  bets: Bet[];
+  bettingPools: BettingPool[];
+  payoutSettings: PayoutSettings;
 }
 
-export function Settings({ onDataUpdate }: SettingsProps) {
+interface SettingsProps {
+  onDataUpdate?: () => void;
+  currentData?: CurrentData;
+}
+
+export function Settings({ onDataUpdate, currentData }: SettingsProps) {
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [payoutSettings, setPayoutSettings] = useState<PayoutSettings>(DEFAULT_PAYOUT_SETTINGS);
   const [isLoading, setIsLoading] = useState(true);
@@ -142,7 +157,10 @@ export function Settings({ onDataUpdate }: SettingsProps) {
         </TabsContent>
 
         <TabsContent value="data">
-          <DataImportExport onDataUpdate={onDataUpdate} />
+          <DataImportExport 
+            onDataUpdate={onDataUpdate} 
+            currentData={currentData}
+          />
         </TabsContent>
       </Tabs>
     </div>
