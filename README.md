@@ -10,6 +10,7 @@ A comprehensive web application for managing Local State Boxing Association oper
 - **Betting System**: Comprehensive betting pools and odds management
 - **Sponsor Management**: Track sponsorships and partnerships
 - **Role-Based Permissions**: Manage user roles and access control
+- **Data Backup & Import/Export**: Comprehensive data management with full backup/restore capabilities
 - **Real-time Data**: Integrated with Azure CosmosDB for persistent storage
 
 ## 🛠️ Technology Stack
@@ -52,6 +53,34 @@ A comprehensive web application for managing Local State Boxing Association oper
    ```bash
    npm run build
    ```
+
+## 💾 Data Management
+
+The LSBA Management System includes comprehensive data backup and import/export capabilities:
+
+- **Full System Backups**: Create complete backups of all your data
+- **Selective Exports**: Export specific data types (boxers, sponsors, fights, etc.)
+- **Data Import**: Restore from backups or import template data
+- **Database Maintenance**: Safe data management tools
+
+For detailed instructions, see the [Data Management Guide](./DATA_MANAGEMENT_GUIDE.md).
+
+## 📁 Project Structure
+
+```
+src/
+├── components/           # React components
+│   ├── ui/              # Reusable UI components
+│   ├── Settings.tsx     # Main settings with data management
+│   ├── DataImportExport.tsx  # Backup/import/export functionality
+│   └── ...              # Other feature components
+├── lib/                 # Utility libraries
+│   ├── cosmosdb.ts     # Azure CosmosDB client
+│   ├── validation.ts   # Data validation schemas
+│   └── ...             # Other utilities
+├── types/              # TypeScript type definitions
+└── styles/             # CSS and styling files
+```
 
 Our mission: Keep boxing fair, profitable, and connected.
 

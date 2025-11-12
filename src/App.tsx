@@ -51,6 +51,7 @@ import { FighterOddsDisplay } from "@/components/FighterOddsDisplay";
 import { LicenseManager } from "@/components/LicenseManager";
 import { RoleManager } from "@/components/RoleManager";
 import { HelpGuide } from "@/components/HelpGuide";
+import { Settings } from "@/components/Settings";
 import { toast, Toaster } from "sonner";
 import type { FightCard } from "@/types/fightCard";
 import type { Boxer, Sponsor, RankingSettings } from "@/types/boxer";
@@ -1166,7 +1167,14 @@ function App() {
               </TabsContent>
 
               <TabsContent value="settings" className="mt-6">
-                <RankingSettingsComponent settings={currentSettings} onSave={handleSaveSettings} />
+                <Settings onDataUpdate={() => {
+                  loadBoxers();
+                  loadSponsors();
+                  loadFightCards();
+                  loadTournaments();
+                  loadBets();
+                  loadRoles();
+                }} />
               </TabsContent>
 
               <TabsContent value="roles" className="mt-6">
