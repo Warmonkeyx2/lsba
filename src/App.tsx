@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { persistNewItems, persistNewObject } from '@/lib/syncToCosmos';
 import { 
   Eye, 
   PencilSimple, 
@@ -194,6 +195,28 @@ function App() {
     if (savedCard) setEditingCard(savedCard);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Auto-sync local-only items to CosmosDB: create items that lack createdAt (i.e. not persisted yet)
+  useEffect(() => {
+    // debounce small changes
+    const timer = setTimeout(async () => {
+      try {
+        // Persist new items only (those missing createdAt)
+        await persistNewItems('boxers', boxers);
+        await persistNewItems('sponsors', sponsors);
+        await persistNewItems('fights', fightCards);
+        await persistNewItems('tournaments', tournaments);
+        await persistNewItems('betting', bets);
+        await persistNewItems('betting_pools', bettingPools);
+        // payout settings is a single object
+        await persistNewObject('payout_settings', payoutSettings);
+      } catch (err) {
+        console.warn('Auto-sync to CosmosDB failed:', err);
+      }
+    }, 1200);
+
+    return () => clearTimeout(timer);
+  }, [boxers, sponsors, fightCards, tournaments, bets, bettingPools, payoutSettings]);
 
   async function initializeAndFetchData() {
     try {
