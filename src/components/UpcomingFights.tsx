@@ -6,6 +6,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FightCardDisplay } from "@/components/FightCardDisplay";
+import { CountdownTimer, CompactCountdownTimer } from "@/components/CountdownTimer";
 import type { FightCard, Bout } from "@/types/fightCard";
 import type { Boxer } from "@/types/boxer";
 
@@ -17,6 +18,24 @@ interface UpcomingFightsProps {
 export function UpcomingFights({ fightCards = [], boxers = [] }: UpcomingFightsProps) {
   const [selectedCard, setSelectedCard] = useState<FightCard | null>(null);
   const upcomingCards = (fightCards ?? []).filter(card => card.status === 'upcoming');
+  
+  // Sort cards by event date to show the most imminent first
+  const sortedUpcomingCards = upcomingCards.sort((a, b) => {
+    const dateA = new Date(`${a.eventDate} 20:00:00`).getTime();
+    const dateB = new Date(`${b.eventDate} 20:00:00`).getTime();
+    return dateA - dateB;
+  });
+  
+  const getCardPriority = (eventDate: string): 'next' | 'soon' | 'upcoming' => {
+    const eventTime = new Date(`${eventDate} 20:00:00`).getTime();
+    const currentTime = new Date().getTime();
+    const timeDiff = eventTime - currentTime;
+    const hoursUntil = timeDiff / (1000 * 60 * 60);
+    
+    if (hoursUntil <= 24) return 'next';
+    if (hoursUntil <= 168) return 'soon'; // 7 days
+    return 'upcoming';
+  };
 
   const getBoxerById = (id?: string) => {
     if (!id) return null;
@@ -31,7 +50,7 @@ export function UpcomingFights({ fightCards = [], boxers = [] }: UpcomingFightsP
     return name.substring(0, 2).toUpperCase();
   };
 
-  const renderBout = (bout: Bout, cardId: string) => {
+  const renderBout = (bout: Bout, cardId: string, eventDate: string) => {
     if (!bout.fighter1 && !bout.fighter2) return null;
 
     const fighter1 = getBoxerById(bout.fighter1Id);
@@ -63,6 +82,12 @@ export function UpcomingFights({ fightCards = [], boxers = [] }: UpcomingFightsP
           {bout.fighter1Rank && bout.fighter2Rank && (
             <span className="text-xs text-muted-foreground">#{bout.fighter1Rank} vs #{bout.fighter2Rank}</span>
           )}
+          <div className="mt-1">
+            <CompactCountdownTimer 
+              targetDate={`${eventDate} 20:00:00`}
+              className="text-xs"
+            />
+          </div>
         </div>
 
         <div className="flex-1 flex items-center gap-3">
@@ -108,15 +133,21 @@ export function UpcomingFights({ fightCards = [], boxers = [] }: UpcomingFightsP
   return (
     <>
       <div className="flex flex-col gap-6">
-        {upcomingCards.map((card) => {
+        {sortedUpcomingCards.map((card, index) => {
           const allBouts = [
             card.mainEvent,
             ...(card.coMainEvent ? [card.coMainEvent] : []),
             ...card.otherBouts
           ].filter(bout => bout.fighter1 && bout.fighter2);
+          
+          const priority = getCardPriority(card.eventDate);
+          const isNextFight = index === 0 && priority === 'next';
 
           return (
-            <Card key={card.id} className="p-6">
+            <Card key={card.id} className={`p-6 ${
+              isNextFight ? 'ring-2 ring-destructive ring-offset-2 bg-destructive/5' : 
+              priority === 'soon' ? 'ring-1 ring-secondary ring-offset-1 bg-secondary/5' : ''
+            }`}>
               <div className="flex flex-col gap-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
@@ -134,11 +165,31 @@ export function UpcomingFights({ fightCards = [], boxers = [] }: UpcomingFightsP
                       <span>•</span>
                       <span>{card.location}</span>
                     </div>
+                    
+                    {/* Live Countdown Timer */}
+                    <div className="mt-4 p-3 bg-muted/50 rounded-lg border">
+                      <CountdownTimer 
+                        targetDate={`${card.eventDate} 20:00:00`}
+                        className="justify-center"
+                      />
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge className="bg-accent text-accent-foreground">
-                      Upcoming
-                    </Badge>
+                    {isNextFight && (
+                      <Badge variant="destructive" className="animate-pulse">
+                        🔥 NEXT FIGHT
+                      </Badge>
+                    )}
+                    {priority === 'soon' && !isNextFight && (
+                      <Badge variant="secondary">
+                        ⚡ THIS WEEK
+                      </Badge>
+                    )}
+                    {priority === 'upcoming' && (
+                      <Badge className="bg-accent text-accent-foreground">
+                        📅 Upcoming
+                      </Badge>
+                    )}
                     <Button
                       onClick={() => setSelectedCard(card)}
                       variant="outline"
@@ -152,7 +203,7 @@ export function UpcomingFights({ fightCards = [], boxers = [] }: UpcomingFightsP
                 </div>
 
                 <div className="flex flex-col gap-3">
-                  {allBouts.map((bout) => renderBout(bout, card.id || ''))}
+                  {allBouts.map((bout) => renderBout(bout, card.id || '', card.eventDate))}
                 </div>
               </div>
             </Card>

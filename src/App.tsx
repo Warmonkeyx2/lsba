@@ -17,7 +17,6 @@ import {
   CurrencyDollar,
   IdentificationCard,
   CaretDown,
-  UserCircleGear,
   Book
 } from "@phosphor-icons/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -49,7 +48,6 @@ import { TournamentBracket } from "@/components/TournamentBracket";
 import { BettingManager } from "@/components/BettingManager";
 import { FighterOddsDisplay } from "@/components/FighterOddsDisplay";
 import { LicenseManager } from "@/components/LicenseManager";
-import { RoleManager } from "@/components/RoleManager";
 import { HelpGuide } from "@/components/HelpGuide";
 import { Settings } from "@/components/Settings";
 import { toast, Toaster } from "sonner";
@@ -57,8 +55,6 @@ import type { FightCard } from "@/types/fightCard";
 import type { Boxer, Sponsor, RankingSettings } from "@/types/boxer";
 import type { Tournament } from "@/types/tournament";
 import type { Bet, BettingPool, PayoutSettings } from "@/types/betting";
-import type { Role } from "@/types/permissions";
-import { DEFAULT_ROLES } from "@/types/permissions";
 import { DEFAULT_RANKING_SETTINGS, calculatePointsForFight, getSortedBoxers } from "@/lib/rankingUtils";
 import { settleBet, DEFAULT_PAYOUT_SETTINGS } from "@/lib/bettingUtils";
 import { LICENSE_FEE } from "@/lib/licenseUtils";
@@ -174,7 +170,6 @@ function App() {
   const [bets, setBets] = useState<Bet[]>([]);
   const [bettingPools, setBettingPools] = useState<BettingPool[]>([]);
   const [payoutSettings, setPayoutSettings] = useState<PayoutSettings>(DEFAULT_PAYOUT_SETTINGS); // Added setPayoutSettings for consistency
-  const [roles, setRoles] = useState<Role[]>(DEFAULT_ROLES);
   // --- END OF FIXED CODE ---
   
   const [editingCard, setEditingCard] = useState<FightCard>(defaultFightCard);
@@ -190,7 +185,6 @@ function App() {
   const bettingPoolsList = bettingPools ?? [];
   const currentCard = savedCard ?? defaultFightCard;
   const currentSettings = rankingSettings ?? DEFAULT_RANKING_SETTINGS;
-  const rolesList = roles ?? DEFAULT_ROLES;
 
   /* ---------- On mount: try to fetch latest from CosmosDB and merge into local state ---------- */
   useEffect(() => {
@@ -757,20 +751,6 @@ function App() {
     });
   };
 
-  const handleCreateRole = (role: Role) => {
-    setRoles((current) => [...(current || []), role]);
-  };
-
-  const handleUpdateRole = (role: Role) => {
-    setRoles((current) =>
-      (current || []).map((r) => (r.id === role.id ? role : r))
-    );
-  };
-
-  const handleDeleteRole = (roleId: string) => {
-    setRoles((current) => (current || []).filter((r) => r.id !== roleId));
-  };
-
   const hasChanges = JSON.stringify(currentCard) !== JSON.stringify(editingCard);
 
   /* ---------- Render logic (kept exactly as original) ---------- */
@@ -922,10 +902,6 @@ function App() {
                       <DropdownMenuItem onClick={() => setActiveTab('help')}>
                         <Book className="w-4 h-4 mr-2" />
                         Help Guide
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setActiveTab('roles')}>
-                        <UserCircleGear className="w-4 h-4 mr-2" />
-                        Roles & Permissions
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setActiveTab('settings')}>
                         <Sliders className="w-4 h-4 mr-2" />
@@ -1167,23 +1143,7 @@ function App() {
               </TabsContent>
 
               <TabsContent value="settings" className="mt-6">
-                <Settings onDataUpdate={() => {
-                  loadBoxers();
-                  loadSponsors();
-                  loadFightCards();
-                  loadTournaments();
-                  loadBets();
-                  loadRoles();
-                }} />
-              </TabsContent>
-
-              <TabsContent value="roles" className="mt-6">
-                <RoleManager
-                  roles={rolesList}
-                  onCreateRole={handleCreateRole}
-                  onUpdateRole={handleUpdateRole}
-                  onDeleteRole={handleDeleteRole}
-                />
+                <Settings />
               </TabsContent>
 
               <TabsContent value="season" className="mt-6">
