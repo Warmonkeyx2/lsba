@@ -26,6 +26,8 @@ export function UpcomingFights({ fightCards = [], boxers = [] }: UpcomingFightsP
     return dateA - dateB;
   });
   
+  const nextFightCard = sortedUpcomingCards[0];
+  
   const getCardPriority = (eventDate: string): 'next' | 'soon' | 'upcoming' => {
     const eventTime = new Date(`${eventDate}T20:00:00`).getTime();
     const currentTime = new Date().getTime();
@@ -82,10 +84,11 @@ export function UpcomingFights({ fightCards = [], boxers = [] }: UpcomingFightsP
           {bout.fighter1Rank && bout.fighter2Rank && (
             <span className="text-xs text-muted-foreground">#{bout.fighter1Rank} vs #{bout.fighter2Rank}</span>
           )}
-          <div className="mt-1">
+          {/* Enhanced Bout Countdown */}
+          <div className="mt-2 p-2 bg-primary/10 rounded-md border border-primary/20">
             <CompactCountdownTimer 
               targetDate={`${eventDate}T20:00:00`}
-              className="text-xs"
+              className="text-xs font-semibold"
             />
           </div>
         </div>
@@ -132,6 +135,34 @@ export function UpcomingFights({ fightCards = [], boxers = [] }: UpcomingFightsP
 
   return (
     <>
+      {/* Next Fight Banner */}
+      {nextFightCard && getCardPriority(nextFightCard.eventDate) === 'next' && (
+        <Card className="mb-6 p-6 bg-gradient-to-r from-destructive/10 to-accent/10 border-destructive/30">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-destructive/20 flex items-center justify-center animate-pulse">
+                <Trophy className="w-6 h-6 text-destructive" weight="fill" />
+              </div>
+              <div>
+                <h3 className="font-display text-xl font-bold text-destructive uppercase tracking-wide">
+                  🔥 NEXT FIGHT
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {nextFightCard.mainEvent.title || 'LSBA Event'} • {nextFightCard.location}
+                </p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-muted-foreground mb-1">Time Remaining</p>
+              <CompactCountdownTimer 
+                targetDate={`${nextFightCard.eventDate}T20:00:00`}
+                className="text-sm font-bold"
+              />
+            </div>
+          </div>
+        </Card>
+      )}
+      
       <div className="flex flex-col gap-6">
         {sortedUpcomingCards.map((card, index) => {
           const allBouts = [
@@ -166,8 +197,12 @@ export function UpcomingFights({ fightCards = [], boxers = [] }: UpcomingFightsP
                       <span>{card.location}</span>
                     </div>
                     
-                    {/* Live Countdown Timer */}
-                    <div className="mt-4 p-3 bg-muted/50 rounded-lg border">
+                    {/* Enhanced Live Countdown Timer */}
+                    <div className="mt-4 p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg border border-primary/20">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Calendar className="w-4 h-4 text-primary" />
+                        <span className="text-sm font-medium text-primary">Time Until Fight</span>
+                      </div>
                       <CountdownTimer 
                         targetDate={`${card.eventDate}T20:00:00`}
                         className="justify-center"
