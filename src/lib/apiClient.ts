@@ -27,6 +27,25 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
 }
 
 export const apiClient = {
+  // Simple HTTP methods for direct endpoint access
+  async get(endpoint: string): Promise<any> {
+    return apiRequest(endpoint);
+  },
+
+  async put(endpoint: string, data: any): Promise<any> {
+    return apiRequest(endpoint, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async post(endpoint: string, data: any): Promise<any> {
+    return apiRequest(endpoint, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
   // Generic CRUD operations
   async create<T>(containerName: string, item: T & { id?: string }): Promise<T> {
     return apiRequest(`/api/${containerName}`, {

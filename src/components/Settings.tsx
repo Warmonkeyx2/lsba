@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AppSettingsManager } from './AppSettingsManager';
 import { DataImportExport } from './DataImportExport';
 import { LSBARevenueConfig } from './LSBARevenueConfig';
-import { cosmosDB } from '@/lib/cosmosdb';
+import { apiClient } from '@/lib/apiClient';
 import { toast } from 'sonner';
 import type { AppSettings } from '@/types/permissions';
 import type { PayoutSettings } from '@/types/betting';
@@ -48,74 +48,73 @@ export function Settings({ onDataUpdate, currentData }: SettingsProps) {
 
   const loadSettings = async () => {
     try {
+      setIsLoading(true);
+      
       // Load app settings
-      const savedSettings = await cosmosDB.read('app_settings', 'main');
+      const savedSettings = await apiClient.get('/app-settings');
       if (savedSettings) {
         setSettings({ ...defaultSettings, ...savedSettings });
       }
 
       // Load payout settings
-      const savedPayoutSettings = await cosmosDB.read('payout_settings', 'main');
+      const savedPayoutSettings = await apiClient.get('/payout-settings');
       if (savedPayoutSettings) {
         setPayoutSettings({ ...DEFAULT_PAYOUT_SETTINGS, ...savedPayoutSettings });
       }
     } catch (error) {
       console.error('Failed to load settings:', error);
-      // Use default settings if loading fails
+      toast.error('Failed to load settings');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleUpdateSettings = async (newSettings: AppSettings) => {
+    const saveSettings = async (newSettings: AppSettings) => {
     try {
-      setIsLoading(true);
-      await cosmosDB.update('app_settings', 'main', { 
-        id: 'main', 
-        ...newSettings 
+      await apiClient.put('/app-settings', { 
+        ...newSettings, 
+        id: 'main',
+        updatedAt: new Date().toISOString() 
       });
       setSettings(newSettings);
+      toast.success('App settings saved successfully');
       
-      // Apply theme colors to CSS variables
-      if (newSettings.primaryColor) {
-        document.documentElement.style.setProperty('--primary', newSettings.primaryColor);
-      }
-      if (newSettings.secondaryColor) {
-        document.documentElement.style.setProperty('--secondary', newSettings.secondaryColor);
-      }
-      if (newSettings.accentColor) {
-        document.documentElement.style.setProperty('--accent', newSettings.accentColor);
-      }
-      
-      toast.success('Settings updated successfully');
-    } catch (error) {
-      console.error('Failed to update settings:', error);
-      toast.error('Failed to update settings');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-      
-  const handleUpdatePayoutSettings = async (newSettings: PayoutSettings) => {
-    try {
-      setIsLoading(true);
-      await cosmosDB.update('payout_settings', 'main', { 
-        id: 'main', 
-        ...newSettings 
-      });
-      setPayoutSettings(newSettings);
-      toast.success('LSBA revenue settings updated successfully');
-      
-      // Trigger data update if callback provided
+      // Trigger parent component update if callback provided
       if (onDataUpdate) {
         onDataUpdate();
       }
     } catch (error) {
-      console.error('Failed to update payout settings:', error);
-      toast.error('Failed to update LSBA revenue settings');
-    } finally {
-      setIsLoading(false);
+      console.error('Failed to save app settings:', error);
+      toast.error('Failed to save app settings');
     }
+  };
+      
+    const savePayoutSettings = async (newPayoutSettings: PayoutSettings) => {
+    try {
+      await apiClient.put('/payout-settings', { 
+        ...newPayoutSettings, 
+        id: 'main',
+        updatedAt: new Date().toISOString() 
+      });
+      setPayoutSettings(newPayoutSettings);
+      toast.success('Payout settings saved successfully');
+      
+      // Trigger parent component update if callback provided
+      if (onDataUpdate) {
+        onDataUpdate();
+      }
+    } catch (error) {
+      console.error('Failed to save payout settings:', error);
+      toast.error('Failed to save payout settings');
+    }
+  };
+
+  const handleUpdateSettings = (newSettings: AppSettings) => {
+    saveSettings(newSettings);
+  };
+
+  const handleUpdatePayoutSettings = (newPayoutSettings: PayoutSettings) => {
+    savePayoutSettings(newPayoutSettings);
   };
 
   if (isLoading) {
