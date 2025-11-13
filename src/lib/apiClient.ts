@@ -1,5 +1,5 @@
-// API client for LSBA backend server
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// API client for LSBA Vercel Functions
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 class ApiError extends Error {
   constructor(public status: number, message: string) {
