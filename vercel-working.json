@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "name": "lsba-management-system",
   "builds": [
     {
       "src": "package.json",
@@ -10,6 +11,12 @@
     }
   ],
   "routes": [
+    {
+      "src": "/assets/(.*)",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      }
+    },
     {
       "handle": "filesystem"
     },
