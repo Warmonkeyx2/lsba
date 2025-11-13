@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LSBA Test Page</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <h1>🥊 LSBA Management System - Deployment Test</h1>
+    
+    <div id="status" class="status">
+        🔄 Loading...
+    </div>
+    
+    <h2>✅ Static Files Working</h2>
+    <p>If you can see this page, your static file hosting is working correctly!</p>
+    
+    <h2>📋 Next Steps:</h2>
+    <ol>
+        <li><strong>Build Check</strong>: Run <code>npm run build</code> locally</li>
+        <li><strong>Deploy Settings</strong>: 
+            <ul>
+                <li>Framework: <strong>Vite</strong></li>
+                <li>Build Command: <strong>npm run build</strong></li>
+                <li>Output Directory: <strong>dist</strong></li>
+            </ul>
+        </li>
+        <li><strong>Environment Variable</strong>: Add <code>VITE_API_URL</code> with your Railway API URL</li>
+        <li><strong>Redeploy</strong>: Force a new deployment without cache</li>
+    </ol>
+    
+    <h2>🔧 If Main App Won't Load:</h2>
+    <p>The LSBA app should replace this test page. If you still see this:</p>
+    <ul>
+        <li>Check deployment build logs for errors</li>
+        <li>Verify <code>dist/index.html</code> exists after build</li>
+        <li>Try deploying to different platform (Netlify vs Vercel)</li>
+    </ul>
+    
+    <h2>🌐 Expected Final Result:</h2>
+    <p>Your users should see:</p>
+    <ul>
+        <li>🥊 Boxer registration and management</li>
+        <li>📊 Live countdown timers for fights</li>
+        <li>💰 Betting system with State ID verification</li>
+        <li>📈 Real-time leaderboards and rankings</li>
+        <li>🏆 Tournament bracket management</li>
+    </ul>
+    
+    <div style="background: #e7f3ff; padding: 20px; margin: 20px 0; border-radius: 5px;">
+        <h3>🚀 Ready to Deploy the Real App?</h3>
+        <p>Replace this test with your actual LSBA app build:</p>
+        <code>npm run build</code> → upload <code>dist/</code> folder
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const status = document.getElementById('status');
+            
+            // Test if this is the real deployment
+            if (window.location.hostname.includes('localhost')) {
+                status.innerHTML = '🏠 Local Test - Deploy to cloud platform next';
+                status.className = 'status success';
+            } else {
+                status.innerHTML = '☁️ Cloud Deployment Working - Ready for LSBA app!';
+                status.className = 'status success';
+            }
+            
+            // Show current URL for debugging
+            const urlInfo = document.createElement('p');
+            urlInfo.innerHTML = `<strong>Current URL:</strong> ${window.location.href}`;
+            status.appendChild(urlInfo);
+        });
+    </script>
+</body>
+</html>
