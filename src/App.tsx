@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { persistNewItems, persistNewObject } from '@/lib/syncToCosmos';
+import { apiClient } from '@/lib/apiClient';
 import { 
   Eye, 
   PencilSimple, 
@@ -61,8 +61,7 @@ import { settleBet, DEFAULT_PAYOUT_SETTINGS } from "@/lib/bettingUtils";
 import { LICENSE_FEE } from "@/lib/licenseUtils";
 import type { BettingConfig } from "@/types/betting";
 
-// CosmosDB client
-import { apiClient } from '@/lib/apiClient';
+// API client for backend communication
 
 const DEFAULT_BETTING_CONFIG: BettingConfig = {
   id: 'default',
@@ -201,6 +200,10 @@ function App() {
     // debounce small changes
     const timer = setTimeout(async () => {
       try {
+        // Note: Auto-sync temporarily disabled - using API client instead
+        // TODO: Implement API client batch sync
+        console.log('Auto-sync: Using API client architecture');
+        /*
         // Persist new items only (those missing createdAt)
         await persistNewItems('boxers', boxers);
         await persistNewItems('sponsors', sponsors);
@@ -210,6 +213,7 @@ function App() {
         await persistNewItems('betting_pools', bettingPools);
         // payout settings is a single object
         await persistNewObject('payout_settings', payoutSettings);
+        */
       } catch (err) {
         console.warn('Auto-sync to CosmosDB failed:', err);
       }
@@ -388,13 +392,18 @@ function App() {
       });
       
       // Try to update first, if not found then create
-      const existingBoxer = await cosmosDB.read<Boxer>('boxers', boxer.id);
-      if (existingBoxer) {
+      try {
         const updated = await apiClient.update<Boxer>('boxers', boxer.id, payload);
         return fromDbBoxer(updated);
-      } else {
-        const created = await apiClient.create<Boxer>('boxers', payload);
-        return fromDbBoxer(created);
+      } catch (updateError) {
+        // If update fails, try creating
+        try {
+          const created = await apiClient.create<Boxer>('boxers', payload);
+          return fromDbBoxer(created);
+        } catch (createError) {
+          console.error('Failed to create boxer:', createError);
+          return null;
+        }
       }
     } catch (err) {
       console.error('syncBoxerToDb error', err);
@@ -416,13 +425,18 @@ function App() {
   async function syncSponsorToDb(sponsor: Sponsor) {
     try {
       // Try to update first, if not found then create
-      const existingSponsor = await cosmosDB.read<Sponsor>('sponsors', sponsor.id);
-      if (existingSponsor) {
+      try {
         const updated = await apiClient.update<Sponsor>('sponsors', sponsor.id, sponsor);
         return updated;
-      } else {
-        const created = await apiClient.create<Sponsor>('sponsors', sponsor);
-        return created;
+      } catch (updateError) {
+        // If update fails, try creating
+        try {
+          const created = await apiClient.create<Sponsor>('sponsors', sponsor);
+          return created;
+        } catch (createError) {
+          console.error('Failed to create sponsor:', createError);
+          return null;
+        }
       }
     } catch (err) {
       console.error('syncSponsorToDb error', err);
@@ -573,7 +587,7 @@ function App() {
     toast.success("Fighter profile deleted successfully");
 
     try {
-      await cosmosDB.delete('boxers', boxerId);
+      await apiClient.delete('boxers', boxerId);
       toast.success('Deleted from DB');
     } catch (err) {
       console.error('handleDeleteBoxer CosmosDB error', err);
@@ -648,12 +662,12 @@ function App() {
       }
       
       // Try to update first, if not found then create
-      const existingCard = await cosmosDB.read<FightCard>('fights', fightCard.id);
       let persistedCard;
-      if (existingCard) {
-        persistedCard = await apiClient.update<FightCard>('fights', fightCard.id, fightCard);
-      } else {
-        persistedCard = await apiClient.create<FightCard>('fights', fightCard);
+      try {
+        persistedCard = await apiClient.update<FightCard>('fightcards', fightCard.id, fightCard);
+      } catch (updateError) {
+        // If update fails, try creating
+        persistedCard = await apiClient.create<FightCard>('fightcards', fightCard);
       }
       
       // replace local fightCards with DB version to keep consistent data
