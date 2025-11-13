@@ -1,19 +1,29 @@
 # Multi-stage build for LSBA Frontend
 FROM node:18-alpine AS frontend-build
 
+# Install build dependencies
+RUN apk add --no-cache python3 make g++
+
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy package files first for better caching
+COPY package.json package-lock.json* ./
 
-# Install ALL dependencies (including devDependencies for build)
-RUN npm ci
+# Clear npm cache and install all dependencies
+RUN npm cache clean --force
+RUN npm install --no-optional
+
+# Verify critical dependencies are installed
+RUN npm list @vitejs/plugin-react-swc || npm install @vitejs/plugin-react-swc
 
 # Copy source code
 COPY . .
 
-# Build the application
+# Set production environment
+ENV NODE_ENV=production
+
+# Build the application with verbose output
 RUN npm run build
 
 # Production stage
